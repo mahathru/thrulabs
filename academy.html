@@ -589,7 +589,7 @@
                 card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
                 card.style.transitionDelay = `${idx * 0.05}s`;
                 card.onclick = () => {
-                    window.location.href = `course.html?course=${course.id}`;
+                    window.location.href = `resource.html?course=${course.id}`;
                 };
                 
                 const colors = colorMap[course.color] || colorMap['accent'];
@@ -851,7 +851,7 @@
             updateProfileNav();
             
             if (targetCourseIdForEnrollment) {
-                window.location.href = `course.html?course=${targetCourseIdForEnrollment}`;
+                window.location.href = `resource.html?course=${targetCourseIdForEnrollment}`;
             }
         }
 
@@ -861,7 +861,7 @@
             if (!enrolledName) {
                 openEnrollmentModal(courseId);
             } else {
-                window.location.href = `course.html?course=${courseId}`;
+                window.location.href = `resource.html?course=${courseId}`;
             }
         }
 

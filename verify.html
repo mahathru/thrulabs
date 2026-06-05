@@ -376,9 +376,9 @@
             animateParticles();
             initSpotlights();
             
-            // Check for id in URL search params
+            // Check for cert or id in URL search params
             const params = new URLSearchParams(window.location.search);
-            const queryId = params.get('id');
+            const queryId = params.get('cert') || params.get('id');
             
             if (queryId) {
                 document.getElementById('cert-verify-input').value = queryId.trim();

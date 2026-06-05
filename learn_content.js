@@ -4,7 +4,7 @@ const courses = {
         title: "Arduino Fundamentals",
         desc: "Learn Arduino programming, sensors, actuators, and project development.",
         difficulty: "Beginner",
-        duration: "6 Hours",
+        duration: "8 Hours",
         lessons: 18,
         whatYouWillLearn: [
             "Microcontroller basics and ATMega328P pin structures",
@@ -486,7 +486,7 @@ void loop() {
         title: "Embedded Systems Essentials",
         desc: "Learn microcontrollers, communication protocols, interrupts, and embedded development.",
         difficulty: "Intermediate",
-        duration: "12 Hours",
+        duration: "18 Hours",
         lessons: 32,
         whatYouWillLearn: [
             "Embedded systems hardware architectures and designs",
@@ -926,12 +926,12 @@ int main(void) {
             }
         ]
     },
-    "esp32-iot-development": {
+    "esp32-iot": {
         category: "AIoT",
         title: "ESP32 & IoT Development",
         desc: "Build IoT systems using ESP32, Wi-Fi, MQTT, and cloud services.",
         difficulty: "Intermediate",
-        duration: "10 Hours",
+        duration: "16 Hours",
         lessons: 25,
         whatYouWillLearn: [
             "ESP32 dual-core Tensilica architecture and memory maps",
@@ -1644,12 +1644,12 @@ Carry = A · B (AND)</pre>
             }
         ]
     },
-    "pcb-design-kicad": {
+    "pcb-design": {
         category: "Electronics & Communication",
         title: "PCB Design with KiCad",
         desc: "Learn schematic design, PCB routing, and manufacturing preparation.",
         difficulty: "Intermediate",
-        duration: "7 Hours",
+        duration: "12 Hours",
         lessons: 15,
         whatYouWillLearn: [
             "KiCad workflow and schematic capture interface",
@@ -1951,12 +1951,12 @@ Carry = A · B (AND)</pre>
             }
         ]
     },
-    "uav-drone-technology": {
+    "uav-drone": {
         category: "UAV & Drone Technology",
         title: "UAV & Drone Technology",
         desc: "Learn drone systems, flight controllers, propulsion systems, and mission planning.",
-        difficulty: "Intermediate",
-        duration: "10 Hours",
+        difficulty: "Advanced",
+        duration: "20 Hours",
         lessons: 22,
         whatYouWillLearn: [
             "Quadcopter aerodynamics, dynamics, and thrust metrics",
@@ -2348,6 +2348,7 @@ Carry = A · B (AND)</pre>
                         "Verify that the failsafe triggers correctly when the radio transmitter is turned off."
                     ],
                     expectedOutput: "The drone passes all checks, and the flight controller triggers failsafes when the transmitter is turned off."
+                }
             }
         ]
     },
@@ -2863,11 +2864,11 @@ Carry = A · B (AND)</pre>
             }
         ]
     },
-    "rtos-development": {
+    "rtos": {
         category: "Embedded Systems",
         title: "RTOS Development",
         desc: "Master real-time task scheduling, semaphores, mutexes, and thread synchronization in FreeRTOS.",
-        difficulty: "Intermediate",
+        difficulty: "Advanced",
         duration: "14 Hours",
         lessons: 28,
         whatYouWillLearn: [
@@ -3023,11 +3024,11 @@ Carry = A · B (AND)</pre>
             }
         ]
     },
-    "aiot-engineering": {
+    "aiot": {
         category: "AIoT",
         title: "AIoT Engineering",
         desc: "Deploy deep learning models on edge microcontrollers and route sensor data through IoT channels.",
-        difficulty: "Intermediate",
+        difficulty: "Advanced",
         duration: "16 Hours",
         lessons: 34,
         whatYouWillLearn: [
@@ -3180,11 +3181,11 @@ Carry = A · B (AND)</pre>
             }
         ]
     },
-    "advanced-embedded-systems": {
+    "advanced-embedded": {
         category: "Embedded Systems",
         title: "Advanced Embedded Systems",
         desc: "Dive deep into hardware registers, DMA pipelines, low-power modes, and device driver development.",
-        difficulty: "Intermediate",
+        difficulty: "Advanced",
         duration: "18 Hours",
         lessons: 40,
         whatYouWillLearn: [
@@ -3335,11 +3336,11 @@ Carry = A · B (AND)</pre>
             }
         ]
     },
-    "industry-project-programs": {
+    "industry-projects": {
         category: "Embedded Systems",
         title: "Industry Project Programs",
         desc: "Build and document enterprise-grade electronics and firmware prototypes matching industry standards.",
-        difficulty: "Intermediate",
+        difficulty: "Expert",
         duration: "20 Hours",
         lessons: 10,
         whatYouWillLearn: [
@@ -3481,3 +3482,7 @@ Carry = A · B (AND)</pre>
         ]
     }
 };
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = courses;
+}

@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const courseId = params.get('course') || 'arduino-fundamentals';
+        window.location.replace(`resource.html?course=${courseId}`);
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THRULABS | Course Detail</title>
@@ -533,7 +538,7 @@
                 },
                 hasCertificate: true
             },
-            "esp32-iot-development": {
+            "esp32-iot": {
                 category: "AIoT",
                 title: "ESP32 & IoT Development",
                 desc: "Architect robust connected solutions. Learn how to interface ESP32 with Wi-Fi, run lightweight MQTT clients, transmit telemetry payloads, integrate with cloud platforms, and implement low-power sleep cycles.",
@@ -623,7 +628,7 @@
                 },
                 hasCertificate: false
             },
-            "pcb-design-kicad": {
+            "pcb-design": {
                 category: "Electronics & Communication",
                 title: "PCB Design with KiCad",
                 desc: "Learn to design industry-grade printed circuit boards using KiCad. Master schematic capture, footprint creation, component placement strategies, copper routing, ground pours, and manufacturing Gerber file exports.",
@@ -668,7 +673,7 @@
                 },
                 hasCertificate: true
             },
-            "uav-drone-technology": {
+            "uav-drone": {
                 category: "UAV & Drone Technology",
                 title: "UAV & Drone Technology",
                 desc: "Uncover the physics and mechanics of multirotor flight systems. Study flight controller hardware, brushless motors, ESC protocols, sensor fusion loops, and autonomous mission mapping tools.",
@@ -823,7 +828,7 @@
                 },
                 hasCertificate: false
             },
-            "rtos-development": {
+            "rtos": {
                 category: "Embedded Systems",
                 title: "RTOS Development",
                 desc: "Master real-time task scheduling, semaphores, mutexes, and thread synchronization in FreeRTOS.",
@@ -861,7 +866,7 @@
                 },
                 hasCertificate: true
             },
-            "aiot-engineering": {
+            "aiot": {
                 category: "AIoT",
                 title: "AIoT Engineering",
                 desc: "Deploy deep learning models on edge microcontrollers and route sensor data through IoT channels.",
@@ -898,7 +903,7 @@
                 },
                 hasCertificate: true
             },
-            "advanced-embedded-systems": {
+            "advanced-embedded": {
                 category: "Embedded Systems",
                 title: "Advanced Embedded Systems",
                 desc: "Dive deep into hardware registers, DMA pipelines, low-power modes, and device driver development.",
@@ -935,7 +940,7 @@
                 },
                 hasCertificate: true
             },
-            "industry-project-programs": {
+            "industry-projects": {
                 category: "Embedded Systems",
                 title: "Industry Project Programs",
                 desc: "Build and document enterprise-grade electronics and firmware prototypes matching industry standards.",

@@ -41,6 +41,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="academy_data.js"></script>
+    <script src="learn_content.js"></script>
 
     <style>
         body {
@@ -137,7 +138,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-5" id="nav-auth-container">
                 <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
                 <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
                     Get Started
@@ -149,83 +150,286 @@
     <!-- Main Content -->
     <main class="relative z-10 pt-36 px-4 md:px-6 pb-24 max-w-[1200px] mx-auto space-y-8">
         
-        <!-- Header -->
-        <div class="flex items-center justify-between border-b border-white/10 pb-4">
-            <h1 id="resource-main-title" class="text-xl font-display font-bold text-white tracking-widest uppercase flex items-center gap-2">
-                <span class="w-1.5 h-6 rounded bg-rose-500"></span>
-                Resource Library
-            </h1>
-            <a href="academy.html" class="text-[10px] font-mono text-[#BFC5D2] hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wider">
-                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Academy
-            </a>
+        <div id="reference-library-view" class="space-y-8">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                <h1 id="resource-main-title" class="text-xl font-display font-bold text-white tracking-widest uppercase flex items-center gap-2">
+                    <span class="w-1.5 h-6 rounded bg-rose-500"></span>
+                    Resource Library
+                </h1>
+                <a href="academy.html" class="text-[10px] font-mono text-[#BFC5D2] hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wider">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Academy
+                </a>
+            </div>
+
+            <!-- Details Grid Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Left 2 Columns: Main Overview & Interactive Content -->
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 space-y-6">
+                            <div class="space-y-3">
+                                <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-mono uppercase tracking-widest inline-block">Study Reference</span>
+                                <h2 id="resource-title" class="text-2xl md:text-3xl font-display font-extrabold text-white leading-tight">--</h2>
+                                <p id="resource-desc" class="text-[#BFC5D2] text-sm font-light leading-relaxed">--</p>
+                            </div>
+                            
+                            <!-- Dynamic HTML content container -->
+                            <div id="resource-content" class="pt-6 border-t border-white/5 space-y-6">
+                                <!-- Dynamic markup rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right 1 Column: Downloads, Recommended Courses, Related Projects -->
+                <div class="space-y-8">
+                    
+                    <!-- Downloads -->
+                    <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 space-y-4">
+                            <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="download" class="w-4.5 h-4.5 text-rose-400"></i> Downloadable Resources
+                            </h3>
+                            <div id="downloads-list" class="space-y-3 pt-2">
+                                <!-- Dynamic downloads -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recommended Courses -->
+                    <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 space-y-4">
+                            <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="graduation-cap" class="w-4.5 h-4.5 text-rose-400"></i> Recommended Courses
+                            </h3>
+                            <div id="courses-list" class="space-y-3 pt-2">
+                                <!-- Dynamic courses -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Related Projects -->
+                    <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 space-y-4">
+                            <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="bot" class="w-4.5 h-4.5 text-rose-400"></i> Related Projects
+                            </h3>
+                            <div id="projects-list" class="space-y-3 pt-2">
+                                <!-- Dynamic projects -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+            </div>
         </div>
 
-        <!-- Details Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Left 2 Columns: Main Overview & Interactive Content -->
-            <div class="lg:col-span-2 space-y-8">
-                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
-                    <div class="spotlight"></div>
-                    <div class="relative z-10 space-y-6">
-                        <div class="space-y-3">
-                            <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-mono uppercase tracking-widest inline-block">Study Reference</span>
-                            <h2 id="resource-title" class="text-2xl md:text-3xl font-display font-extrabold text-white leading-tight">--</h2>
-                            <p id="resource-desc" class="text-[#BFC5D2] text-sm font-light leading-relaxed">--</p>
+        <!-- Course Details View -->
+        <div id="course-details-view" class="hidden max-w-[1000px] mx-auto space-y-16">
+            <!-- Back Link -->
+            <div class="reveal-text">
+                <a href="academy.html" class="inline-flex items-center gap-2 text-xs font-mono text-white/60 hover:text-white transition-colors hover-target">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Academy Hub
+                </a>
+            </div>
+
+            <!-- COURSE HERO -->
+            <section id="course-hero" class="academy-card p-8 md:p-12 rounded-[2.5rem] relative overflow-hidden group reveal-text">
+                <div class="spotlight"></div>
+                <div class="relative z-10 space-y-6">
+                    <div class="flex flex-wrap gap-2">
+                        <span id="hero-category" class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 text-accent-bright text-[9px] font-mono uppercase tracking-widest">
+                            Category
+                        </span>
+                        <span id="hero-instructor" class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-[9px] font-mono uppercase tracking-widest">
+                            THRULABS
+                        </span>
+                    </div>
+                    
+                    <h1 id="hero-title" class="text-3xl md:text-5xl font-display font-extrabold tracking-tight text-white leading-tight">
+                        Course Title
+                    </h1>
+                    
+                    <p id="hero-desc" class="text-[#BFC5D2] text-sm md:text-base font-light leading-relaxed max-w-3xl">
+                        Course Description
+                    </p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-y border-white/5 text-xs font-mono">
+                        <div>
+                            <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Difficulty</span>
+                            <span id="hero-difficulty" class="text-white font-bold">--</span>
                         </div>
-                        
-                        <!-- Dynamic HTML content container -->
-                        <div id="resource-content" class="pt-6 border-t border-white/5 space-y-6">
-                            <!-- Dynamic markup rendered here -->
+                        <div>
+                            <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Duration</span>
+                            <span id="hero-duration" class="text-white font-bold">--</span>
                         </div>
+                        <div>
+                            <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Syllabus</span>
+                            <span id="hero-lessons" class="text-white font-bold">-- Lessons</span>
+                        </div>
+                        <div>
+                            <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Certification</span>
+                            <span id="hero-certification" class="text-emerald-400 font-bold">Available</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="startCourseAction()" class="px-8 py-4 bg-white text-black hover:bg-accent hover:text-white rounded-xl text-xs font-extrabold uppercase tracking-widest transition-all shadow-xl hover-target">
+                        Start Learning
+                    </button>
+                </div>
+            </section>
+
+            <!-- Dynamic Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 reveal-text" style="transition-delay: 0.1s;">
+                <!-- Left 2 Columns -->
+                <div class="lg:col-span-2 space-y-16">
+                    <!-- WHAT YOU WILL LEARN -->
+                    <section id="course-learn" class="space-y-4">
+                        <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                            <span class="w-1.5 h-5 rounded bg-accent"></span>
+                            What You Will Learn
+                        </h2>
+                        <ul id="learn-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs text-[#BFC5D2]">
+                            <!-- Dynamic -->
+                        </ul>
+                    </section>
+
+                    <!-- COURSE MODULES -->
+                    <section id="course-modules" class="space-y-4">
+                        <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                            <span class="w-1.5 h-5 rounded bg-purple-500"></span>
+                            Course Syllabus & Modules
+                        </h2>
+                        <div id="modules-accordion" class="space-y-3">
+                            <!-- Dynamic Accordions -->
+                        </div>
+                    </section>
+
+                    <!-- COURSE OUTCOMES -->
+                    <section id="course-outcomes" class="space-y-4">
+                        <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                            <span class="w-1.5 h-5 rounded bg-emerald-500"></span>
+                            Course Outcomes
+                        </h2>
+                        <div class="space-y-3" id="outcomes-container">
+                            <!-- Dynamic outcomes -->
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right 1 Column -->
+                <div class="space-y-12">
+                    <!-- REQUIREMENTS -->
+                    <section id="course-requirements" class="academy-card p-6 rounded-[2rem] space-y-4">
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-accent-bright"></i> Requirements
+                        </h3>
+                        <ul id="requirements-list" class="space-y-2.5 text-[11px] text-[#BFC5D2] leading-relaxed list-disc pl-4">
+                            <!-- Dynamic requirements -->
+                        </ul>
+                    </section>
+
+                    <!-- CERTIFICATION -->
+                    <section id="course-certification-detail" class="academy-card p-6 rounded-[2rem] space-y-4">
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="award" class="w-4 h-4 text-emerald-400"></i> Certification
+                        </h3>
+                        <div id="certification-meta" class="space-y-3 text-[11px] text-[#BFC5D2] font-mono">
+                            <!-- Dynamic certification info -->
+                        </div>
+                    </section>
+
+                    <!-- START LEARNING CTA -->
+                    <section id="course-cta" class="academy-card p-6 rounded-[2rem] bg-gradient-to-br from-accent/15 to-transparent border border-accent/20 space-y-5">
+                        <div class="space-y-1">
+                            <h3 class="text-base font-display font-extrabold text-white">Ready to Begin?</h3>
+                            <p class="text-[11px] text-[#BFC5D2]">Enroll instantly and start your practical engineering learning path today.</p>
+                        </div>
+                        <div class="space-y-2.5">
+                            <button onclick="startCourseAction()" class="w-full py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover-target">
+                                Start Course
+                            </button>
+                            <button id="btn-view-cert-req" onclick="viewCertRequirements()" class="w-full py-3 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover-target">
+                                View Certification Requirements
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrollment Modal -->
+        <div id="enrollment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-base/80 backdrop-blur-md">
+            <div class="academy-card max-w-md w-full p-8 rounded-[2.5rem] bg-surface border border-white/10 shadow-2xl space-y-6 relative animate-fadeIn">
+                <div class="spotlight" style="background: radial-gradient(circle, rgba(94,106,210,0.15) 0%, transparent 70%); width: 300px; height: 300px; opacity: 1;"></div>
+                <div class="relative z-10 space-y-4">
+                    <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                        <div class="w-10 h-10 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent-bright">
+                            <i data-lucide="graduation-cap" class="w-5 h-5 text-accent-bright"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-display font-extrabold text-white">Start Learning</h3>
+                            <p class="text-[10px] text-white/40 font-mono uppercase tracking-wider">Configure Enrollment Pipeline</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-[#BFC5D2] font-light leading-relaxed">
+                        Enter your full name exactly as it should appear on your verified engineering certificates.
+                    </p>
+                    <div class="space-y-3 pt-2">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Full Name</label>
+                            <input type="text" id="enrollment-name" placeholder="e.g. Alex Mercer" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Email Address (Optional)</label>
+                            <input type="email" id="enrollment-email" placeholder="e.g. alex@example.com" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-4 font-mono text-[9px] tracking-widest uppercase">
+                        <button onclick="closeEnrollmentModal()" class="flex-1 py-3.5 rounded-xl border border-white/10 text-white/60 hover:text-white transition-all">Cancel</button>
+                        <button onclick="submitEnrollment()" class="flex-1 py-3.5 rounded-xl bg-white text-black hover:bg-accent hover:text-white transition-all font-bold">Continue</button>
                     </div>
                 </div>
             </div>
-            
-            <!-- Right 1 Column: Downloads, Recommended Courses, Related Projects -->
-            <div class="space-y-8">
-                
-                <!-- Downloads -->
-                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
-                    <div class="spotlight"></div>
-                    <div class="relative z-10 space-y-4">
-                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <i data-lucide="download" class="w-4.5 h-4.5 text-rose-400"></i> Downloadable Resources
-                        </h3>
-                        <div id="downloads-list" class="space-y-3 pt-2">
-                            <!-- Dynamic downloads -->
+        </div>
+
+        <!-- Profile/Settings Modal -->
+        <div id="profile-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-base/80 backdrop-blur-md">
+            <div class="academy-card max-w-md w-full p-8 rounded-[2.5rem] bg-surface border border-white/10 shadow-2xl space-y-6 relative animate-fadeIn">
+                <div class="spotlight" style="background: radial-gradient(circle, rgba(94,106,210,0.15) 0%, transparent 70%); width: 300px; height: 300px; opacity: 1;"></div>
+                <div class="relative z-10 space-y-4">
+                    <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <i data-lucide="user" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-display font-extrabold text-white">Profile Settings</h3>
+                            <p class="text-[10px] text-white/40 font-mono uppercase tracking-wider">User Identity Config</p>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Recommended Courses -->
-                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
-                    <div class="spotlight"></div>
-                    <div class="relative z-10 space-y-4">
-                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <i data-lucide="graduation-cap" class="w-4.5 h-4.5 text-rose-400"></i> Recommended Courses
-                        </h3>
-                        <div id="courses-list" class="space-y-3 pt-2">
-                            <!-- Dynamic courses -->
+                    <div class="space-y-3 pt-2">
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Full Name</label>
+                            <input type="text" id="profile-name" placeholder="e.g. Alex Mercer" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Email Address</label>
+                            <input type="email" id="profile-email" placeholder="e.g. alex@example.com" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
                         </div>
                     </div>
-                </div>
-                
-                <!-- Related Projects -->
-                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
-                    <div class="spotlight"></div>
-                    <div class="relative z-10 space-y-4">
-                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <i data-lucide="bot" class="w-4.5 h-4.5 text-rose-400"></i> Related Projects
-                        </h3>
-                        <div id="projects-list" class="space-y-3 pt-2">
-                            <!-- Dynamic projects -->
-                        </div>
+                    <div class="flex gap-3 pt-4 font-mono text-[9px] tracking-widest uppercase">
+                        <button onclick="closeProfileModal()" class="flex-1 py-3.5 rounded-xl border border-white/10 text-white/60 hover:text-white transition-all">Cancel</button>
+                        <button onclick="submitProfileUpdate()" class="flex-1 py-3.5 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all font-bold">Save Changes</button>
                     </div>
                 </div>
-                
             </div>
-            
         </div>
 
     </main>
@@ -286,26 +490,302 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Load Resource Collection Details
         let activeResource = null;
+        let courseId = null;
+        let targetCourseIdForEnrollment = null;
 
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
-            if (params.has('course')) {
-                window.location.replace(`course.html?course=${params.get('course')}`);
-                return;
-            }
             animateParticles();
             initSpotlights();
-            const resourceType = params.get('type') || 'formulas';
             
-            activeResource = academyData.resourceCollections[resourceType];
-            if (!activeResource) {
-                activeResource = academyData.resourceCollections['formulas'];
+            if (params.has('course')) {
+                courseId = params.get('course');
+                document.getElementById('reference-library-view').classList.add('hidden');
+                document.getElementById('course-details-view').classList.remove('hidden');
+                renderCourseDetails();
+            } else {
+                document.getElementById('reference-library-view').classList.remove('hidden');
+                document.getElementById('course-details-view').classList.add('hidden');
+                
+                const resourceType = params.get('type') || 'formulas';
+                activeResource = academyData.resourceCollections[resourceType];
+                if (!activeResource) {
+                    activeResource = academyData.resourceCollections['formulas'];
+                }
+                renderResource();
+            }
+            updateProfileNav();
+        };
+
+        function renderCourseDetails() {
+            const course = courses[courseId];
+            if (!course) {
+                document.getElementById('course-details-view').innerHTML = `
+                    <div class="flex flex-col items-center justify-center min-h-[50vh] space-y-4 text-center">
+                        <i data-lucide="alert-triangle" class="w-12 h-12 text-rose-500"></i>
+                        <h2 class="text-xl font-display font-extrabold text-white uppercase tracking-wider">Course Not Found</h2>
+                        <p class="text-[#BFC5D2] text-xs max-w-sm">The course key '${courseId}' could not be located in our database.</p>
+                        <a href="academy.html" class="px-6 py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-accent hover:text-white transition-all shadow-xl font-mono">
+                            Back to Academy
+                        </a>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            document.title = `THRULABS | ${course.title}`;
+
+            // Populate Hero
+            document.getElementById('hero-category').innerText = course.category || "Engineering";
+            document.getElementById('hero-title').innerText = course.title;
+            document.getElementById('hero-desc').innerText = course.desc;
+            document.getElementById('hero-difficulty').innerText = course.difficulty;
+            document.getElementById('hero-duration').innerText = course.duration;
+            document.getElementById('hero-lessons').innerText = `${course.lessons} Lessons`;
+            document.getElementById('hero-instructor').innerText = course.instructor || "THRULABS Engineering Faculty";
+
+            // What You Will Learn
+            const learnList = document.getElementById('learn-list');
+            const itemsToLearn = course.whatYouWillLearn || [];
+            learnList.innerHTML = itemsToLearn.map(topic => `
+                <li class="flex items-start gap-2 bg-white/[0.01] border border-white/5 p-3 rounded-xl hover:bg-white/[0.03] transition-colors">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-accent shrink-0 mt-0.5"></i>
+                    <span>${topic}</span>
+                </li>
+            `).join('');
+
+            // Syllabus & Modules Accordion
+            const modulesContainer = document.getElementById('modules-accordion');
+            const syllabusModules = course.modules || [];
+            modulesContainer.innerHTML = syllabusModules.map((mod, idx) => `
+                <div class="academy-card rounded-2xl overflow-hidden mb-3">
+                    <button onclick="toggleModule(${idx})" class="w-full p-5 text-left flex justify-between items-center bg-white/[0.01] hover:bg-white/[0.03] transition-all">
+                        <span class="text-xs md:text-sm font-display font-bold text-white">${mod.title}</span>
+                        <i id="module-icon-${idx}" data-lucide="chevron-down" class="w-4 h-4 text-white/50 transition-transform"></i>
+                    </button>
+                    <div id="module-content-${idx}" class="hidden p-5 border-t border-white/5 bg-black/40 text-[11px] text-[#BFC5D2] leading-relaxed">
+                        <p class="mb-3">${mod.desc}</p>
+                        ${mod.lessons ? `
+                        <div class="space-y-1.5 border-t border-white/5 pt-3 mt-2">
+                            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider block">Lessons in this module:</span>
+                            <ul class="space-y-1 list-disc pl-4 text-zinc-400">
+                                ${mod.lessons.map(les => `<li>${les.title}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Course Outcomes
+            const outcomesContainer = document.getElementById('outcomes-container');
+            const outcomes = course.outcomes || course.skillsGained || [];
+            outcomesContainer.innerHTML = outcomes.map(out => `
+                <div class="flex items-start gap-3 bg-white/[0.01] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.03] transition-colors mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                        <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <span class="text-white font-bold text-[11.5px] block">Expected Outcome</span>
+                        <p class="text-[11px] text-[#BFC5D2] mt-0.5">${out}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Requirements
+            const reqList = document.getElementById('requirements-list');
+            const requirements = course.prerequisites || course.requirements || ["None"];
+            reqList.innerHTML = requirements.map(req => `
+                <li>${req}</li>
+            `).join('');
+
+            // Certification Details
+            const certSection = document.getElementById('course-certification-detail');
+            const certIndicator = document.getElementById('hero-certification');
+            
+            if (course.hasCertificate) {
+                if (certSection) certSection.classList.remove('hidden');
+                if (certIndicator) {
+                    certIndicator.innerText = "Available";
+                    certIndicator.className = "text-emerald-400 font-bold";
+                }
+                const certMeta = document.getElementById('certification-meta');
+                if (certMeta) {
+                    certMeta.innerHTML = `
+                        <div class="flex justify-between border-b border-white/5 pb-2">
+                            <span class="text-white/40">✓ Certificate Available:</span>
+                            <span class="text-emerald-400 font-bold">Yes</span>
+                        </div>
+                        <div class="flex flex-col gap-1 border-b border-white/5 pb-2">
+                            <span class="text-white/40">✓ Assessment Required:</span>
+                            <span class="text-white">Yes (${course.certDetail ? course.certDetail.assessment : 'Final Exam'})</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-2">
+                            <span class="text-white/40">✓ Verification Supported:</span>
+                            <span class="text-emerald-400 font-bold">Yes</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-white/40">✓ Curriculum Alignment:</span>
+                            <span class="text-white font-bold">Industry-Aligned</span>
+                        </div>
+                    `;
+                }
+            } else {
+                if (certSection) certSection.classList.add('hidden');
+                if (certIndicator) {
+                    certIndicator.innerText = "Learning Only";
+                    certIndicator.className = "text-zinc-500 font-bold";
+                }
+            }
+
+            const btnViewCertReq = document.getElementById('btn-view-cert-req');
+            if (btnViewCertReq) {
+                if (course.hasCertificate) {
+                    btnViewCertReq.classList.remove('hidden');
+                } else {
+                    btnViewCertReq.classList.add('hidden');
+                }
+            }
+
+            lucide.createIcons();
+            initSpotlights();
+            setTimeout(() => {
+                document.querySelectorAll('#course-details-view .reveal-text').forEach(el => el.classList.add('active'));
+            }, 10);
+        }
+
+        function toggleModule(idx) {
+            const content = document.getElementById(`module-content-${idx}`);
+            const icon = document.getElementById(`module-icon-${idx}`);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function updateProfileNav() {
+            const userName = localStorage.getItem('thrulabs_user_name');
+            const authContainer = document.getElementById('nav-auth-container');
+            if (!authContainer) return;
+            if (userName) {
+                authContainer.innerHTML = `
+                    <button onclick="openProfileModal()" class="px-5 py-2.5 bg-accent/20 border border-accent/40 text-accent-bright hover:bg-accent hover:text-white text-[9px] font-extrabold rounded-full transition-all hover-target uppercase tracking-widest flex items-center gap-1.5 shadow-xl">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i> ${userName}
+                    </button>
+                `;
+            } else {
+                authContainer.innerHTML = `
+                    <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                    <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                        Get Started
+                    </a>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function startCourseAction() {
+            const enrolledName = localStorage.getItem('thrulabs_user_name');
+            if (!enrolledName) {
+                openEnrollmentModal(courseId);
+            } else {
+                window.location.href = `learn.html?course=${courseId}`;
+            }
+        }
+
+        function viewCertRequirements() {
+            document.getElementById('course-certification-detail').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function openEnrollmentModal(cId) {
+            targetCourseIdForEnrollment = cId;
+            const modal = document.getElementById('enrollment-modal');
+            const nameInput = document.getElementById('enrollment-name');
+            const emailInput = document.getElementById('enrollment-email');
+            
+            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
+            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            
+            modal.classList.remove('hidden');
+            nameInput.focus();
+        }
+
+        function closeEnrollmentModal() {
+            const modal = document.getElementById('enrollment-modal');
+            modal.classList.add('hidden');
+        }
+
+        function submitEnrollment() {
+            const nameVal = document.getElementById('enrollment-name').value.trim();
+            const emailVal = document.getElementById('enrollment-email').value.trim();
+            if (!nameVal) {
+                alert("Please enter your full name.");
+                return;
             }
             
-            renderResource();
-        };
+            localStorage.setItem('thrulabs_user_name', nameVal);
+            if (emailVal) {
+                localStorage.setItem('thrulabs_user_email', emailVal);
+            } else {
+                localStorage.removeItem('thrulabs_user_email');
+            }
+            
+            closeEnrollmentModal();
+            updateProfileNav();
+            
+            if (targetCourseIdForEnrollment) {
+                window.location.href = `learn.html?course=${targetCourseIdForEnrollment}`;
+            }
+        }
+
+        function openProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            const nameInput = document.getElementById('profile-name');
+            const emailInput = document.getElementById('profile-email');
+            
+            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
+            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            
+            modal.classList.remove('hidden');
+            nameInput.focus();
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.add('hidden');
+        }
+
+        function submitProfileUpdate() {
+            const nameVal = document.getElementById('profile-name').value.trim();
+            const emailVal = document.getElementById('profile-email').value.trim();
+            if (!nameVal) {
+                alert("Full name cannot be empty.");
+                return;
+            }
+            
+            localStorage.setItem('thrulabs_user_name', nameVal);
+            if (emailVal) {
+                localStorage.setItem('thrulabs_user_email', emailVal);
+            } else {
+                localStorage.removeItem('thrulabs_user_email');
+            }
+            
+            closeProfileModal();
+            updateProfileNav();
+            alert("Profile settings updated successfully.");
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEnrollmentModal();
+                closeProfileModal();
+            }
+        });
 
         function renderResource() {
             if (!activeResource) return;
@@ -335,7 +815,7 @@
                 let displayTitle = cId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                 
                 const box = document.createElement('a');
-                box.href = `learn.html?course=${cId}`;
+                box.href = `resource.html?course=${cId}`;
                 box.className = 'block p-4 rounded-2xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 hover-target transition-all text-xs font-display font-bold text-white flex justify-between items-center';
                 box.innerHTML = `
                     <span>${displayTitle}</span>
