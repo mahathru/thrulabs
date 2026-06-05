@@ -28,11 +28,12 @@ const courses = {
             "Basic Computer Knowledge",
             "No Prior Arduino Experience Required"
         ],
+        hasCertificate: false,
         certDetail: {
-            available: "Yes",
+            available: "No",
             assessment: "Practical Assessment Required",
-            verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00001"
+            verification: "Not Supported",
+            idPrefix: "TL-2026-NOCERT"
         },
         modules: [
             {
@@ -1310,14 +1311,15 @@ void setup() {
         careerRelevance: "Essential skills for digital systems designers, FPGA developers, and logic synthesis engineers.",
         toolsRequired: "Digital logic simulator (Logisim or online circuit builder), breadboard, 74-series logic gate ICs (7408, 7432, 7404).",
         prerequisites: [
-            "Basic algebra knowledge",
-            "No prior electronics experience required"
+            "Basic Computer Knowledge",
+            "No Prior Arduino Experience Required"
         ],
+        hasCertificate: false,
         certDetail: {
-            available: "Yes",
+            available: "No",
             assessment: "Practical Assessment Required",
-            verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00006"
+            verification: "Not Supported",
+            idPrefix: "TL-2026-NOCERT"
         },
         modules: [
             {
@@ -2346,6 +2348,387 @@ Carry = A · B (AND)</pre>
                         "Verify that the failsafe triggers correctly when the radio transmitter is turned off."
                     ],
                     expectedOutput: "The drone passes all checks, and the flight controller triggers failsafes when the transmitter is turned off."
+            }
+        ]
+    },
+    "communication-systems-basics": {
+        category: "Electronics & Communication",
+        title: "Communication Systems Basics",
+        desc: "Introduction to signal modulation, noise reduction, and analog/digital transmission standards.",
+        difficulty: "Beginner",
+        duration: "6 Hours",
+        lessons: 15,
+        whatYouWillLearn: [
+            "Introduction to signals, amplitude and frequency",
+            "Analog modulation techniques (AM/FM)",
+            "Digital modulation and signal coding",
+            "Understanding noise margins and signal filters"
+        ],
+        skillsGained: [
+            "Signal Analysis",
+            "Modulation Principles",
+            "Noise Filtering"
+        ],
+        careerRelevance: "Essential for RF engineers, communications technicians, and telecommunications product designers.",
+        toolsRequired: "SDR receiver, signal generator, soundcard analyzer tools.",
+        prerequisites: [
+            "Basic algebra",
+            "High school physics foundations"
+        ],
+        certDetail: {
+            available: "No",
+            assessment: "Practical Exercises",
+            verification: "Not Available",
+            idPrefix: "TL-2026-NOCERT"
+        },
+        modules: [
+            {
+                title: "Module 1: Introduction to Modulation",
+                desc: "Basics of modulation, carrier frequencies, and transmission channels.",
+                duration: "45 Min",
+                lessons: [
+                    {
+                        title: "Lesson 1.1: What is Modulation?",
+                        content: "<p>Modulation is the process of varying one or more properties of a high-frequency periodic waveform, called the carrier signal, with a modulating signal that contains information to be transmitted.</p>"
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the signal that contains information called?", options: ["Carrier Signal", "Modulating Signal", "Noise Signal"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Simulate a basic AM modulator in an online tool.",
+                    components: ["Computer"],
+                    procedure: ["Open simulation tool.", "Set carrier to 10kHz.", "Verify modulated output wave."],
+                    expectedOutput: "An AM modulated wave pattern."
+                }
+            }
+        ]
+    },
+    "introduction-to-embedded": {
+        category: "Embedded Systems",
+        title: "Introduction to Embedded Systems",
+        desc: "Basics of microcontrollers, breadboard prototyping, and writing your first firmware logic.",
+        difficulty: "Beginner",
+        duration: "5 Hours",
+        lessons: 12,
+        whatYouWillLearn: [
+            "Understanding what an embedded system is",
+            "Basic components of a microcontroller",
+            "Breadboard prototyping and wiring rules",
+            "Writing simple code loops in C"
+        ],
+        skillsGained: [
+            "Prototyping Basics",
+            "Firmware Logic",
+            "Hardware Safety"
+        ],
+        careerRelevance: "Great introductory skill for hobbyists, entry-level firmware testers, and robotics enthusiasts.",
+        toolsRequired: "Arduino Uno board, breadboard, resistors, LEDs.",
+        prerequisites: [
+            "None"
+        ],
+        certDetail: {
+            available: "No",
+            assessment: "Lab Exercises",
+            verification: "Not Available",
+            idPrefix: "TL-2026-NOCERT"
+        },
+        modules: [
+            {
+                title: "Module 1: Getting Started with MCUs",
+                desc: "Introduction to chips, boards, and standard input/output components.",
+                duration: "40 Min",
+                lessons: [
+                    {
+                        title: "Lesson 1.1: What is an Embedded System?",
+                        content: "<p>An embedded system is a microprocessor-based computer hardware system with software that is designed to perform a dedicated function, either as an independent system or as a part of a large system.</p>"
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the main brain of an embedded system called?", options: ["Microcontroller / Microprocessor", "SRAM", "Power supply"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Identify pins on a microcontroller board.",
+                    components: ["MCU Board"],
+                    procedure: ["Examine board layouts.", "Locate digital pin 13 and GND."],
+                    expectedOutput: "Pins correctly identified."
+                }
+            }
+        ]
+    },
+    "basic-electronics": {
+        category: "Electronics & Communication",
+        title: "Basic Electronics",
+        desc: "Understand voltage, current, resistance, Ohm's law, and passive components in circuit design.",
+        difficulty: "Beginner",
+        duration: "8 Hours",
+        lessons: 20,
+        whatYouWillLearn: [
+            "Voltage, current, and resistance principles",
+            "Resistors, capacitors, and inductors in series/parallel",
+            "Ohm's Law calculations and measurements",
+            "How to read electronic circuit schematics"
+        ],
+        skillsGained: [
+            "Circuit Analysis",
+            "Multimeter Usage",
+            "Schematic Reading"
+        ],
+        careerRelevance: "Fundamental skills required for all electronic engineers, hardware technicians, and makers.",
+        toolsRequired: "Digital Multimeter, breadboard, resistors, battery.",
+        prerequisites: [
+            "None"
+        ],
+        certDetail: {
+            available: "No",
+            assessment: "Practical Lab Tests",
+            verification: "Not Available",
+            idPrefix: "TL-2026-NOCERT"
+        },
+        modules: [
+            {
+                title: "Module 1: Ohm's Law",
+                desc: "Calculating voltage, current, and resistance metrics.",
+                duration: "50 Min",
+                lessons: [
+                    {
+                        title: "Lesson 1.1: The Formula V = IR",
+                        content: "<p>Ohm's law states that the current through a conductor between two points is directly proportional to the voltage across the two points. The formula is V = I * R, where V is voltage, I is current, and R is resistance.</p>"
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "If V = 10V and R = 5 Ohms, what is current I?", options: ["2 Amps", "50 Amps", "0.5 Amps"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Verify Ohm's Law using a digital multimeter.",
+                    components: ["Resistor", "Battery", "Multimeter"],
+                    procedure: ["Measure resistor resistance.", "Measure battery voltage.", "Measure loop current and compare with V/R calculation."],
+                    expectedOutput: "Measured current matches calculated current."
+                }
+            }
+        ]
+    },
+    "rtos-development": {
+        category: "Embedded Systems",
+        title: "RTOS Development",
+        desc: "Master real-time task scheduling, semaphores, mutexes, and thread synchronization in FreeRTOS.",
+        difficulty: "Intermediate",
+        duration: "14 Hours",
+        lessons: 28,
+        whatYouWillLearn: [
+            "RTOS principles vs bare-metal schedulers",
+            "Creating and running tasks in FreeRTOS",
+            "Task synchronization with Semaphores and Mutexes",
+            "Handling resource sharing and deadlock scenarios"
+        ],
+        skillsGained: [
+            "RTOS Architecture",
+            "Task Scheduling",
+            "Resource Management"
+        ],
+        careerRelevance: "Highly sought skill for advanced embedded developers, safety-critical aerospace controllers, and automotive system engineers.",
+        toolsRequired: "32-bit development board, FreeRTOS library source, debugger.",
+        prerequisites: [
+            "Pointers in C programming",
+            "Microcontroller bare-metal basics"
+        ],
+        certDetail: {
+            available: "Yes",
+            assessment: "RTOS Task Synchronization quiz (100% correct required)",
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-00007"
+        },
+        modules: [
+            {
+                title: "Module 1: Introduction to RTOS Schedulers",
+                desc: "Core mechanics of real-time scheduling and preemptive context switching.",
+                duration: "60 Min",
+                lessons: [
+                    {
+                        title: "Lesson 1.1: What is a Real-Time Operating System?",
+                        content: "<p>A Real-Time Operating System (RTOS) is an operating system intended to serve real-time applications that process data as it comes in, typically without buffer delays. The key characteristic of an RTOS is the level of its consistency concerning the amount of time it takes to accept and complete an application's task.</p>"
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What scheduling strategy suspends a lower priority task immediately for a higher one?", options: ["Cooperative", "Preemptive", "Round-Robin"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Create two basic tasks in FreeRTOS.",
+                    components: ["STM32 Nucleo Board", "FreeRTOS config"],
+                    procedure: ["Declare task functions.", "Use xTaskCreate to register tasks with different priorities.", "Start scheduler."],
+                    expectedOutput: "Both tasks run in their respective intervals under scheduler control."
+                }
+            }
+        ]
+    },
+    "aiot-engineering": {
+        category: "AIoT",
+        title: "AIoT Engineering",
+        desc: "Deploy deep learning models on edge microcontrollers and route sensor data through IoT channels.",
+        difficulty: "Intermediate",
+        duration: "16 Hours",
+        lessons: 34,
+        whatYouWillLearn: [
+            "Building telemetry data paths with ESP32 & MQTT",
+            "Edge AI architecture and ML model quantization",
+            "Running inference on microcontrollers with TensorFlow Lite Micro",
+            "Visualizing sensor predictions on cloud dashboards"
+        ],
+        skillsGained: [
+            "Edge ML Deployment",
+            "MQTT Telemetry",
+            "TensorFlow Lite Micro"
+        ],
+        careerRelevance: "High-demand skill for smart device developers, AIoT software engineers, and automated warehouse system leads.",
+        toolsRequired: "ESP32-S3 Camera Board, TensorFlow Lite packages, MQTT broker.",
+        prerequisites: [
+            "Python basics for ML modeling",
+            "ESP32 Wi-Fi configuration basics"
+        ],
+        certDetail: {
+            available: "Yes",
+            assessment: "Edge AI telemetry deployment exam (100% correct required)",
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-00008"
+        },
+        modules: [
+            {
+                title: "Module 1: Edge AI Basics",
+                desc: "Introduction to model training, quantization, and microcontroller deployment frameworks.",
+                duration: "60 Min",
+                lessons: [
+                    {
+                        title: "Lesson 1.1: AI at the Edge",
+                        content: "<p>Edge AI refers to deploying machine learning models directly onto hardware devices (like microcontrollers) instead of sending sensor data to a remote cloud server. This reduces latency, saves bandwidth, and increases privacy.</p>"
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What process reduces model sizes by converting floating point weights to 8-bit integers?", options: ["Quantization", "Gradient Descent", "Compilation"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Configure a basic TensorFlow Lite Micro interpreter on ESP32.",
+                    components: ["ESP32-S3 board", "TF Micro library"],
+                    procedure: ["Load quantized model array.", "Set up tensor arena memory.", "Run mock inference with dummy input."],
+                    expectedOutput: "The ESP32 logs prediction probabilities without cloud connection."
+                }
+            }
+        ]
+    },
+    "advanced-embedded-systems": {
+        category: "Embedded Systems",
+        title: "Advanced Embedded Systems",
+        desc: "Dive deep into hardware registers, DMA pipelines, low-power modes, and device driver development.",
+        difficulty: "Intermediate",
+        duration: "18 Hours",
+        lessons: 40,
+        whatYouWillLearn: [
+            "Direct memory access (DMA) high-speed transfer configs",
+            "Configuring microcontroller low-power modes and wake-up events",
+            "Writing re-entrant device drivers for SPI and I2C buses",
+            "Memory protection unit (MPU) configurations"
+        ],
+        skillsGained: [
+            "DMA Controls",
+            "Low-power Config",
+            "Device Driver Writing"
+        ],
+        careerRelevance: "Essential for expert firmware developers, principal hardware designers, and defense systems engineers.",
+        toolsRequired: "Advanced 32-bit MCU development board, logic analyzer.",
+        prerequisites: [
+            "Completed Embedded Systems Essentials course",
+            "Strong C programming and hardware registry knowledge"
+        ],
+        certDetail: {
+            available: "Yes",
+            assessment: "DMA and Driver registration exam (100% correct required)",
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-00009"
+        },
+        modules: [
+            {
+                title: "Module 1: Direct Memory Access (DMA)",
+                desc: "Bypassing CPU cycles for high-speed hardware data transfers.",
+                duration: "70 Min",
+                lessons: [
+                    {
+                        title: "Lesson 1.1: The Power of DMA",
+                        content: "<p>Direct Memory Access (DMA) allows hardware subsystems to access main system memory independently of the central processing unit (CPU). This is crucial for high-speed communication since the CPU does not have to copy each byte individually, freeing it up for computation.</p>"
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "Which component handles data copy from peripheral registers directly to SRAM?", options: ["CPU Scheduler", "DMA Controller", "NVIC"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Configure a DMA stream to copy ADC buffer registers to SRAM automatically.",
+                    components: ["32-bit MCU Board"],
+                    procedure: ["Initialize ADC peripheral.", "Configure DMA channel matching ADC trigger.", "Enable DMA double buffer."],
+                    expectedOutput: "ADC samples populate memory array without CPU intervention."
+                }
+            }
+        ]
+    },
+    "industry-project-programs": {
+        category: "Embedded Systems",
+        title: "Industry Project Programs",
+        desc: "Build and document enterprise-grade electronics and firmware prototypes matching industry standards.",
+        difficulty: "Intermediate",
+        duration: "20 Hours",
+        lessons: 10,
+        whatYouWillLearn: [
+            "Industrial design requirements and safety standards",
+            "Sourcing parts, compiling BOMs, and reviewing design constraints",
+            "Designing multi-layer circuit boards with custom shielding",
+            "Writing extensive engineering tests and documentation"
+        ],
+        skillsGained: [
+            "Industrial PCB Layout",
+            "Engineering Reports",
+            "Parts Sourcing"
+        ],
+        careerRelevance: "Crucial for system design leaders, engineering consultants, and research and development engineers.",
+        toolsRequired: "PCB CAD Suite, hardware test lab tools.",
+        prerequisites: [
+            "Completed PCB design and Embedded firmware courses"
+        ],
+        certDetail: {
+            available: "Yes",
+            assessment: "Product design review and checklist clearance",
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-00010"
+        },
+        modules: [
+            {
+                title: "Module 1: Engineering Product Design Lifecycle",
+                desc: "Design steps from specification documents to functional certified product.",
+                duration: "80 Min",
+                lessons: [
+                    {
+                        title: "Lesson 1.1: The Lifecycle Phases",
+                        content: "<p>Developing industrial electronics requires following rigid phases: requirements analysis, schematic capture, layout design, prototyping, testing, verification, FCC/CE certification review, and manufacturing transfer.</p>"
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is a document listing all components, quantities, and reference designators called?", options: ["Schematic", "Bill of Materials (BOM)", "Data Sheet"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Compile a professional BOM sheet matching design rules.",
+                    components: ["Computer"],
+                    procedure: ["Select component models.", "Write manufacturer codes, quantities, and package details in a sheet."],
+                    expectedOutput: "A complete BOM matching the layout schematic."
                 }
             }
         ]

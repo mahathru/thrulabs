@@ -249,7 +249,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-5" id="nav-auth-container">
                 <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
                 <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
                     Get Started
@@ -273,18 +273,18 @@
         <!-- Search and Filters Section -->
         <section class="max-w-[1200px] mx-auto mb-16 reveal-text" style="transition-delay: 0.2s;">
             <div class="glass-nav p-3 rounded-[2.5rem] border border-white/5 flex flex-col gap-3 shadow-2xl">
-                <div class="flex flex-col md:flex-row items-center gap-3 w-full">
+                <div class="flex flex-col lg:flex-row items-center gap-3 w-full">
                     <div class="relative flex-1 w-full">
                         <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70"></i>
-                        <input type="text" id="academy-search" placeholder="Search courses, certifications, projects, roadmaps..." class="w-full h-11 pl-11 pr-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-sm text-white placeholder-[#9CA3AF] focus:outline-none focus:border-accent/60 transition-all">
+                        <input type="text" id="academy-search" placeholder="Search Courses..." class="w-full h-11 pl-11 pr-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-sm text-white placeholder-[#9CA3AF] focus:outline-none focus:border-accent/60 transition-all">
                     </div>
-                    <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                        <button data-filter="all" class="filter-btn active h-11 px-5 rounded-2xl bg-accent text-white text-[10px] font-bold uppercase tracking-widest transition-all">All</button>
-                        <button data-filter="free" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Free</button>
-                        <button data-filter="premium" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Premium</button>
-                        <button data-filter="certifications" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Certifications</button>
-                        <button data-filter="projects" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Projects</button>
-                        <button data-filter="roadmaps" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Roadmaps</button>
+                    <div class="flex flex-wrap gap-2 w-full lg:w-auto">
+                        <button data-filter="all" class="filter-btn active h-11 px-4 rounded-2xl bg-accent text-white text-[10px] font-bold uppercase tracking-widest transition-all">All</button>
+                        <button data-filter="free" class="filter-btn h-11 px-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Free</button>
+                        <button data-filter="premium" class="filter-btn h-11 px-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Premium</button>
+                        <button data-filter="certificate-available" class="filter-btn h-11 px-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Certificate Available</button>
+                        <button data-filter="beginner" class="filter-btn h-11 px-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Beginner</button>
+                        <button data-filter="intermediate" class="filter-btn h-11 px-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Intermediate</button>
                     </div>
                 </div>
             </div>
@@ -293,13 +293,11 @@
         <!-- Empty State -->
         <section id="empty-state" class="hidden max-w-[1200px] mx-auto py-20 text-center flex-col items-center justify-center">
             <i data-lucide="search-code" class="w-12 h-12 text-[#9CA3AF] mb-4 animate-pulse"></i>
-            <h3 class="text-[#D1D5DB] font-medium text-sm">No courses, certifications, roadmaps, projects, or resources match your search criteria.</h3>
+            <h3 class="text-[#D1D5DB] font-medium text-sm">No courses match your search criteria.</h3>
         </section>
 
         <!-- Multi-Section Layout -->
         <section class="max-w-[1200px] mx-auto space-y-20">
-            
-
             
             <!-- SECTION 1: Learning Categories -->
             <div id="section-categories" class="space-y-6 scroll-reveal">
@@ -310,22 +308,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="grid-categories"></div>
             </div>
 
-            <!-- SECTION 2: Featured Courses -->
+            <!-- SECTION 2: LEARNING CATALOG -->
             <div id="section-courses" class="space-y-6 scroll-reveal">
-                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
-                    <span class="w-1.5 h-7 rounded bg-purple-500"></span>
-                    Featured Courses
-                </h2>
+                <div class="border-b border-white/10 pb-4">
+                    <h2 class="text-2xl font-display font-extrabold text-white flex items-center gap-3">
+                        <span class="w-1.5 h-7 rounded bg-purple-500"></span>
+                        LEARNING CATALOG
+                    </h2>
+                    <p class="text-xs text-white/60 font-light mt-1.5">
+                        Explore engineering courses, project-based learning paths, and industry-relevant certifications.
+                    </p>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-courses"></div>
-            </div>
-
-            <!-- SECTION 3: Certifications -->
-            <div id="section-certifications" class="space-y-6 scroll-reveal">
-                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
-                    <span class="w-1.5 h-7 rounded bg-emerald-500"></span>
-                    Certifications
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-certifications"></div>
             </div>
 
             <!-- SECTION 4: Project Tracks -->
@@ -375,6 +369,73 @@
 
         </section>
     </main>
+
+    <!-- Enrollment Modal -->
+    <div id="enrollment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-base/80 backdrop-blur-md">
+        <div class="academy-card max-w-md w-full p-8 rounded-[2.5rem] bg-surface border border-white/10 shadow-2xl space-y-6 relative animate-fadeIn">
+            <div class="spotlight" style="background: radial-gradient(circle, rgba(94,106,210,0.15) 0%, transparent 70%); width: 300px; height: 300px; opacity: 1;"></div>
+            <div class="relative z-10 space-y-4">
+                <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                    <div class="w-10 h-10 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent-bright">
+                        <i data-lucide="graduation-cap" class="w-5 h-5 text-accent-bright"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-display font-extrabold text-white">Start Learning</h3>
+                        <p class="text-[10px] text-white/40 font-mono uppercase tracking-wider">Configure Enrollment Pipeline</p>
+                    </div>
+                </div>
+                <p class="text-xs text-[#BFC5D2] font-light leading-relaxed">
+                    Enter your full name exactly as it should appear on your verified engineering certificates.
+                </p>
+                <div class="space-y-3 pt-2">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Full Name</label>
+                        <input type="text" id="enrollment-name" placeholder="e.g. Alex Mercer" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Email Address (Optional)</label>
+                        <input type="email" id="enrollment-email" placeholder="e.g. alex@example.com" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4 font-mono text-[9px] tracking-widest uppercase">
+                    <button onclick="closeEnrollmentModal()" class="flex-1 py-3.5 rounded-xl border border-white/10 text-white/60 hover:text-white transition-all">Cancel</button>
+                    <button onclick="submitEnrollment()" class="flex-1 py-3.5 rounded-xl bg-white text-black hover:bg-accent hover:text-white transition-all font-bold">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile/Settings Modal -->
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-base/80 backdrop-blur-md">
+        <div class="academy-card max-w-md w-full p-8 rounded-[2.5rem] bg-surface border border-white/10 shadow-2xl space-y-6 relative animate-fadeIn">
+            <div class="spotlight" style="background: radial-gradient(circle, rgba(94,106,210,0.15) 0%, transparent 70%); width: 300px; height: 300px; opacity: 1;"></div>
+            <div class="relative z-10 space-y-4">
+                <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <i data-lucide="user" class="w-5 h-5 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-display font-extrabold text-white">Profile Settings</h3>
+                        <p class="text-[10px] text-white/40 font-mono uppercase tracking-wider">User Identity Config</p>
+                    </div>
+                </div>
+                <div class="space-y-3 pt-2">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Full Name</label>
+                        <input type="text" id="profile-name" placeholder="e.g. Alex Mercer" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Email Address</label>
+                        <input type="email" id="profile-email" placeholder="e.g. alex@example.com" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4 font-mono text-[9px] tracking-widest uppercase">
+                    <button onclick="closeProfileModal()" class="flex-1 py-3.5 rounded-xl border border-white/10 text-white/60 hover:text-white transition-all">Cancel</button>
+                    <button onclick="submitProfileUpdate()" class="flex-1 py-3.5 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all font-bold">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50 relative z-10">
         <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -528,7 +589,7 @@
                 card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
                 card.style.transitionDelay = `${idx * 0.05}s`;
                 card.onclick = () => {
-                    window.location.href = `learn.html?course=${course.id}`;
+                    window.location.href = `course.html?course=${course.id}`;
                 };
                 
                 const colors = colorMap[course.color] || colorMap['accent'];
@@ -541,14 +602,24 @@
                                 <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="${colors.bgStyle};${colors.borderStyle}">
                                     <i data-lucide="${course.icon}" class="w-5 h-5" style="${colors.textStyle}"></i>
                                 </div>
-                                <div class="flex items-center gap-1.5">
-                                    ${course.price === 'FREE' 
-                                        ? `<span class="badge-free px-2.5 py-1 rounded-full text-[8px] font-mono tracking-widest">FREE</span>`
-                                        : `<span class="badge-premium px-2.5 py-1 rounded-full text-[8px] font-mono tracking-widest">PREMIUM</span>`
+                                <div class="flex flex-col items-end gap-1.5">
+                                    <div class="flex items-center gap-1">
+                                        ${course.price === 'FREE' 
+                                            ? `<span class="badge-free px-2 py-0.5 rounded-full text-[7px] font-mono tracking-widest bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">FREE</span>`
+                                            : `<span class="badge-premium px-2 py-0.5 rounded-full text-[7px] font-mono tracking-widest bg-accent/10 border border-accent/30 text-accent-bright">PREMIUM</span>`
+                                        }
+                                        <span class="px-2 py-0.5 rounded-full text-[7px] font-mono tracking-widest" style="${colors.bgStyle};${colors.borderStyle};color:#FFFFFF">
+                                            ${course.difficulty}
+                                        </span>
+                                    </div>
+                                    ${course.hasCertificate 
+                                        ? `<span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[7px] font-mono font-bold tracking-widest bg-accent/20 border border-accent/40 text-accent-bright">
+                                            <i data-lucide="award" class="w-2.5 h-2.5 text-accent-bright"></i> ✓ Certificate Available
+                                           </span>`
+                                        : `<span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[7px] font-mono font-bold tracking-widest bg-white/5 border border-white/10 text-white/40">
+                                            <i data-lucide="book-open" class="w-2.5 h-2.5 text-white/40"></i> Learning Only
+                                           </span>`
                                     }
-                                    <span class="px-2.5 py-1 rounded-full text-[8px] font-mono tracking-widest" style="${colors.bgStyle};${colors.borderStyle};color:#FFFFFF">
-                                        ${course.difficulty}
-                                    </span>
                                 </div>
                             </div>
                             <h3 class="text-base font-display font-extrabold mb-2 line-clamp-1" style="color:#FFFFFF">${course.title}</h3>
@@ -559,61 +630,8 @@
                                 <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5" style="color:#7C89FF"></i> ${course.duration}</span>
                                 <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5" style="color:#7C89FF"></i> ${course.lessons} Lessons</span>
                             </div>
-                            <button class="w-full py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#FFFFFF">
+                            <button onclick="onStartCourseClick(event, '${course.id}')" class="w-full py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#FFFFFF">
                                 Start Learning
-                            </button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-                setTimeout(() => card.classList.add('active'), 10);
-                addSpotlightEffect(card, colors.glow);
-            });
-        }
-
-        function renderCertifications(data) {
-            const container = document.getElementById('grid-certifications');
-            container.innerHTML = '';
-            data.forEach((cert, idx) => {
-                const card = document.createElement('div');
-                card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
-                card.style.transitionDelay = `${idx * 0.05}s`;
-                card.onclick = () => {
-                    window.location.href = `certification.html?cert=${cert.id}`;
-                };
-                
-                const colors = colorMap[cert.color] || colorMap['accent'];
-
-                card.innerHTML = `
-                    <div class="spotlight"></div>
-                    <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div>
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="${colors.bgStyle};${colors.borderStyle}">
-                                    <i data-lucide="${cert.icon}" class="w-5 h-5" style="${colors.textStyle}"></i>
-                                </div>
-                                <span class="badge-certification px-2.5 py-1 rounded-full text-[8px] font-mono tracking-widest">
-                                    ${cert.level}
-                                </span>
-                            </div>
-                            <h3 class="text-base font-display font-extrabold mb-2 line-clamp-1" style="color:#FFFFFF">${cert.title}</h3>
-                            <div class="space-y-1 mb-4">
-                                <span class="uppercase tracking-widest block text-[7px] font-bold mb-0.5" style="color:#E5E7EB">Includes:</span>
-                                <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px]" style="color:#D1D5DB">
-                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3" style="color:#34D399"></i> Final Exam</span>
-                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3" style="color:#34D399"></i> Project</span>
-                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3" style="color:#34D399"></i> Verifiable ID</span>
-                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3" style="color:#34D399"></i> Certificate</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between text-[10px] font-mono" style="color:#E5E7EB;border-top:1px solid rgba(255,255,255,0.1);padding-top:1rem">
-                                <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5" style="color:#7C89FF"></i> ${cert.duration}</span>
-                                <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5" style="color:#7C89FF"></i> ${cert.modules} Modules</span>
-                            </div>
-                            <button class="w-full py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#FFFFFF">
-                                Start Certification
                             </button>
                         </div>
                     </div>
@@ -761,15 +779,134 @@
             window.location.href = `verify.html?id=${id}`;
         }
 
-        // Filtering and search algorithm loading from dynamic datasets
+        // State variables for enrollment and filtering
         let currentFilter = 'all';
         let searchQuery = '';
+        let targetCourseIdForEnrollment = null;
+
+        function updateProfileNav() {
+            const userName = localStorage.getItem('thrulabs_user_name');
+            const authContainer = document.getElementById('nav-auth-container');
+            if (!authContainer) return;
+            if (userName) {
+                authContainer.innerHTML = `
+                    <button onclick="openProfileModal()" class="px-5 py-2.5 bg-accent/20 border border-accent/40 text-accent-bright hover:bg-accent hover:text-white text-[9px] font-extrabold rounded-full transition-all hover-target uppercase tracking-widest flex items-center gap-1.5 shadow-xl">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i> ${userName}
+                    </button>
+                `;
+            } else {
+                authContainer.innerHTML = `
+                    <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                    <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                        Get Started
+                    </a>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        // Enrollment Modal actions
+        function openEnrollmentModal(courseId) {
+            targetCourseIdForEnrollment = courseId;
+            const modal = document.getElementById('enrollment-modal');
+            const nameInput = document.getElementById('enrollment-name');
+            const emailInput = document.getElementById('enrollment-email');
+            
+            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
+            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            
+            modal.classList.remove('hidden');
+            nameInput.focus();
+        }
+
+        // Handle Escape key or outside clicks to close modal
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEnrollmentModal();
+                closeProfileModal();
+            }
+        });
+
+        function closeEnrollmentModal() {
+            const modal = document.getElementById('enrollment-modal');
+            modal.classList.add('hidden');
+        }
+
+        function submitEnrollment() {
+            const nameVal = document.getElementById('enrollment-name').value.trim();
+            const emailVal = document.getElementById('enrollment-email').value.trim();
+            if (!nameVal) {
+                alert("Please enter your full name.");
+                return;
+            }
+            
+            localStorage.setItem('thrulabs_user_name', nameVal);
+            if (emailVal) {
+                localStorage.setItem('thrulabs_user_email', emailVal);
+            } else {
+                localStorage.removeItem('thrulabs_user_email');
+            }
+            
+            closeEnrollmentModal();
+            updateProfileNav();
+            
+            if (targetCourseIdForEnrollment) {
+                window.location.href = `course.html?course=${targetCourseIdForEnrollment}`;
+            }
+        }
+
+        function onStartCourseClick(event, courseId) {
+            event.stopPropagation();
+            const enrolledName = localStorage.getItem('thrulabs_user_name');
+            if (!enrolledName) {
+                openEnrollmentModal(courseId);
+            } else {
+                window.location.href = `course.html?course=${courseId}`;
+            }
+        }
+
+        // Profile Settings Modal actions
+        function openProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            const nameInput = document.getElementById('profile-name');
+            const emailInput = document.getElementById('profile-email');
+            
+            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
+            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            
+            modal.classList.remove('hidden');
+            nameInput.focus();
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.add('hidden');
+        }
+
+        function submitProfileUpdate() {
+            const nameVal = document.getElementById('profile-name').value.trim();
+            const emailVal = document.getElementById('profile-email').value.trim();
+            if (!nameVal) {
+                alert("Full name cannot be empty.");
+                return;
+            }
+            
+            localStorage.setItem('thrulabs_user_name', nameVal);
+            if (emailVal) {
+                localStorage.setItem('thrulabs_user_email', emailVal);
+            } else {
+                localStorage.removeItem('thrulabs_user_email');
+            }
+            
+            closeProfileModal();
+            updateProfileNav();
+            alert("Profile settings updated successfully.");
+        }
 
         function applyFiltersAndSearch() {
             const sections = {
                 'categories': document.getElementById('section-categories'),
                 'courses': document.getElementById('section-courses'),
-                'certifications': document.getElementById('section-certifications'),
                 'projects': document.getElementById('section-projects'),
                 'roadmaps': document.getElementById('section-roadmaps'),
                 'resources': document.getElementById('section-resources'),
@@ -778,10 +915,9 @@
 
             const visibility = {
                 'categories': currentFilter === 'all',
-                'courses': currentFilter === 'all' || currentFilter === 'free' || currentFilter === 'premium',
-                'certifications': currentFilter === 'all' || currentFilter === 'certifications',
-                'projects': currentFilter === 'all' || currentFilter === 'projects',
-                'roadmaps': currentFilter === 'all' || currentFilter === 'roadmaps',
+                'courses': true,
+                'projects': currentFilter === 'all',
+                'roadmaps': currentFilter === 'all',
                 'resources': currentFilter === 'all',
                 'verification': currentFilter === 'all'
             };
@@ -812,22 +948,26 @@
                     c.difficulty.toLowerCase().includes(q) ||
                     c.desc.toLowerCase().includes(q);
                 
+                if (!matchesSearch) return false;
+
                 if (currentFilter === 'free') {
-                    return matchesSearch && c.price === 'FREE';
+                    return c.price === 'FREE';
                 }
                 if (currentFilter === 'premium') {
-                    return matchesSearch && c.price === 'PREMIUM';
+                    return c.price === 'PREMIUM';
                 }
-                return matchesSearch;
+                if (currentFilter === 'certificate-available') {
+                    return c.hasCertificate === true;
+                }
+                if (currentFilter === 'beginner') {
+                    return c.difficulty === 'Beginner';
+                }
+                if (currentFilter === 'intermediate') {
+                    return c.difficulty === 'Intermediate';
+                }
+                return true;
             });
             renderFeaturedCourses(filteredCourses);
-
-            // Filter Certifications
-            const filteredCerts = certifications.filter(c => 
-                c.title.toLowerCase().includes(q) || 
-                c.level.toLowerCase().includes(q)
-            );
-            renderCertifications(filteredCerts);
 
             // Filter Projects
             const filteredProjects = projectTracks.filter(p => 
@@ -854,15 +994,12 @@
             // Dynamically hide section container if searching and no elements match
             let totalVisibleItems = 0;
 
-            if (q) {
+            if (q || currentFilter !== 'all') {
                 if (filteredCategories.length === 0 && sections['categories']) sections['categories'].classList.add('hidden');
                 else if (visibility['categories']) totalVisibleItems += filteredCategories.length;
 
                 if (filteredCourses.length === 0 && sections['courses']) sections['courses'].classList.add('hidden');
                 else if (visibility['courses']) totalVisibleItems += filteredCourses.length;
-
-                if (filteredCerts.length === 0 && sections['certifications']) sections['certifications'].classList.add('hidden');
-                else if (visibility['certifications']) totalVisibleItems += filteredCerts.length;
 
                 if (filteredProjects.length === 0 && sections['projects']) sections['projects'].classList.add('hidden');
                 else if (visibility['projects']) totalVisibleItems += filteredProjects.length;
@@ -878,7 +1015,6 @@
             } else {
                 if (visibility['categories']) totalVisibleItems += learningCategories.length;
                 if (visibility['courses']) totalVisibleItems += featuredCourses.length;
-                if (visibility['certifications']) totalVisibleItems += certifications.length;
                 if (visibility['projects']) totalVisibleItems += projectTracks.length;
                 if (visibility['roadmaps']) totalVisibleItems += careerRoadmaps.length;
                 if (visibility['resources']) totalVisibleItems += resourceCollections.length;
@@ -941,6 +1077,7 @@
         // Initialize lists and start events
         window.onload = () => {
             document.querySelectorAll('.reveal-text').forEach(el => el.classList.add('active'));
+            updateProfileNav();
             applyFiltersAndSearch();
             animate();
         };

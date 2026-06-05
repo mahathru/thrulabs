@@ -11,7 +11,8 @@ const academyData = {
             desc: "Learn Arduino programming, sensors, actuators, serial communication, and project development.",
             icon: "cpu",
             color: "purple-500",
-            price: "FREE"
+            price: "FREE",
+            hasCertificate: false
         },
         {
             id: "embedded-systems",
@@ -22,7 +23,8 @@ const academyData = {
             desc: "Learn microcontrollers, GPIO, timers, interrupts, UART, SPI, and I2C communication.",
             icon: "cpu",
             color: "accent",
-            price: "PREMIUM"
+            price: "PREMIUM",
+            hasCertificate: true
         },
         {
             id: "esp32-iot-development",
@@ -33,7 +35,8 @@ const academyData = {
             desc: "Build connected IoT systems using ESP32, Wi-Fi, MQTT, and cloud integration.",
             icon: "wifi",
             color: "emerald-500",
-            price: "PREMIUM"
+            price: "PREMIUM",
+            hasCertificate: true
         },
         {
             id: "digital-electronics",
@@ -44,7 +47,8 @@ const academyData = {
             desc: "Study logic gates, Boolean algebra, combinational circuits, and sequential circuits.",
             icon: "binary",
             color: "cyan-500",
-            price: "FREE"
+            price: "FREE",
+            hasCertificate: false
         },
         {
             id: "pcb-design-kicad",
@@ -55,7 +59,8 @@ const academyData = {
             desc: "Design professional PCB layouts, routing, schematics, and manufacturing files.",
             icon: "layers",
             color: "amber-500",
-            price: "PREMIUM"
+            price: "PREMIUM",
+            hasCertificate: true
         },
         {
             id: "uav-drone-technology",
@@ -66,7 +71,92 @@ const academyData = {
             desc: "Learn drone architecture, flight controllers, ESCs, motors, batteries, and mission planning.",
             icon: "plane",
             color: "rose-500",
-            price: "PREMIUM"
+            price: "PREMIUM",
+            hasCertificate: true
+        },
+        {
+            id: "communication-systems-basics",
+            title: "Communication Systems Basics",
+            difficulty: "Beginner",
+            duration: "6 Hours",
+            lessons: 15,
+            desc: "Introduction to signal modulation, noise reduction, and analog/digital transmission standards.",
+            icon: "radio",
+            color: "cyan-500",
+            price: "FREE",
+            hasCertificate: false
+        },
+        {
+            id: "introduction-to-embedded",
+            title: "Introduction to Embedded Systems",
+            difficulty: "Beginner",
+            duration: "5 Hours",
+            lessons: 12,
+            desc: "Basics of microcontrollers, breadboard prototyping, and writing your first firmware logic.",
+            icon: "cpu",
+            color: "purple-500",
+            price: "FREE",
+            hasCertificate: false
+        },
+        {
+            id: "basic-electronics",
+            title: "Basic Electronics",
+            difficulty: "Beginner",
+            duration: "8 Hours",
+            lessons: 20,
+            desc: "Understand voltage, current, resistance, Ohm's law, and passive components in circuit design.",
+            icon: "activity",
+            color: "emerald-500",
+            price: "FREE",
+            hasCertificate: false
+        },
+        {
+            id: "rtos-development",
+            title: "RTOS Development",
+            difficulty: "Intermediate",
+            duration: "14 Hours",
+            lessons: 28,
+            desc: "Master real-time task scheduling, semaphores, mutexes, and thread synchronization in FreeRTOS.",
+            icon: "sliders",
+            color: "accent",
+            price: "PREMIUM",
+            hasCertificate: true
+        },
+        {
+            id: "aiot-engineering",
+            title: "AIoT Engineering",
+            difficulty: "Intermediate",
+            duration: "16 Hours",
+            lessons: 34,
+            desc: "Deploy deep learning models on edge microcontrollers and route sensor data through IoT channels.",
+            icon: "network",
+            color: "rose-500",
+            price: "PREMIUM",
+            hasCertificate: true
+        },
+        {
+            id: "advanced-embedded-systems",
+            title: "Advanced Embedded Systems",
+            difficulty: "Intermediate",
+            duration: "18 Hours",
+            lessons: 40,
+            desc: "Dive deep into hardware registers, DMA pipelines, low-power modes, and device driver development.",
+            icon: "cpu",
+            color: "amber-500",
+            price: "PREMIUM",
+            hasCertificate: true
+        },
+        {
+            id: "industry-project-programs",
+            title: "Industry Project Programs",
+            difficulty: "Intermediate",
+            duration: "20 Hours",
+            lessons: 10,
+            desc: "Build and document enterprise-grade electronics and firmware prototypes matching industry standards.",
+            icon: "briefcase",
+            color: "purple-500",
+            price: "PREMIUM",
+            hasCertificate: true
         }
     ],
     certifications: {

@@ -195,7 +195,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-5" id="nav-auth-container">
                 <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
                 <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
                     Get Started
@@ -330,12 +330,78 @@
                         <button onclick="startCourseAction()" class="w-full py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover-target">
                             Start Course
                         </button>
-                        <button onclick="viewCertRequirements()" class="w-full py-3 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover-target">
+                        <button id="btn-view-cert-req" onclick="viewCertRequirements()" class="w-full py-3 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover-target">
                             View Certification Requirements
                         </button>
                     </div>
                 </section>
             </div>
+    <!-- Enrollment Modal -->
+    <div id="enrollment-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-base/80 backdrop-blur-md">
+        <div class="academy-card max-w-md w-full p-8 rounded-[2.5rem] bg-surface border border-white/10 shadow-2xl space-y-6 relative animate-fadeIn">
+            <div class="spotlight" style="background: radial-gradient(circle, rgba(94,106,210,0.15) 0%, transparent 70%); width: 300px; height: 300px; opacity: 1;"></div>
+            <div class="relative z-10 space-y-4">
+                <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                    <div class="w-10 h-10 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent-bright">
+                        <i data-lucide="graduation-cap" class="w-5 h-5 text-accent-bright"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-display font-extrabold text-white">Start Learning</h3>
+                        <p class="text-[10px] text-white/40 font-mono uppercase tracking-wider">Configure Enrollment Pipeline</p>
+                    </div>
+                </div>
+                <p class="text-xs text-[#BFC5D2] font-light leading-relaxed">
+                    Enter your full name exactly as it should appear on your verified engineering certificates.
+                </p>
+                <div class="space-y-3 pt-2">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Full Name</label>
+                        <input type="text" id="enrollment-name" placeholder="e.g. Alex Mercer" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Email Address (Optional)</label>
+                        <input type="email" id="enrollment-email" placeholder="e.g. alex@example.com" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4 font-mono text-[9px] tracking-widest uppercase">
+                    <button onclick="closeEnrollmentModal()" class="flex-1 py-3.5 rounded-xl border border-white/10 text-white/60 hover:text-white transition-all">Cancel</button>
+                    <button onclick="submitEnrollment()" class="flex-1 py-3.5 rounded-xl bg-white text-black hover:bg-accent hover:text-white transition-all font-bold">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile/Settings Modal -->
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-base/80 backdrop-blur-md">
+        <div class="academy-card max-w-md w-full p-8 rounded-[2.5rem] bg-surface border border-white/10 shadow-2xl space-y-6 relative animate-fadeIn">
+            <div class="spotlight" style="background: radial-gradient(circle, rgba(94,106,210,0.15) 0%, transparent 70%); width: 300px; height: 300px; opacity: 1;"></div>
+            <div class="relative z-10 space-y-4">
+                <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <i data-lucide="user" class="w-5 h-5 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-display font-extrabold text-white">Profile Settings</h3>
+                        <p class="text-[10px] text-white/40 font-mono uppercase tracking-wider">User Identity Config</p>
+                    </div>
+                </div>
+                <div class="space-y-3 pt-2">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Full Name</label>
+                        <input type="text" id="profile-name" placeholder="e.g. Alex Mercer" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-mono text-[#D1D5DB] uppercase tracking-wider block">Email Address</label>
+                        <input type="email" id="profile-email" placeholder="e.g. alex@example.com" class="w-full h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.12] text-sm text-white focus:outline-none focus:border-accent/60 transition-all font-sans font-normal">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-4 font-mono text-[9px] tracking-widest uppercase">
+                    <button onclick="closeProfileModal()" class="flex-1 py-3.5 rounded-xl border border-white/10 text-white/60 hover:text-white transition-all">Cancel</button>
+                    <button onclick="submitProfileUpdate()" class="flex-1 py-3.5 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all font-bold">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
         </div>
     </main>
 
@@ -415,11 +481,12 @@
                     "No prior electronics or programming experience required"
                 ],
                 certDetail: {
-                    available: "Yes",
+                    available: "No",
                     assessment: "Practical Project & Quiz Assessment Required",
-                    verification: "Supported (Cataloged under global database)",
-                    idPrefix: "TL-2026-00001"
-                }
+                    verification: "Not Supported",
+                    idPrefix: "TL-2026-NOCERT"
+                },
+                hasCertificate: false
             },
             "embedded-systems": {
                 category: "Embedded Systems",
@@ -463,7 +530,8 @@
                     assessment: "Hardware Registers Config Lab Required",
                     verification: "Supported (Verifiable internationally)",
                     idPrefix: "TL-2026-00002"
-                }
+                },
+                hasCertificate: true
             },
             "esp32-iot-development": {
                 category: "AIoT",
@@ -507,7 +575,8 @@
                     assessment: "Telemetry Dashboard Capstone Project Required",
                     verification: "Supported (Digital verification)",
                     idPrefix: "TL-2026-00003"
-                }
+                },
+                hasCertificate: true
             },
             "digital-electronics": {
                 category: "Electronics & Communication",
@@ -547,11 +616,12 @@
                     "No prior electronics experience required"
                 ],
                 certDetail: {
-                    available: "Yes",
+                    available: "No",
                     assessment: "Logic Circuit Design Lab Exam Required",
-                    verification: "Supported",
-                    idPrefix: "TL-2026-00006"
-                }
+                    verification: "Not Supported",
+                    idPrefix: "TL-2026-NOCERT"
+                },
+                hasCertificate: false
             },
             "pcb-design-kicad": {
                 category: "Electronics & Communication",
@@ -595,7 +665,8 @@
                     assessment: "Schematic & Multi-layer Board Layout Submission Required",
                     verification: "Supported",
                     idPrefix: "TL-2026-00004"
-                }
+                },
+                hasCertificate: true
             },
             "uav-drone-technology": {
                 category: "UAV & Drone Technology",
@@ -639,7 +710,245 @@
                     assessment: "PID Flight Stabilization Tuning Test Required",
                     verification: "Supported",
                     idPrefix: "TL-2026-00005"
-                }
+                },
+                hasCertificate: true
+            },
+            "communication-systems-basics": {
+                category: "Electronics & Communication",
+                title: "Communication Systems Basics",
+                desc: "Introduction to signal modulation, noise reduction, and analog/digital transmission standards.",
+                difficulty: "Beginner",
+                duration: "6 Hours",
+                lessons: 15,
+                instructor: "THRULABS ECE Department",
+                whatYouWillLearn: [
+                    "Introduction to signals, amplitude and frequency",
+                    "Analog modulation techniques (AM/FM)",
+                    "Digital modulation and signal coding",
+                    "Understanding noise margins and signal filters"
+                ],
+                modules: [
+                    { title: "Module 1: Introduction to Modulation", desc: "Basics of modulation, carrier frequencies, and transmission channels." }
+                ],
+                outcomes: [
+                    "Understand signal amplitude and frequency fundamentals",
+                    "Analyze analog modulation techniques (AM/FM)",
+                    "Interpret digital modulation and signal coding",
+                    "Apply noise filtering algorithms"
+                ],
+                requirements: [
+                    "Basic algebra",
+                    "High school physics foundations"
+                ],
+                certDetail: {
+                    available: "No",
+                    assessment: "Practical Exercises",
+                    verification: "Not Supported",
+                    idPrefix: "TL-2026-NOCERT"
+                },
+                hasCertificate: false
+            },
+            "introduction-to-embedded": {
+                category: "Embedded Systems",
+                title: "Introduction to Embedded Systems",
+                desc: "Basics of microcontrollers, breadboard prototyping, and writing your first firmware logic.",
+                difficulty: "Beginner",
+                duration: "5 Hours",
+                lessons: 12,
+                instructor: "THRULABS Engineering Faculty",
+                whatYouWillLearn: [
+                    "Understanding what an embedded system is",
+                    "Basic components of a microcontroller",
+                    "Breadboard prototyping and wiring rules",
+                    "Writing simple code loops in C"
+                ],
+                modules: [
+                    { title: "Module 1: Getting Started with MCUs", desc: "Introduction to chips, boards, and standard input/output components." }
+                ],
+                outcomes: [
+                    "Understand core microcontroller sub-components",
+                    "Build basic breadboard circuit layouts safely",
+                    "Compile and run firmware loops in bare-metal C"
+                ],
+                requirements: [
+                    "None"
+                ],
+                certDetail: {
+                    available: "No",
+                    assessment: "Lab Exercises",
+                    verification: "Not Supported",
+                    idPrefix: "TL-2026-NOCERT"
+                },
+                hasCertificate: false
+            },
+            "basic-electronics": {
+                category: "Electronics & Communication",
+                title: "Basic Electronics",
+                desc: "Understand voltage, current, resistance, Ohm's law, and passive components in circuit design.",
+                difficulty: "Beginner",
+                duration: "8 Hours",
+                lessons: 20,
+                instructor: "THRULABS Engineering Faculty",
+                whatYouWillLearn: [
+                    "Voltage, current, and resistance principles",
+                    "Resistors, capacitors, and inductors in series/parallel",
+                    "Ohm's Law calculations and measurements",
+                    "How to read electronic circuit schematics"
+                ],
+                modules: [
+                    { title: "Module 1: Ohm's Law", desc: "Calculating voltage, current, and resistance metrics." }
+                ],
+                outcomes: [
+                    "Calculate electrical variables using Ohm's Law",
+                    "Measure resistance, voltage, and current with a multimeter",
+                    "Read and parse basic schematic layouts"
+                ],
+                requirements: [
+                    "None"
+                ],
+                certDetail: {
+                    available: "No",
+                    assessment: "Practical Lab Tests",
+                    verification: "Not Supported",
+                    idPrefix: "TL-2026-NOCERT"
+                },
+                hasCertificate: false
+            },
+            "rtos-development": {
+                category: "Embedded Systems",
+                title: "RTOS Development",
+                desc: "Master real-time task scheduling, semaphores, mutexes, and thread synchronization in FreeRTOS.",
+                difficulty: "Intermediate",
+                duration: "14 Hours",
+                lessons: 28,
+                instructor: "THRULABS Microelectronics Lab",
+                whatYouWillLearn: [
+                    "RTOS principles vs bare-metal schedulers",
+                    "Creating and running tasks in FreeRTOS",
+                    "Task synchronization with Semaphores and Mutexes",
+                    "Handling resource sharing and deadlock scenarios"
+                ],
+                modules: [
+                    { title: "Module 1: Introduction to RTOS Schedulers", desc: "Core mechanics of real-time scheduling and preemptive context switching." }
+                ],
+                outcomes: [
+                    "Deploy FreeRTOS kernels on STM32 microcontrollers",
+                    "Configure tasks with varying scheduling weights",
+                    "Synchronize tasks using binary and counting semaphores",
+                    "Avoid race conditions and priority inversion locks"
+                ],
+                requirements: [
+                    "Pointers in C programming",
+                    "Microcontroller bare-metal basics"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "RTOS Task Synchronization Quiz Required",
+                    verification: "Supported (Verifiable internationally)",
+                    idPrefix: "TL-2026-00007"
+                },
+                hasCertificate: true
+            },
+            "aiot-engineering": {
+                category: "AIoT",
+                title: "AIoT Engineering",
+                desc: "Deploy deep learning models on edge microcontrollers and route sensor data through IoT channels.",
+                difficulty: "Intermediate",
+                duration: "16 Hours",
+                lessons: 34,
+                instructor: "THRULABS AIoT Division",
+                whatYouWillLearn: [
+                    "Building telemetry data paths with ESP32 & MQTT",
+                    "Edge AI architecture and ML model quantization",
+                    "Running inference on microcontrollers with TensorFlow Lite Micro",
+                    "Visualizing sensor predictions on cloud dashboards"
+                ],
+                modules: [
+                    { title: "Module 1: Edge AI Basics", desc: "Introduction to model training, quantization, and microcontroller deployment frameworks." }
+                ],
+                outcomes: [
+                    "Build robust telemetry streams via MQTT and JSON",
+                    "Quantize ML models to fit edge device RAM bounds",
+                    "Integrate TensorFlow Lite Micro for on-chip inference"
+                ],
+                requirements: [
+                    "Python basics for ML modeling",
+                    "ESP32 Wi-Fi configuration basics"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "Edge AI Telemetry Deployment Exam Required",
+                    verification: "Supported (Verifiable internationally)",
+                    idPrefix: "TL-2026-00008"
+                },
+                hasCertificate: true
+            },
+            "advanced-embedded-systems": {
+                category: "Embedded Systems",
+                title: "Advanced Embedded Systems",
+                desc: "Dive deep into hardware registers, DMA pipelines, low-power modes, and device driver development.",
+                difficulty: "Intermediate",
+                duration: "18 Hours",
+                lessons: 40,
+                instructor: "THRULABS Microelectronics Lab",
+                whatYouWillLearn: [
+                    "Direct memory access (DMA) high-speed transfer configs",
+                    "Configuring microcontroller low-power modes and wake-up events",
+                    "Writing re-entrant device drivers for SPI and I2C buses",
+                    "Memory protection unit (MPU) configurations"
+                ],
+                modules: [
+                    { title: "Module 1: Direct Memory Access (DMA)", desc: "Bypassing CPU cycles for high-speed hardware data transfers." }
+                ],
+                outcomes: [
+                    "Configure DMA hardware blocks for peripheral data routing",
+                    "Optimize battery draw states utilizing sleep and stop registers",
+                    "Write custom device drivers following manufacturer datasheets"
+                ],
+                requirements: [
+                    "Completed Embedded Systems Essentials course",
+                    "Strong C programming and hardware registry knowledge"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "DMA and Driver Registration Exam Required",
+                    verification: "Supported (Verifiable internationally)",
+                    idPrefix: "TL-2026-00009"
+                },
+                hasCertificate: true
+            },
+            "industry-project-programs": {
+                category: "Embedded Systems",
+                title: "Industry Project Programs",
+                desc: "Build and document enterprise-grade electronics and firmware prototypes matching industry standards.",
+                difficulty: "Intermediate",
+                duration: "20 Hours",
+                lessons: 10,
+                instructor: "THRULABS Electronics Lab",
+                whatYouWillLearn: [
+                    "Industrial design requirements and safety standards",
+                    "Sourcing parts, compiling BOMs, and reviewing design constraints",
+                    "Designing multi-layer circuit boards with custom shielding",
+                    "Writing extensive engineering tests and documentation"
+                ],
+                modules: [
+                    { title: "Module 1: Engineering Product Design Lifecycle", desc: "Design steps from specification documents to functional certified product." }
+                ],
+                outcomes: [
+                    "Apply mechanical and electrical design standards to packaging",
+                    "Structure manufacturing files and BOM spreadsheets",
+                    "Author comprehensive test plans and compliance files"
+                ],
+                requirements: [
+                    "Completed PCB design and Embedded firmware courses"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "Product Design Review Checklist Clearance Required",
+                    verification: "Supported (Verifiable internationally)",
+                    idPrefix: "TL-2026-00010"
+                },
+                hasCertificate: true
             }
         };
 
@@ -718,26 +1027,53 @@
                 <li>${req}</li>
             `).join('');
 
-            // Section 6: Certification Meta
-            const certMeta = document.getElementById('certification-meta');
-            certMeta.innerHTML = `
-                <div class="flex justify-between border-b border-white/5 pb-2">
-                    <span class="text-white/40">Available:</span>
-                    <span class="text-emerald-400 font-bold">${course.certDetail.available}</span>
-                </div>
-                <div class="flex flex-col gap-1 border-b border-white/5 pb-2">
-                    <span class="text-white/40">Assessment:</span>
-                    <span class="text-white">${course.certDetail.assessment}</span>
-                </div>
-                <div class="flex justify-between border-b border-white/5 pb-2">
-                    <span class="text-white/40">Database verification:</span>
-                    <span class="text-white">${course.certDetail.verification}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-white/40">Default ID Ref:</span>
-                    <span class="text-accent-bright font-bold select-all">${course.certDetail.idPrefix}</span>
-                </div>
-            `;
+            // Section 6: Certification Meta (Eligibility Details Display)
+            const certSection = document.getElementById('course-certification-detail');
+            const certIndicator = document.getElementById('hero-certification');
+            
+            if (course.hasCertificate) {
+                if (certSection) certSection.classList.remove('hidden');
+                if (certIndicator) {
+                    certIndicator.innerText = "Available";
+                    certIndicator.className = "text-emerald-400 font-bold";
+                }
+                const certMeta = document.getElementById('certification-meta');
+                if (certMeta) {
+                    certMeta.innerHTML = `
+                        <div class="flex justify-between border-b border-white/5 pb-2">
+                            <span class="text-white/40">Certificate Available:</span>
+                            <span class="text-emerald-400 font-bold">Yes</span>
+                        </div>
+                        <div class="flex flex-col gap-1 border-b border-white/5 pb-2">
+                            <span class="text-white/40">Assessment Required:</span>
+                            <span class="text-white">${course.certDetail.assessment}</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-2">
+                            <span class="text-white/40">Minimum Passing Score:</span>
+                            <span class="text-white font-bold">100%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-white/40">Certificate Verification Supported:</span>
+                            <span class="text-emerald-400 font-bold">Yes</span>
+                        </div>
+                    `;
+                }
+            } else {
+                if (certSection) certSection.classList.add('hidden');
+                if (certIndicator) {
+                    certIndicator.innerText = "Learning Only";
+                    certIndicator.className = "text-zinc-500 font-bold";
+                }
+            }
+
+            const btnViewCertReq = document.getElementById('btn-view-cert-req');
+            if (btnViewCertReq) {
+                if (course.hasCertificate) {
+                    btnViewCertReq.classList.remove('hidden');
+                } else {
+                    btnViewCertReq.classList.add('hidden');
+                }
+            }
 
             lucide.createIcons();
         }
@@ -755,15 +1091,135 @@
             }
         }
 
+        // Enrollment and Profile Settings State
+        let targetCourseIdForEnrollment = null;
+
+        function updateProfileNav() {
+            const userName = localStorage.getItem('thrulabs_user_name');
+            const authContainer = document.getElementById('nav-auth-container');
+            if (!authContainer) return;
+            if (userName) {
+                authContainer.innerHTML = `
+                    <button onclick="openProfileModal()" class="px-5 py-2.5 bg-accent/20 border border-accent/40 text-accent-bright hover:bg-accent hover:text-white text-[9px] font-extrabold rounded-full transition-all hover-target uppercase tracking-widest flex items-center gap-1.5 shadow-xl">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i> ${userName}
+                    </button>
+                `;
+            } else {
+                authContainer.innerHTML = `
+                    <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                    <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                        Get Started
+                    </a>
+                `;
+            }
+            lucide.createIcons();
+        }
+
         // Actions
         function startCourseAction() {
-            alert(`Initiating enrollment pipeline for "${course.title}". Connecting workspace sandbox...`);
-            window.location.href = `academy.html`;
+            const enrolledName = localStorage.getItem('thrulabs_user_name');
+            if (!enrolledName) {
+                openEnrollmentModal(courseId);
+            } else {
+                window.location.href = `learn.html?course=${courseId}`;
+            }
         }
 
         function viewCertRequirements() {
             window.location.href = `#course-certification-detail`;
         }
+
+        // Enrollment Modal actions
+        function openEnrollmentModal(courseId) {
+            targetCourseIdForEnrollment = courseId;
+            const modal = document.getElementById('enrollment-modal');
+            const nameInput = document.getElementById('enrollment-name');
+            const emailInput = document.getElementById('enrollment-email');
+            
+            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
+            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            
+            modal.classList.remove('hidden');
+            nameInput.focus();
+        }
+
+        function closeEnrollmentModal() {
+            const modal = document.getElementById('enrollment-modal');
+            modal.classList.add('hidden');
+        }
+
+        function submitEnrollment() {
+            const nameVal = document.getElementById('enrollment-name').value.trim();
+            const emailVal = document.getElementById('enrollment-email').value.trim();
+            if (!nameVal) {
+                alert("Please enter your full name.");
+                return;
+            }
+            
+            localStorage.setItem('thrulabs_user_name', nameVal);
+            if (emailVal) {
+                localStorage.setItem('thrulabs_user_email', emailVal);
+            } else {
+                localStorage.removeItem('thrulabs_user_email');
+            }
+            
+            closeEnrollmentModal();
+            updateProfileNav();
+            
+            if (targetCourseIdForEnrollment) {
+                window.location.href = `learn.html?course=${targetCourseIdForEnrollment}`;
+            }
+        }
+
+        // Profile Settings Modal actions
+        function openProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            const nameInput = document.getElementById('profile-name');
+            const emailInput = document.getElementById('profile-email');
+            
+            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
+            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            
+            modal.classList.remove('hidden');
+            nameInput.focus();
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.add('hidden');
+        }
+
+        // Submit profile changes and refresh dynamic views
+        function submitProfileUpdate() {
+            const nameVal = document.getElementById('profile-name').value.trim();
+            const emailVal = document.getElementById('profile-email').value.trim();
+            if (!nameVal) {
+                alert("Full name cannot be empty.");
+                return;
+            }
+            
+            localStorage.setItem('thrulabs_user_name', nameVal);
+            if (emailVal) {
+                localStorage.setItem('thrulabs_user_email', emailVal);
+            } else {
+                localStorage.removeItem('thrulabs_user_email');
+            }
+            
+            closeProfileModal();
+            updateProfileNav();
+            alert("Profile settings updated successfully.");
+        }
+
+        // Handle Escape key or outside clicks to close modal
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEnrollmentModal();
+                closeProfileModal();
+            }
+        });
+
+        // Initialize active profile button
+        updateProfileNav();
 
         // WebGL Particle Canvas
         const canvas = document.getElementById('webgl-canvas');
