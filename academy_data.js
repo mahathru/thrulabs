@@ -407,6 +407,8 @@ int getD() {
         "embedded": {
             id: "embedded",
             title: "Embedded Systems Engineer",
+            icon: "cpu",
+            color: "accent",
             desc: "Develop low-level drivers, core firmware layers, real-time operating threads, and perform register level microcontroller testing.",
             skills: ["C/C++ Programming", "Microcontroller Architectures", "RTOS Task Scheduling", "SPI/I2C/UART Protocols", "Oscilloscopes & Logic Analyzers"],
             timeline: [
@@ -427,6 +429,8 @@ int getD() {
         "aiot": {
             id: "aiot",
             title: "AIoT Systems Engineer",
+            icon: "network",
+            color: "emerald-500",
             desc: "Deploy smart hardware systems using internet connectivity protocols, edge model inference nodes, and cloud telemetry databases.",
             skills: ["ESP32 & BLE SoC", "MQTT Telemetry Pipelines", "Python & Edge ML (TensorFlow Lite)", "API Gateway Integrations", "Database logging"],
             timeline: [
@@ -447,6 +451,8 @@ int getD() {
         "uav": {
             id: "uav",
             title: "UAV Systems Engineer",
+            icon: "navigation",
+            color: "amber-500",
             desc: "Develop robotics avionics, PID control loops, GPS mission routing, and telemetry links on multirotor platforms.",
             skills: ["Autopilot Flight Firmware (PX4/ArduPilot)", "PID Feedback Loops", "RF Telemetry Bindings", "Aerodynamics & Propellers", "ROS (Robot Operating System)"],
             timeline: [
@@ -467,6 +473,8 @@ int getD() {
         "ece": {
             id: "ece",
             title: "ECE Career Path",
+            icon: "radio",
+            color: "cyan-500",
             desc: "Master analog circuits, digital logic design, board-level PCB layout routings, and high-frequency communication protocols.",
             skills: ["Analog/Digital Circuit Design", "PCB CAD Routing (KiCad)", "DRC Validation Rules", "Boolean Minimization", "Signal Transmission Systems"],
             timeline: [
@@ -489,6 +497,8 @@ int getD() {
         "formulas": {
             id: "formulas",
             title: "Formula Sheets",
+            icon: "file-text",
+            color: "accent",
             desc: "Reference manuals containing circuit theory rules, signal transform equations, and microcontroller register indexes.",
             downloads: [
                 { label: "Download Electronics Formula Sheet (PDF)", url: "#" },
@@ -567,6 +577,8 @@ int getD() {
         "viva": {
             id: "viva",
             title: "Viva Questions",
+            icon: "message-circle",
+            color: "emerald-500",
             desc: "Review compiled questions frequently asked during university lab examinations and hardware demonstrations.",
             downloads: [
                 { label: "Download Microcontroller Viva Q&A Guide (PDF)", url: "#" },
@@ -610,6 +622,8 @@ int getD() {
         "interview": {
             id: "interview",
             title: "Interview Preparation",
+            icon: "briefcase",
+            color: "purple-500",
             desc: "Prepare for embedded firmware interviews with actual code puzzles, bitwise routines, and debugging case studies.",
             downloads: [
                 { label: "Download Firmware Interview Blueprint (PDF)", url: "#" },
@@ -651,6 +665,8 @@ int getD() {
         "notes": {
             id: "notes",
             title: "Study Notes",
+            icon: "notebook-pen",
+            color: "amber-500",
             desc: "Compact lecture summaries, hardware architecture flowcharts, and ECE exam review materials.",
             downloads: [
                 { label: "Download Nyquist & DSP Study Notes (PDF)", url: "#" },
@@ -685,6 +701,8 @@ int getD() {
         "guides": {
             id: "guides",
             title: "Learning Guides",
+            icon: "book-open",
+            color: "rose-500",
             desc: "Sequence roadmaps, external reading links, and hardware board recommendations.",
             downloads: [
                 { label: "Download Hardware Layout Setup Guide (PDF)", url: "#" },

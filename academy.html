@@ -182,11 +182,8 @@
     <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
         <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
             <div class="flex items-center gap-8">
-                <a href="index.html" class="flex items-center gap-2.5 hover-target">
-                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
-                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
-                    </div>
-                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                <a href="index.html" class="flex items-center hover-target">
+                    <img src="logo.svg" alt="THRULABS Logo" class="h-5 w-auto">
                 </a>
                 
                 <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
@@ -374,9 +371,7 @@
     <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50 relative z-10">
         <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
             <div class="flex items-center gap-3">
-                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
-                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
-                </div>
+                <img src="logo.svg" alt="THRULABS Logo" class="h-5 w-auto">
                 <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-[#D1D5DB] uppercase">Academy Ecosystem</span>
             </div>
             <div class="flex gap-8 font-mono text-[9px] text-[#D1D5DB] uppercase tracking-[0.2em]">
@@ -384,7 +379,7 @@
                 <a href="#" class="hover:text-white hover-target transition-colors">Certification Verify</a>
                 <a href="#" class="hover:text-white hover-target transition-colors">Instructor Hub</a>
             </div>
-            <p class="text-[8px] text-[#9CA3AF] font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL LEARNING AUTHORITY</p>
+            <p class="text-[8px] text-[#9CA3AF] font-mono uppercase tracking-[0.4em]">&copy; 2026 GLOBAL LEARNING AUTHORITY</p>
         </div>
     </footer>
 
@@ -671,7 +666,7 @@
                 card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
                 card.style.transitionDelay = `${idx * 0.05}s`;
                 card.onclick = () => {
-                    window.location.href = `roadmap.html?path=&{roadmap.id}`.replace('&{', '${');
+                    window.location.href = `roadmap.html?path=${roadmap.id}`;
                 };
                 
                 const colors = colorMap[roadmap.color] || colorMap['accent'];
@@ -893,6 +888,27 @@
 
             lucide.createIcons();
         }
+
+        // Filter button event listeners
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentFilter = btn.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-accent', 'text-white');
+                    b.classList.add('bg-white/[0.04]', 'border', 'border-white/[0.12]', 'text-[#E5E7EB]');
+                });
+                btn.classList.add('active', 'bg-accent', 'text-white');
+                btn.classList.remove('bg-white/[0.04]', 'border-white/[0.12]', 'text-[#E5E7EB]');
+                applyFiltersAndSearch();
+            });
+        });
+
+        // Search input event listener
+        document.getElementById('academy-search').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            applyFiltersAndSearch();
+        });
+
         // WebGL Particle Canvas System
         const canvas = document.getElementById('webgl-canvas');
         const scene = new THREE.Scene();
