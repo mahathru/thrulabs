@@ -2389,19 +2389,137 @@ Carry = A · B (AND)</pre>
                 lessons: [
                     {
                         title: "Lesson 1.1: What is Modulation?",
-                        content: "<p>Modulation is the process of varying one or more properties of a high-frequency periodic waveform, called the carrier signal, with a modulating signal that contains information to be transmitted.</p>"
+                        content: `<p class="mb-4">Modulation is the process of varying one or more properties of a high-frequency periodic waveform, called the carrier signal, with a modulating signal that contains information to be transmitted.</p>
+                        <p class="mb-4">By superimposing the message signal on a higher frequency carrier, we can transmit data over long distances using reasonable antenna sizes, and multiplex multiple signals over the same channel without overlap.</p>`
+                    },
+                    {
+                        title: "Lesson 1.2: Carrier Waves and Channels",
+                        content: `<p class="mb-4">The carrier signal is generally a high-frequency sine wave represented as:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            c(t) = Ac * sin(2 * pi * fc * t)
+                        </div>
+                        <p class="mb-4">Transmission channels can be guided (like coaxial cables or optical fibers) or unguided (like wireless radio frequency bands). Each channel has unique attenuation and frequency response properties.</p>`
                     }
                 ],
                 quiz: {
                     questions: [
-                        { q: "What is the signal that contains information called?", options: ["Carrier Signal", "Modulating Signal", "Noise Signal"], ans: 1 }
+                        { q: "What is the signal that contains information called?", options: ["Carrier Signal", "Modulating Signal", "Noise Signal"], ans: 1 },
+                        { q: "Which signal characteristics can be modified during modulation?", options: ["Amplitude, Frequency, or Phase", "Only Amplitude", "Only Frequency"], ans: 0 },
+                        { q: "Why is high-frequency carrier modulation necessary for wireless transmission?", options: ["It decreases signal speed", "It keeps required antenna dimensions practical", "It removes the need for amplifiers"], ans: 1 }
                     ]
                 },
                 project: {
                     objective: "Simulate a basic AM modulator in an online tool.",
                     components: ["Computer"],
-                    procedure: ["Open simulation tool.", "Set carrier to 10kHz.", "Verify modulated output wave."],
-                    expectedOutput: "An AM modulated wave pattern."
+                    procedure: ["Open simulation tool.", "Set carrier to 10kHz and signal to 500Hz.", "Verify modulated output wave envelopes."],
+                    expectedOutput: "An AM modulated wave pattern showing signal envelope matching the modulating wave."
+                }
+            },
+            {
+                title: "Module 2: Amplitude & Frequency Modulation",
+                desc: "Understanding AM/FM transmitter and receiver circuit designs and modulation indexes.",
+                duration: "50 Min",
+                lessons: [
+                    {
+                        title: "Lesson 2.1: Amplitude Modulation (AM)",
+                        content: `<p class="mb-4">In Amplitude Modulation, the instantaneous amplitude of the carrier wave is varied in linear proportion to the message signal's voltage.</p>
+                        <p class="mb-4">We define the modulation index <code>m</code> as:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            m = Am / Ac
+                        </div>
+                        <p class="mb-4">If <code>m &gt; 1</code>, overmodulation occurs. This distorts the signal envelope, making demodulation via simple diode peak detectors impossible without severe audio cracking.</p>`
+                    },
+                    {
+                        title: "Lesson 2.2: Frequency Modulation (FM)",
+                        content: `<p class="mb-4">Frequency Modulation varies the instantaneous frequency of the carrier signal in proportion to the modulating signal's voltage amplitude, while keeping the carrier's amplitude constant.</p>
+                        <p class="mb-4">Since electrical noise mostly affects a signal's amplitude, FM is highly immune to noise compared to AM. However, FM requires significantly wider frequency bandwidths to transmit the same audio signal.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What happens if the modulation index (m) is greater than 1 in AM?", options: ["Signal strength doubles", "Overmodulation and envelope distortion", "Bandwidth decreases by half"], ans: 1 },
+                        { q: "Which parameter remains completely constant in Frequency Modulation?", options: ["Phase", "Frequency", "Amplitude"], ans: 2 },
+                        { q: "What is a major advantage of FM over AM?", options: ["It uses less bandwidth", "It has superior noise immunity", "It requires simpler receiver circuits"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Measure the modulation index of an AM wave using an oscilloscope simulator.",
+                    components: ["Virtual signal generator", "Virtual oscilloscope", "AM modulator circuit block"],
+                    procedure: ["Set modulating frequency to 1kHz.", "Set carrier frequency to 100kHz.", "Adjust modulating amplitude until peaks are twice the carrier values.", "Calculate the resulting index value."],
+                    expectedOutput: "The modulation index is calculated as 0.5 without overmodulation envelope distortion."
+                }
+            },
+            {
+                title: "Module 3: Digital Transmission Standards",
+                desc: "Exploring ASK, FSK, and PSK shift keying methods alongside Shannon-Nyquist sampling rules.",
+                duration: "60 Min",
+                lessons: [
+                    {
+                        title: "Lesson 3.1: Digital Shift Keying (ASK/FSK/PSK)",
+                        content: `<p class="mb-4">Digital modulation maps discrete binary logic states (0s and 1s) onto a continuous analog carrier wave. The three primary methods are:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>Amplitude Shift Keying (ASK):</strong> Toggles carrier amplitude states (often 0V for binary 0, full voltage for 1).</li>
+                            <li><strong>Frequency Shift Keying (FSK):</strong> Switches between two different carrier frequencies.</li>
+                            <li><strong>Phase Shift Keying (PSK):</strong> Shifts the starting phase angle of the carrier wave.</li>
+                        </ul>`
+                    },
+                    {
+                        title: "Lesson 3.2: The Sampling Theorem",
+                        content: `<p class="mb-4">The Nyquist-Shannon Sampling Theorem states that to accurately reconstruct a continuous analog signal in the digital domain, the sampling rate must exceed twice the highest frequency component of the analog signal:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            Fs &gt; 2 * Fmax
+                        </div>
+                        <p class="mb-4">If <code>Fs</code> is lower, high-frequency components 'alias' into false low-frequency signals, destroying data integrity.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "Which digital modulation scheme shifts the phase angle of the carrier wave?", options: ["ASK", "FSK", "PSK"], ans: 2 },
+                        { q: "According to Nyquist, what is the minimum sampling rate for a 4kHz voice signal?", options: ["4kHz", "8kHz", "16kHz"], ans: 1 },
+                        { q: "What phenomenon occurs when sampling below the Nyquist rate?", options: ["Aliasing", "Attenuation", "Modulation index drop"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Demonstrate signal aliasing on a virtual sample-and-hold circuit.",
+                    components: ["Signal generator", "Variable clock pulse generator", "Low-pass reconstruction filter"],
+                    procedure: ["Feed a 2kHz sine wave into the sampler.", "Adjust clock pulse from 5kHz down to 3kHz.", "Observe the output on the virtual scope."],
+                    expectedOutput: "The output waveform gets distorted and shifts to a false lower frequency when clock falls below 4kHz."
+                }
+            },
+            {
+                title: "Module 4: Noise Filtering & Signal Integrity",
+                desc: "Designing passive high-pass/low-pass noise filters and calculating signal-to-noise ratios (SNR).",
+                duration: "60 Min",
+                lessons: [
+                    {
+                        title: "Lesson 4.1: Noise and SNR Calculations",
+                        content: `<p class="mb-4">Noise is unwanted random electrical signals that corrupt data. We quantify signal quality using the Signal-to-Noise Ratio (SNR), expressed in decibels (dB):</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            SNR (dB) = 10 * log10(P_signal / P_noise)
+                        </div>
+                        <p class="mb-4">Higher SNR indicates a cleaner channel, which is crucial for achieving high data transmission throughput rates.</p>`
+                    },
+                    {
+                        title: "Lesson 4.2: Filtering Out Noise",
+                        content: `<p class="mb-4">Filters block specific frequency bands while letting others pass. An RC low-pass filter passes frequencies below its cutoff frequency:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            fc = 1 / (2 * pi * R * C)
+                        </div>
+                        <p class="mb-4">Error correction codes (such as Hamming codes) add structured redundant bits to digital packets, enabling detection and correction of transmission corruption on noisy channels.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "How is a filter that blocks low frequencies but passes high frequencies classified?", options: ["Low-Pass Filter", "High-Pass Filter", "Band-Pass Filter"], ans: 1 },
+                        { q: "What unit of measure is standard for Signal-to-Noise Ratio (SNR)?", options: ["Hertz (Hz)", "Decibels (dB)", "Ohms"], ans: 1 },
+                        { q: "Which coding technique allows fixing transmission bits that flipped due to noise?", options: ["Amplitude shift keying", "Error-Correcting Code (e.g. Hamming Code)", "Frequency sweep coding"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Design a passive RC low-pass filter with a cutoff frequency of 1.6kHz.",
+                    components: ["1k Ohm resistor", "100nF capacitor", "Breadboard", "Audio function generator"],
+                    procedure: ["Connect the resistor in series with the input signal.", "Place the capacitor in parallel to ground.", "Measure signal attenuation at 500Hz, 1.6kHz, and 5kHz."],
+                    expectedOutput: "The filter passes 500Hz signals with minimal loss but attenuates 5kHz signals by more than 10dB."
                 }
             }
         ]
@@ -2443,19 +2561,133 @@ Carry = A · B (AND)</pre>
                 lessons: [
                     {
                         title: "Lesson 1.1: What is an Embedded System?",
-                        content: "<p>An embedded system is a microprocessor-based computer hardware system with software that is designed to perform a dedicated function, either as an independent system or as a part of a large system.</p>"
+                        content: `<p class="mb-4">An embedded system is a microprocessor-based computer hardware system with software that is designed to perform a dedicated function, either as an independent system or as a part of a large system.</p>
+                        <p class="mb-4">Unlike standard desktop PCs, embedded systems are highly optimized for specific tasks, operate in real-time, have strict power limits, and interface directly with physical sensors and actuators.</p>`
+                    },
+                    {
+                        title: "Lesson 1.2: Microcontroller Pins and Voltage Rails",
+                        content: `<p class="mb-4">Microcontrollers access the outside world through General Purpose Input/Output (GPIO) pins. Pins are mapped in software as either digital inputs (to read switches) or digital outputs (to drive LEDs/relays).</p>
+                        <p class="mb-4">Most modern microcontrollers operate on either 5.0V or 3.3V power rails. Connecting a high-voltage sensor directly to a GPIO pin can burn out the silicon ports instantly.</p>`
                     }
                 ],
                 quiz: {
                     questions: [
-                        { q: "What is the main brain of an embedded system called?", options: ["Microcontroller / Microprocessor", "SRAM", "Power supply"], ans: 0 }
+                        { q: "What is the main brain of an embedded system called?", options: ["Microcontroller / Microprocessor", "SRAM", "Power supply"], ans: 0 },
+                        { q: "What does GPIO stand for?", options: ["General Purpose Input/Output", "Global Peripheral Interface Organizer", "Galvanic Port Impedance Operator"], ans: 0 },
+                        { q: "What happens if you feed a 12V sensor signal directly into a 3.3V GPIO pin?", options: ["The signal is scaled down automatically", "It will likely destroy the microcontroller port", "It increases system speed"], ans: 1 }
                     ]
                 },
                 project: {
                     objective: "Identify pins on a microcontroller board.",
-                    components: ["MCU Board"],
-                    procedure: ["Examine board layouts.", "Locate digital pin 13 and GND."],
-                    expectedOutput: "Pins correctly identified."
+                    components: ["MCU Board", "Reference Pinout Sheet"],
+                    procedure: ["Examine board layouts.", "Locate digital pin 13, GND, and the 5V power header pins.", "Verify pin assignments against the datasheet board map."],
+                    expectedOutput: "Pins correctly identified and mapped on the physical layout sheet."
+                }
+            },
+            {
+                title: "Module 2: Breadboard Prototyping",
+                desc: "Understanding direct currents, LED routing, series resistors, and tactile button debounce rules.",
+                duration: "45 Min",
+                lessons: [
+                    {
+                        title: "Lesson 2.1: Solderless Breadboard Internal Structures",
+                        content: `<p class="mb-4">Breadboards allow solderless prototyping. The internal clips are organized in structural patterns:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>Power Rails:</strong> Run vertically down the sides to distribute VCC and GND.</li>
+                            <li><strong>Terminal Strips:</strong> Run horizontally in groups of 5, separated by a center divider channel.</li>
+                        </ul>
+                        <p class="mb-4">The center channel matches standard dual-in-line (DIP) IC chip pin spacings, preventing pins on opposite sides from short-circuiting.</p>`
+                    },
+                    {
+                        title: "Lesson 2.2: Debouncing Button Switches",
+                        content: `<p class="mb-4">Mechanical switches consist of spring metal contacts. When pressed, the contacts vibrate and bounce physically for several milliseconds, making the MCU read multiple rapid button presses.</p>
+                        <p class="mb-4">To solve this, we implement debouncing. This can be done in hardware (using an RC filter) or in software (by adding a brief delay and re-checking the pin state before registering the press).</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "How are the outer columns of a standard breadboard typically wired?", options: ["Vertically as power rails", "Horizontally in groups of 5", "They are not connected at all"], ans: 0 },
+                        { q: "Why is a pull-up resistor used with input buttons?", options: ["To limit current to the LED", "To keep the pin in a stable HIGH state when the button is open", "To boost the voltage to 12V"], ans: 1 },
+                        { q: "What is the main cause of button bounce?", options: ["Software loop glitches", "Mechanical spring contacts vibrating before settling", "Excessive electrical capacitance"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Build a debounced button circuit to toggle a state indicator LED.",
+                    components: ["Microcontroller board", "Tactile switch", "10k Ohm resistor", "LED", "220 Ohm resistor"],
+                    procedure: ["Connect a button with a 10k pull-up resistor to digital pin 2.", "Write code to read pin state.", "Add a 20ms delay logic check before toggling pin 13 LED."],
+                    expectedOutput: "The LED toggles cleanly on each button press without double-triggering."
+                }
+            },
+            {
+                title: "Module 3: Core Architecture & Memory",
+                desc: "Exploring bare-metal processor registers, SRAM vs Flash, and standard compiler pipelines.",
+                duration: "50 Min",
+                lessons: [
+                    {
+                        title: "Lesson 3.1: Inside the Microcontroller Core",
+                        content: `<p class="mb-4">A microcontroller integrates several core systems onto a single chip:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>CPU Core:</strong> Fetches instructions, decodes them, and performs arithmetic.</li>
+                            <li><strong>Registers:</strong> Small, ultra-fast memory units inside the CPU used for immediate calculations.</li>
+                            <li><strong>Flash Memory:</strong> Non-volatile memory that holds the compiled program instructions permanently.</li>
+                            <li><strong>SRAM:</strong> Volatile memory that stores runtime variables and the stack.</li>
+                        </ul>`
+                    },
+                    {
+                        title: "Lesson 3.2: Compilation Pipeline",
+                        content: `<p class="mb-4">The source code written in C is converted to a binary map that the processor can run. The steps are:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[9px]">
+                            Source Code (.c) -&gt; Preprocessor -&gt; Compiler (.s) -&gt; Assembler (.o) -&gt; Linker -&gt; Binary (.hex/.bin)
+                        </div>
+                        <p class="mb-4">The linked output mapping allocates global variables to the SRAM data section and instructions to the Flash program memory.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "Which MCU memory block is non-volatile and holds the program code?", options: ["Flash Memory", "SRAM", "EEPROM"], ans: 0 },
+                        { q: "What does the Program Counter (PC) register store?", options: ["The address of the next instruction to execute", "The values of local variables", "The cumulative number of clock ticks"], ans: 0 },
+                        { q: "What role does the linker play in the compilation pipeline?", options: ["It uploads code to the board", "It compiles assembly to machine code", "It combines object files and libraries into a single executable map"], ans: 2 }
+                    ]
+                },
+                project: {
+                    objective: "Audit compile sizes of global variables versus local variables.",
+                    components: ["Compiler toolchain IDE"],
+                    procedure: ["Declare a large static array globally and compile.", "Move the array inside a function locally and compile.", "Note the memory allocation difference in the compiler outputs."],
+                    expectedOutput: "Global array allocations permanently increase SRAM usage metrics in the compiler log."
+                }
+            },
+            {
+                title: "Module 4: Analog Interfacing & ADC",
+                desc: "Interfacing potentiometers and photoresistors, and configuring analog-to-digital converters.",
+                duration: "55 Min",
+                lessons: [
+                    {
+                        title: "Lesson 4.1: Analog vs Digital Inputs",
+                        content: `<p class="mb-4">While digital inputs only distinguish between HIGH (1) and LOW (0), analog inputs can measure intermediate voltages. To convert these voltages to numbers, the MCU uses an Analog-to-Digital Converter (ADC).</p>
+                        <p class="mb-4">Common analog sensors, like potentiometers and photoresistors (LDRs), are configured in voltage divider circuits to output a variable voltage corresponding to physical changes.</p>`
+                    },
+                    {
+                        title: "Lesson 4.2: ADC Resolution and Calculations",
+                        content: `<p class="mb-4">ADC resolution determines the precision of digital readings. A 10-bit ADC maps analog input voltages between 0V and Vref to integers from 0 to 1023.</p>
+                        <p class="mb-4">The step resolution is calculated as:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            Resolution = Vref / (2^n)
+                        </div>
+                        <p class="mb-4">For a 10-bit ADC with Vref = 5V, each step is approximately 4.88mV.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What numeric range does a 10-bit ADC return?", options: ["0 to 255", "0 to 1023", "0 to 4095"], ans: 1 },
+                        { q: "If Vref is 5.0V, what voltage corresponds to an ADC reading of 512?", options: ["1.25V", "2.5V", "3.3V"], ans: 1 },
+                        { q: "Which sensor type relies on a voltage divider circuit to read light levels?", options: ["LDR (Photoresistor)", "Digital temperature probe", "PWM motor shield"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Read variable light intensity using an LDR and light up an alarm if dark.",
+                    components: ["LDR sensor", "10k Ohm resistor", "LED", "MCU board", "Jumper wires"],
+                    procedure: ["Create a voltage divider with the LDR and 10k resistor.", "Connect middle node to analog pin A0.", "Monitor the integer reading in loop.", "Toggle LED if reading falls below 300."],
+                    expectedOutput: "Covering the LDR causes the ADC value to drop below 300, turning on the warning LED."
                 }
             }
         ]
@@ -2497,12 +2729,27 @@ Carry = A · B (AND)</pre>
                 lessons: [
                     {
                         title: "Lesson 1.1: The Formula V = IR",
-                        content: "<p>Ohm's law states that the current through a conductor between two points is directly proportional to the voltage across the two points. The formula is V = I * R, where V is voltage, I is current, and R is resistance.</p>"
+                        content: `<p class="mb-4">Ohm's law states that the current through a conductor between two points is directly proportional to the voltage across the two points. The formula is:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            V = I * R
+                        </div>
+                        <p class="mb-4">Where V is voltage in volts (V), I is current in amperes (A), and R is resistance in ohms (Ω). This equation is the foundation of electrical circuit analysis.</p>`
+                    },
+                    {
+                        title: "Lesson 1.2: Volts, Amperes, and Ohms",
+                        content: `<p class="mb-4">To visualize these units, think of a water pipe analogy:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>Voltage:</strong> The water pressure pushing the fluid.</li>
+                            <li><strong>Current:</strong> The flow rate of water through the pipe.</li>
+                            <li><strong>Resistance:</strong> The physical narrowing of the pipe restricting flow.</li>
+                        </ul>`
                     }
                 ],
                 quiz: {
                     questions: [
-                        { q: "If V = 10V and R = 5 Ohms, what is current I?", options: ["2 Amps", "50 Amps", "0.5 Amps"], ans: 0 }
+                        { q: "If V = 10V and R = 5 Ohms, what is current I?", options: ["2 Amps", "50 Amps", "0.5 Amps"], ans: 0 },
+                        { q: "Which unit measures the flow of electrical charge?", options: ["Volt", "Ohm", "Ampere"], ans: 2 },
+                        { q: "What is the equivalent resistance of three 100 Ohm resistors in series?", options: ["33.3 Ohms", "100 Ohms", "300 Ohms"], ans: 2 }
                     ]
                 },
                 project: {
@@ -2510,6 +2757,108 @@ Carry = A · B (AND)</pre>
                     components: ["Resistor", "Battery", "Multimeter"],
                     procedure: ["Measure resistor resistance.", "Measure battery voltage.", "Measure loop current and compare with V/R calculation."],
                     expectedOutput: "Measured current matches calculated current."
+                }
+            },
+            {
+                title: "Module 2: Passive Components",
+                desc: "Studying series and parallel resistors, capacitors, inductors, and RC filter time constants.",
+                duration: "50 Min",
+                lessons: [
+                    {
+                        title: "Lesson 2.1: Capacitors & Inductors",
+                        content: `<p class="mb-4">Capacitors store electrical energy in an electrostatic field. They block DC current but let AC pass. Inductors store energy in a magnetic field when current flows through them. They block AC signals but pass DC.</p>
+                        <p class="mb-4">Combining capacitors and inductors allows engineering filters, oscillators, and power regulation circuits.</p>`
+                    },
+                    {
+                        title: "Lesson 2.2: RC Time Constants (Tau)",
+                        content: `<p class="mb-4">In a circuit containing a resistor (R) and capacitor (C), the charging and discharging rates depend on the time constant <code>tau</code>:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            tau = R * C
+                        </div>
+                        <p class="mb-4">It takes approximately 5 * tau for a capacitor to charge to 99.3% of the supply voltage.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the unit of measure for capacitance?", options: ["Farad", "Henry", "Ohm"], ans: 0 },
+                        { q: "How does a capacitor behave in a steady-state DC circuit?", options: ["Short circuit", "Open circuit", "Resistor of 10 Ohms"], ans: 1 },
+                        { q: "What is the time constant of a circuit with a 1k Ohm resistor and a 10uF capacitor?", options: ["1 millisecond", "10 milliseconds", "100 milliseconds"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Build and measure the charge curve of an RC timer circuit.",
+                    components: ["100uF capacitor", "10k Ohm resistor", "LED", "5V power source", "Multimeter", "Stopwatch"],
+                    procedure: ["Connect resistor and capacitor in series to 5V.", "Connect a voltmeter across the capacitor.", "Measure voltage at 1s, 2s, 3s, and 5s after power-on."],
+                    expectedOutput: "Voltmeter reads 3.15V at 1 second (~1 time constant) and approaches 5V by 5 seconds."
+                }
+            },
+            {
+                title: "Module 3: Diodes & Transistors",
+                desc: "Understanding PN-junction diode rectification and using BJTs/MOSFETs as solid-state switches.",
+                duration: "55 Min",
+                lessons: [
+                    {
+                        title: "Lesson 3.1: Diodes & Rectification",
+                        content: `<p class="mb-4">Diodes permit current flow in one direction only (forward bias) and block it in the opposite direction (reverse bias). Standard silicon diodes require a forward voltage drop of ~0.7V to conduct.</p>
+                        <p class="mb-4">Diodes are essential for converting Alternating Current (AC) to Direct Current (DC) in power adapters, a process called rectification.</p>`
+                    },
+                    {
+                        title: "Lesson 3.2: Transistors as Switches",
+                        content: `<p class="mb-4">Bipolar Junction Transistors (BJTs) and Field Effect Transistors (MOSFETs) act as electronic switches. Driving the control pin (base or gate) with a small current/voltage allows conducting a much larger current between the output pins (collector/emitter or drain/source).</p>
+                        <p class="mb-4">This allows microcontrollers to drive heavy motors or relays from weak GPIO outputs.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the typical forward voltage drop of a silicon diode?", options: ["0.3V", "0.7V", "1.2V"], ans: 1 },
+                        { q: "Which terminal in a MOSFET controls the conduction between source and drain?", options: ["Gate", "Base", "Collector"], ans: 0 },
+                        { q: "What is the primary function of a rectifying diode?", options: ["To store static charge", "To amplify voltage", "To convert AC to DC"], ans: 2 }
+                    ]
+                },
+                project: {
+                    objective: "Build a transistor switch circuit to control a DC motor.",
+                    components: ["NPN Transistor (PN2222)", "1k Ohm resistor", "DC Motor", "Flyback diode (1N4007)", "9V battery", "Breadboard"],
+                    procedure: ["Connect transistor collector to motor.", "Place flyback diode in parallel with motor to block spikes.", "Connect emitter to ground.", "Apply 5V through the 1k resistor to the transistor base."],
+                    expectedOutput: "The motor runs when voltage is applied to the base resistor and stops when the base is grounded."
+                }
+            },
+            {
+                title: "Module 4: Operational Amplifiers",
+                desc: "Designing signal buffers, inverting, and non-inverting Op-Amp circuit configurations.",
+                duration: "60 Min",
+                lessons: [
+                    {
+                        title: "Lesson 4.1: Ideal Op-Amp Characteristics",
+                        content: `<p class="mb-4">Operational Amplifiers (Op-Amps) are high-gain differential amplifiers. An ideal Op-Amp has:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li>Infinite input impedance (no input current draw).</li>
+                            <li>Zero output impedance.</li>
+                            <li>Infinite open-loop gain.</li>
+                        </ul>
+                        <p class="mb-4">Using negative feedback loops stabilizes the circuit, allowing precise control of gain parameters.</p>`
+                    },
+                    {
+                        title: "Lesson 4.2: Gain Configurations",
+                        content: `<p class="mb-4">The two primary gain configurations are:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>Non-Inverting Amplifier:</strong> Vo = Vi * (1 + Rf/Rin). Output is in phase.</li>
+                            <li><strong>Inverting Amplifier:</strong> Vo = Vi * (-Rf/Rin). Output is inverted.</li>
+                            <li><strong>Voltage Follower:</strong> Vo = Vi. Acts as a buffer to prevent signal loading.</li>
+                        </ul>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the gain of a voltage follower (buffer) op-amp circuit?", options: ["0", "1", "Rf/Rin"], ans: 1 },
+                        { q: "In a non-inverting op-amp config, if Rf = 10k and Rin = 1k, what is the gain?", options: ["10", "11", "9"], ans: 1 },
+                        { q: "What does infinite input impedance mean for an op-amp?", options: ["It draws no current from the signal source", "It conducts high outputs", "It blocks all outputs"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Configure a non-inverting amplifier with a voltage gain of 2.",
+                    components: ["LM741 Op-Amp", "Two 10k Ohm resistors", "9V dual power supply", "Signal generator", "Oscilloscope"],
+                    procedure: ["Connect a 10k resistor from output to inverting input.", "Connect another 10k from inverting input to ground.", "Feed a 1V sine wave to the non-inverting input.", "Observe output on oscilloscope."],
+                    expectedOutput: "The output is a clean sine wave with an amplitude of 2V, in phase with the input."
                 }
             }
         ]
@@ -2552,19 +2901,124 @@ Carry = A · B (AND)</pre>
                 lessons: [
                     {
                         title: "Lesson 1.1: What is a Real-Time Operating System?",
-                        content: "<p>A Real-Time Operating System (RTOS) is an operating system intended to serve real-time applications that process data as it comes in, typically without buffer delays. The key characteristic of an RTOS is the level of its consistency concerning the amount of time it takes to accept and complete an application's task.</p>"
+                        content: `<p class="mb-4">A Real-Time Operating System (RTOS) is an operating system intended to serve real-time applications that process data as it comes in, typically without buffer delays.</p>
+                        <p class="mb-4">The key characteristic of an RTOS is the level of its consistency concerning the amount of time it takes to accept and complete an application's task. Unlike generic OS schedulers, an RTOS guarantees deterministic response behaviors.</p>`
+                    },
+                    {
+                        title: "Lesson 1.2: Preemption and Context Switching",
+                        content: `<p class="mb-4">In a preemptive scheduler, the executing task can be interrupted and placed in the Ready state if a higher priority task becomes available to run.</p>
+                        <p class="mb-4">The process of saving the execution state (program counter, stack pointers, registers) of the running task and loading the state of the new task is called a context switch, managed by the scheduler's kernel port.</p>`
                     }
                 ],
                 quiz: {
                     questions: [
-                        { q: "What scheduling strategy suspends a lower priority task immediately for a higher one?", options: ["Cooperative", "Preemptive", "Round-Robin"], ans: 1 }
+                        { q: "What scheduling strategy suspends a lower priority task immediately for a higher one?", options: ["Cooperative", "Preemptive", "Round-Robin"], ans: 1 },
+                        { q: "What does deterministic behavior mean in an RTOS context?", options: ["Task execution timing is predictable and guaranteed", "Tasks run as fast as possible", "The scheduler picks tasks at random"], ans: 0 },
+                        { q: "Which memory structure stores a task's CPU registers during context switching?", options: ["Global variables section", "Task stack", "Heap memory"], ans: 1 }
                     ]
                 },
                 project: {
                     objective: "Create two basic tasks in FreeRTOS.",
-                    components: ["STM32 Nucleo Board", "FreeRTOS config"],
-                    procedure: ["Declare task functions.", "Use xTaskCreate to register tasks with different priorities.", "Start scheduler."],
+                    components: ["STM32 Nucleo Board", "FreeRTOS config", "IDE Toolchain"],
+                    procedure: ["Declare task functions.", "Use xTaskCreate to register tasks with different priorities.", "Start the FreeRTOS scheduler loop."],
                     expectedOutput: "Both tasks run in their respective intervals under scheduler control."
+                }
+            },
+            {
+                title: "Module 2: Task Priorities & States",
+                desc: "Understanding FreeRTOS scheduler weights, blocked/running states, and task yield controls.",
+                duration: "60 Min",
+                lessons: [
+                    {
+                        title: "Lesson 2.1: FreeRTOS Task States",
+                        content: `<p class="mb-4">A FreeRTOS task exists in one of the following states:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>Running:</strong> Currently executing on the CPU core.</li>
+                            <li><strong>Ready:</strong> Able to execute but waiting for CPU allocation.</li>
+                            <li><strong>Blocked:</strong> Waiting for a time delay (e.g., delay ticks) or a resource event.</li>
+                            <li><strong>Suspended:</strong> Taken out of scheduler rotation entirely.</li>
+                        </ul>`
+                    },
+                    {
+                        title: "Lesson 2.2: Scheduler Tick rate and vTaskDelay",
+                        content: `<p class="mb-4">The kernel tick timer interrupt runs at a configurable frequency (commonly 1000Hz, or a 1ms period). Using <code>vTaskDelay(500)</code> puts the task into the Blocked state for 500 tick interrupts, allowing lower priority tasks to run.</p>
+                        <p class="mb-4">Using busy delay loops (like <code>for</code> or <code>while</code> loops) keeps the task in the Running state, blocking other tasks of lower priority and wasting CPU cycles.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "Which state represents a task that is prepared to run but waiting for CPU allocation?", options: ["Running", "Ready", "Blocked"], ans: 1 },
+                        { q: "What FreeRTOS API function is used to delay a task and move it to the Blocked state?", options: ["vTaskDelay", "xTaskYield", "vTaskSuspend"], ans: 0 },
+                        { q: "What happens when two Ready tasks have the exact same priority in FreeRTOS?", options: ["The scheduler crashes", "They share CPU time via Round-Robin scheduling", "Only the task created first runs"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Configure task yields using vTaskDelay to toggle two onboard LEDs.",
+                    components: ["32-bit MCU Board", "FreeRTOS kernel", "Two LEDs"],
+                    procedure: ["Create Task A and Task B with priority 1.", "Use vTaskDelay(500) in Task A and vTaskDelay(1000) in Task B.", "Start the scheduler and observe execution times."],
+                    expectedOutput: "LED A toggles every 500ms and LED B toggles every 1000ms without blocking each other."
+                }
+            },
+            {
+                title: "Module 3: Semaphores & Mutexes",
+                desc: "Resolving resource sharing race conditions, priority inversion, and mutex locks.",
+                duration: "65 Min",
+                lessons: [
+                    {
+                        title: "Lesson 3.1: Semaphores for Synchronization",
+                        content: `<p class="mb-4">Semaphores are token-based synchronization tokens:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>Binary Semaphores:</strong> Hold either 0 or 1 token. Ideal for task-to-interrupt synchronization (unblocking a task when an interrupt fires).</li>
+                            <li><strong>Counting Semaphores:</strong> Hold multiple tokens. Used to manage pools of resources.</li>
+                        </ul>`
+                    },
+                    {
+                        title: "Lesson 3.2: Mutexes and Priority Inversion",
+                        content: `<p class="mb-4">A Mutex is a binary semaphore that supports priority inheritance. Priority inversion occurs when a low-priority task holds a lock that a high-priority task needs, and a medium-priority task preempts the low-priority task, indefinitely blocking the high-priority task.</p>
+                        <p class="mb-4">Priority inheritance temporarily raises the low-priority task's priority to match the high-priority task's level while it holds the lock, resolving the block.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What mechanism solves the Priority Inversion problem in FreeRTOS?", options: ["Task yield", "Priority Inheritance", "Round-Robin scheduling"], ans: 1 },
+                        { q: "What object is best suited to synchronize a task with a hardware interrupt?", options: ["Binary Semaphore", "Mutex", "Global integer"], ans: 0 },
+                        { q: "What is the key difference between a Mutex and a Binary Semaphore?", options: ["Mutexes support task ownership and priority inheritance", "Mutexes cannot be taken", "Binary semaphores are faster"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Protect a shared print buffer using a Mutex.",
+                    components: ["32-bit MCU Board", "USART transceiver", "FreeRTOS Mutex library"],
+                    procedure: ["Create two tasks that print long strings to USART.", "Create a mutex wrapper around the print call.", "Run both tasks simultaneously and verify serial outputs."],
+                    expectedOutput: "Printed strings appear sequentially on the serial console without letter scrambling."
+                }
+            },
+            {
+                title: "Module 4: Queues & Inter-task Communication",
+                desc: "Passing safe message buffers between concurrent threads using FreeRTOS queues.",
+                duration: "70 Min",
+                lessons: [
+                    {
+                        title: "Lesson 4.1: Thread-safe Queues",
+                        content: `<p class="mb-4">Queues are the primary form of inter-task communication. They are FIFO (First-In, First-Out) memory buffers. Reading or writing to a queue is thread-safe and manages task states automatically.</p>
+                        <p class="mb-4">If a task attempts to read from an empty queue, the scheduler blocks the task until data is written, avoiding CPU polling loops.</p>`
+                    },
+                    {
+                        title: "Lesson 4.2: Event Groups and Notifications",
+                        content: `<p class="mb-4">Event groups allow tasks to wait for combinations of bit flags. Task notifications are lightweight, fast alternatives to semaphores and queues that write directly to the target task's structure, saving RAM overhead.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "How is data passed into a FreeRTOS queue by default?", options: ["By reference", "By value (copied directly)", "Through pointers only"], ans: 1 },
+                        { q: "How many bits are available for flags in a 32-bit FreeRTOS event group?", options: ["8 bits", "24 bits", "32 bits"], ans: 1 },
+                        { q: "Why are queues preferred over global variables for task communication?", options: ["They use less memory", "They provide automatic task blocking and thread-safety", "They require no configuration"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Build a producer-consumer system passing sensor data structure.",
+                    components: ["32-bit MCU Board", "FreeRTOS Queue API"],
+                    procedure: ["Define a structure containing temperature and humidity values.", "Create a Queue of size 5.", "Write a producer task to post readings.", "Write a consumer task to print readings."],
+                    expectedOutput: "The consumer task wakes up and prints data logs exactly when the producer sends a new structure."
                 }
             }
         ]
@@ -2607,12 +3061,20 @@ Carry = A · B (AND)</pre>
                 lessons: [
                     {
                         title: "Lesson 1.1: AI at the Edge",
-                        content: "<p>Edge AI refers to deploying machine learning models directly onto hardware devices (like microcontrollers) instead of sending sensor data to a remote cloud server. This reduces latency, saves bandwidth, and increases privacy.</p>"
+                        content: `<p class="mb-4">Edge AI refers to deploying machine learning models directly onto hardware devices (like microcontrollers) instead of sending sensor data to a remote cloud server. This reduces latency, saves bandwidth, and increases privacy.</p>
+                        <p class="mb-4">However, edge hardware has tight hardware constraints, requiring specialized tinyML frameworks and model compression techniques.</p>`
+                    },
+                    {
+                        title: "Lesson 1.2: TensorFlow Lite Micro Overview",
+                        content: `<p class="mb-4">TensorFlow Lite Micro (TFLM) is a lightweight C++ interpreter designed to run neural network inference on chips with only kilobytes of memory.</p>
+                        <p class="mb-4">It does not require dynamic memory allocation (<code>malloc</code>), operating system support, or float-point hardware accelerators.</p>`
                     }
                 ],
                 quiz: {
                     questions: [
-                        { q: "What process reduces model sizes by converting floating point weights to 8-bit integers?", options: ["Quantization", "Gradient Descent", "Compilation"], ans: 0 }
+                        { q: "What process reduces model sizes by converting floating point weights to 8-bit integers?", options: ["Quantization", "Gradient Descent", "Compilation"], ans: 0 },
+                        { q: "Why is Edge AI preferred over Cloud AI for real-time collision detection?", options: ["It features lower latency", "It allows larger model sizes", "It requires more server bandwidth"], ans: 0 },
+                        { q: "Does TensorFlow Lite Micro require dynamic memory allocation at runtime?", options: ["Yes, for storing inputs", "No, it operates entirely on static buffers", "Only when running on ARM chips"], ans: 1 }
                     ]
                 },
                 project: {
@@ -2620,6 +3082,100 @@ Carry = A · B (AND)</pre>
                     components: ["ESP32-S3 board", "TF Micro library"],
                     procedure: ["Load quantized model array.", "Set up tensor arena memory.", "Run mock inference with dummy input."],
                     expectedOutput: "The ESP32 logs prediction probabilities without cloud connection."
+                }
+            },
+            {
+                title: "Module 2: ESP32 Telemetry & MQTT",
+                desc: "Configuring local Wi-Fi, publishing telemetry data, and parsing custom JSON command packets.",
+                duration: "60 Min",
+                lessons: [
+                    {
+                        title: "Lesson 2.1: Wi-Fi Stack and TCP/IP on ESP32",
+                        content: `<p class="mb-4">The ESP32 microcontroller houses an integrated 2.4GHz Wi-Fi radio. In firmware, we utilize the ESP-IDF Wi-Fi driver and LwIP TCP/IP stack to configure stations, request IP addresses, and handle network reconnections.</p>`
+                    },
+                    {
+                        title: "Lesson 2.2: The MQTT Protocol",
+                        content: `<p class="mb-4">MQTT (Message Queuing Telemetry Transport) is a lightweight publish-subscribe protocol running over TCP. Devices (clients) publish data to logical path strings called 'topics' hosted on an MQTT broker. Other clients subscribe to those topics to receive real-time telemetry updates.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "Which MQTT QoS level guarantees a message is delivered exactly once?", options: ["QoS 0", "QoS 1", "QoS 2"], ans: 2 },
+                        { q: "What is the default TCP port for unencrypted MQTT connections?", options: ["80", "1883", "8883"], ans: 1 },
+                        { q: "What does the publish-subscribe pattern decouple?", options: ["Voltage levels", "Data encoders", "Producers and consumers of data"], ans: 2 }
+                    ]
+                },
+                project: {
+                    objective: "Establish connection to a public MQTT broker and publish test telemetry.",
+                    components: ["ESP32 board", "Wi-Fi Router Access", "MQTT Broker Connection"],
+                    procedure: ["Code Wi-Fi credentials in firmware.", "Initialize ESP-MQTT library.", "Publish a JSON payload containing sensor mock variables to topic 'thrulabs/sensor/temp'."],
+                    expectedOutput: "Telemetry publishes successfully and appears on the MQTT subscriber terminal."
+                }
+            },
+            {
+                title: "Module 3: ML Model Quantization",
+                desc: "Using Post-Training Quantization (PTQ) to shrink ML model arrays from float32 to int8 formats.",
+                duration: "65 Min",
+                lessons: [
+                    {
+                        title: "Lesson 3.1: Mathematical Mapping of Quantization",
+                        content: `<p class="mb-4">Quantization maps a wide range of floating-point values (32-bit float) to a narrow range of integers (8-bit signed integer). The linear mapping equation is:</p>
+                        <div class="p-3 bg-white/5 border border-white/10 rounded-xl mb-4 font-mono text-[10px] text-center">
+                            r = S * (q - Z)
+                        </div>
+                        <p class="mb-4">Where <code>r</code> is the real float value, <code>S</code> is the scale factor, <code>q</code> is the quantized integer, and <code>Z</code> is the zero-point offset.</p>`
+                    },
+                    {
+                        title: "Lesson 3.2: Post-Training Quantization",
+                        content: `<p class="mb-4">Post-Training Quantization (PTQ) compresses a model after it has finished training. Using a representative dataset of typical input samples allows calibration of dynamic range activations, preserving model accuracy during conversion.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What percentage size reduction is achieved when converting a model from float32 to int8?", options: ["50%", "75%", "90%"], ans: 1 },
+                        { q: "Why is integer math preferred on edge microcontrollers?", options: ["It is more accurate", "Most tiny microcontrollers lack floating-point hardware accelerators", "It increases model capacity"], ans: 1 },
+                        { q: "What is the role of a representative dataset in quantization?", options: ["To retrain the model weights", "To calibrate the dynamic range of activations", "To check the network speed"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Convert a Keras model to a quantized TensorFlow Lite flatbuffer array.",
+                    components: ["Python environment", "TensorFlow framework packages"],
+                    procedure: ["Load a trained Keras model.", "Configure TFLiteConverter with optimization flags.", "Export static C-array header file."],
+                    expectedOutput: "A compiled header file containing the model weights as a static byte array."
+                }
+            },
+            {
+                title: "Module 4: On-Chip Inference & Deployment",
+                desc: "Running local machine learning model logic on ESP32 chips using TensorFlow Lite Micro.",
+                duration: "70 Min",
+                lessons: [
+                    {
+                        title: "Lesson 4.1: Allocating the Tensor Arena",
+                        content: `<p class="mb-4">Unlike standard Python environments that allocate memory dynamically, TensorFlow Lite Micro requires the developer to allocate a static byte array called the <strong>Tensor Arena</strong>.</p>
+                        <p class="mb-4">All intermediate calculations, input tensors, and output tensors are stored within this arena space. Under-allocating this array causes the interpreter initialization to fail.</p>`
+                    },
+                    {
+                        title: "Lesson 4.2: Writing the Inference Loop",
+                        content: `<p class="mb-4">The edge inference sequence consists of three structural steps:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li>Copy raw digital sensor values into the interpreter's input tensor.</li>
+                            <li>Call <code>interpreter-&gt;Invoke()</code> to run the model layers.</li>
+                            <li>Read classification probabilities or regression outputs from the output tensor.</li>
+                        </ul>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the static memory array allocated to store intermediate variables during TF Micro inference?", options: ["Tensor Arena", "Heap Stack", "DMA buffer"], ans: 0 },
+                        { q: "Which interpreter method is called to execute model inference?", options: ["Run()", "Start()", "Invoke()"], ans: 2 },
+                        { q: "Where are model output predictions read from after invocation?", options: ["SRAM buffers", "Output Tensors", "Input Tensors"], ans: 1 }
+                    ]
+                },
+                project: {
+                    objective: "Run local sine-wave approximation inference on the ESP32 chip.",
+                    components: ["ESP32-S3 Board", "TF Lite Micro library", "model array header"],
+                    procedure: ["Initialize interpreter.", "Allocate a 10KB Tensor Arena.", "Feed x-coordinates in a loop.", "Log predicted y-values."],
+                    expectedOutput: "The ESP32 logs correct math outputs matching a sine curve on the serial console."
                 }
             }
         ]
@@ -2662,19 +3218,119 @@ Carry = A · B (AND)</pre>
                 lessons: [
                     {
                         title: "Lesson 1.1: The Power of DMA",
-                        content: "<p>Direct Memory Access (DMA) allows hardware subsystems to access main system memory independently of the central processing unit (CPU). This is crucial for high-speed communication since the CPU does not have to copy each byte individually, freeing it up for computation.</p>"
+                        content: `<p class="mb-4">Direct Memory Access (DMA) allows hardware subsystems to access main system memory independently of the central processing unit (CPU). This is crucial for high-speed communication since the CPU does not have to copy each byte individually, freeing it up for computation.</p>
+                        <p class="mb-4">By offloading data transfer loops (e.g., streaming ADC buffers directly to SRAM), the CPU can go to sleep or execute heavy DSP equations.</p>`
+                    },
+                    {
+                        title: "Lesson 1.2: DMA Channels, Streams, and Double Buffering",
+                        content: `<p class="mb-4">DMA controllers manage multiple channels mapped to specific hardware peripherals. Double buffering uses two memory blocks: while the DMA controller is writing new data into Buffer A, the CPU reads processed data from Buffer B, switching roles when the transfer completes.</p>`
                     }
                 ],
                 quiz: {
                     questions: [
-                        { q: "Which component handles data copy from peripheral registers directly to SRAM?", options: ["CPU Scheduler", "DMA Controller", "NVIC"], ans: 1 }
+                        { q: "Which component handles data copy from peripheral registers directly to SRAM?", options: ["CPU Scheduler", "DMA Controller", "NVIC"], ans: 1 },
+                        { q: "What is the primary benefit of double buffering?", options: ["It speeds up clock signals", "It prevents memory read/write collisions", "It uses less RAM"], ans: 1 },
+                        { q: "Does DMA copy require active CPU instruction execution cycles?", options: ["Yes, for every byte", "No, it transfers data independently of the CPU", "Only on 8-bit controllers"], ans: 1 }
                     ]
                 },
                 project: {
                     objective: "Configure a DMA stream to copy ADC buffer registers to SRAM automatically.",
-                    components: ["32-bit MCU Board"],
+                    components: ["32-bit MCU Board", "Multimeter"],
                     procedure: ["Initialize ADC peripheral.", "Configure DMA channel matching ADC trigger.", "Enable DMA double buffer."],
                     expectedOutput: "ADC samples populate memory array without CPU intervention."
+                }
+            },
+            {
+                title: "Module 2: Low-Power Modes & Sleep Registers",
+                desc: "Configuring sleep, stop, and standby modes with active RTC and external wakeup events.",
+                duration: "70 Min",
+                lessons: [
+                    {
+                        title: "Lesson 2.1: Microcontroller Low-Power States",
+                        content: `<p class="mb-4">To maximize battery life, modern microcontrollers support distinct power-saving states:</p>
+                        <ul class="list-disc pl-4 space-y-1 mb-4">
+                            <li><strong>Sleep Mode:</strong> Only the CPU core stops. Peripherals and clocks continue running. Very fast wakeup.</li>
+                            <li><strong>Stop Mode:</strong> Clocks to the core and peripherals are halted. SRAM and registers are preserved. Wakeup takes microseconds.</li>
+                            <li><strong>Standby Mode:</strong> Internal voltage regulator is shut down. Registers and SRAM contents are lost. Wakeup takes milliseconds and acts as a cold reboot.</li>
+                        </ul>`
+                    },
+                    {
+                        title: "Lesson 2.2: Wakeup Triggers and Clock Gating",
+                        content: `<p class="mb-4">Waking up from deep sleep states requires configuring asynchronous events, such as external GPIO interrupts, real-time clock (RTC) alarms, or watchdog reset events.</p>
+                        <p class="mb-4">Clock gating disables clock feeds to unused peripherals during run mode, cutting dynamic power draw.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "Which low-power mode preserves SRAM contents but shuts down all system clocks?", options: ["Sleep Mode", "Stop Mode", "Standby Mode"], ans: 1 },
+                        { q: "Which hardware component can wake an MCU from Standby mode at a specific time?", options: ["RTC (Real-Time Clock)", "Timer 1", "SRAM Controller"], ans: 0 },
+                        { q: "What does clock gating accomplish?", options: ["Reduces dynamic power by cutting clocks to inactive peripherals", "Increases voltage rails", "Speeds up CPU calculations"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Measure current draw reduction using Stop mode.",
+                    components: ["32-bit MCU Board", "External Multimeter", "Push-button switch"],
+                    procedure: ["Measure run-mode current draw.", "Write code to configure MCU to enter Stop mode.", "Measure low-power current draw.", "Wake the MCU using a GPIO button interrupt."],
+                    expectedOutput: "Current draw drops from 20mA to under 10uA in Stop mode, rising back to 20mA on button press."
+                }
+            },
+            {
+                title: "Module 3: Device Driver Development",
+                desc: "Writing bare-metal hardware drivers for SPI and I2C peripherals using device datasheets.",
+                duration: "75 Min",
+                lessons: [
+                    {
+                        title: "Lesson 3.1: Register-level Peripheral Control",
+                        content: `<p class="mb-4">Device drivers interact with hardware by reading and writing to memory-mapped registers. In C, registers are declared as volatile pointers to prevent the compiler from optimizing out repeated read/write access loops:</p>
+                        <pre class="bg-black/40 border border-white/5 p-3 rounded-lg text-[9px] text-emerald-400 font-mono overflow-x-auto leading-relaxed mb-4">
+#define GPIOA_MODER *((volatile uint32_t*)0x40020000)</pre>`
+                    },
+                    {
+                        title: "Lesson 3.2: SPI and I2C Driver Routines",
+                        content: `<p class="mb-4">Writing bus drivers requires matching peripheral timing protocols. For I2C, you must generate START/STOP conditions and verify ACKs. For SPI, you must control chip select (CS) lines and read/write shift buffers concurrently.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What keyword prevents the compiler from optimizing memory-mapped register pointer accesses?", options: ["static", "volatile", "register"], ans: 1 },
+                        { q: "Which event starts any I2C bus transaction?", options: ["Pulling SDA low while SCL remains high", "Setting SCL low", "Generating an ACK bit"], ans: 0 },
+                        { q: "What does it mean if a register is designated read-only?", options: ["Writing has no effect and only reflects hardware status", "It can only be read once", "It stores instructions"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Write a bare-metal register driver for an SPI temperature sensor.",
+                    components: ["32-bit MCU Board", "SPI Temperature Sensor", "Logic Analyzer"],
+                    procedure: ["Set SPI configuration registers for clock polarity.", "Implement transfer function.", "Read raw temperature register address.", "Convert data bytes."],
+                    expectedOutput: "MCU reads raw sensor registers and prints temperature logs accurately."
+                }
+            },
+            {
+                title: "Module 4: Memory Protection & Safety",
+                desc: "Configuring Hardware MPUs, watchdog recovery, and performing stack buffer audits.",
+                duration: "80 Min",
+                lessons: [
+                    {
+                        title: "Lesson 4.1: The Memory Protection Unit (MPU)",
+                        content: `<p class="mb-4">The Memory Protection Unit (MPU) monitors memory transactions. It divides the memory map into regions and assigns access privileges (e.g., user mode tasks cannot write to operating system code space or core registers).</p>
+                        <p class="mb-4">If a task attempts unauthorized access, the MPU triggers a hard fault exception, preventing system-wide crashes.</p>`
+                    },
+                    {
+                        title: "Lesson 4.2: Watchdogs and Stack Overflows",
+                        content: `<p class="mb-4">Watchdog timers boot the system if code hangs. Stack overflows are detected by checking 'guard bands'—unique byte patterns written at the end of stack boundaries that trigger errors if overwritten.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What CPU exception is triggered when a task accesses unauthorized memory?", options: ["MemManage Fault / Hard Fault", "NMI", "Usage Fault"], ans: 0 },
+                        { q: "How does a Watchdog Timer prevent system lockups?", options: ["It resets the system if not periodically cleared", "It scales CPU speed", "It blocks interrupts"], ans: 0 },
+                        { q: "What is a stack guard band?", options: ["A reserved memory pattern checked to detect stack overflows", "A hardware filter", "A compile variable"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Configure a Windowed Watchdog Timer (WWDG) to reset on system freeze.",
+                    components: ["MCU Development Board"],
+                    procedure: ["Initialize WWDG registers.", "Add watchdog refresh code inside main loop.", "Simulate a deadlock hang using an infinite delay.", "Observe system recovery reset."],
+                    expectedOutput: "The MCU resets automatically and logs a watchdog reset code on boot when the loop freezes."
                 }
             }
         ]
@@ -2716,19 +3372,110 @@ Carry = A · B (AND)</pre>
                 lessons: [
                     {
                         title: "Lesson 1.1: The Lifecycle Phases",
-                        content: "<p>Developing industrial electronics requires following rigid phases: requirements analysis, schematic capture, layout design, prototyping, testing, verification, FCC/CE certification review, and manufacturing transfer.</p>"
+                        content: `<p class="mb-4">Developing industrial electronics requires following rigid phases: requirements analysis, schematic capture, layout design, prototyping, testing, verification, FCC/CE certification review, and manufacturing transfer.</p>
+                        <p class="mb-4">Strict engineering logs and design reviews ensure quality and reduce costs before ordering factory assembly runs.</p>`
+                    },
+                    {
+                        title: "Lesson 1.2: Design Specification Documentation",
+                        content: `<p class="mb-4">A design specification document lists target features, electrical voltage tolerances, environmental operating bounds, and manufacturing cost limits, guiding design decisions.</p>`
                     }
                 ],
                 quiz: {
                     questions: [
-                        { q: "What is a document listing all components, quantities, and reference designators called?", options: ["Schematic", "Bill of Materials (BOM)", "Data Sheet"], ans: 1 }
+                        { q: "What is a document listing all components, quantities, and reference designators called?", options: ["Schematic", "Bill of Materials (BOM)", "Data Sheet"], ans: 1 },
+                        { q: "Which phase determines electrical properties and components layout?", options: ["Schematic & Board Layout", "Product Shipping", "Customer Marketing"], ans: 0 },
+                        { q: "Why is CE/FCC compliance testing necessary?", options: ["To guarantee high-speed software execution", "To legally sell digital electronic products in the market", "To check component costs"], ans: 1 }
                     ]
                 },
                 project: {
                     objective: "Compile a professional BOM sheet matching design rules.",
-                    components: ["Computer"],
-                    procedure: ["Select component models.", "Write manufacturer codes, quantities, and package details in a sheet."],
-                    expectedOutput: "A complete BOM matching the layout schematic."
+                    components: ["Computer", "Electronic parts database browser"],
+                    procedure: ["Select component models.", "Write manufacturer codes, quantities, and package details in a sheet.", "Check components lifecycle availability status."],
+                    expectedOutput: "A complete BOM sheet listing parts, packages, costs, and alternates."
+                }
+            },
+            {
+                title: "Module 2: Sourcing Components & BOM Management",
+                desc: "Selecting electrical parts, planning power budgets, and organizing manufacturer spreadsheets.",
+                duration: "80 Min",
+                lessons: [
+                    {
+                        title: "Lesson 2.1: Sourcing Parameters",
+                        content: `<p class="mb-4">When choosing components for production, engineers must evaluate electrical tolerances, thermal dissipation coefficients, package sizes, price scales, and lifecycle availability (e.g., avoiding Obsolete parts).</p>`
+                    },
+                    {
+                        title: "Lesson 2.2: Managing the Bill of Materials",
+                        content: `<p class="mb-4">A structured Bill of Materials (BOM) contains manufacture codes, supplier links, package footprints, and pricing. Identifying pin-compatible alternates protects production runs from supply chain delays.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What parameter indicates if a component is active, deprecated, or obsolete?", options: ["Lifecycle Status", "Tolerance", "Footprint"], ans: 0 },
+                        { q: "Why is it important to define secondary source alternates in a BOM?", options: ["To prevent production stops due to supplier shortages", "To increase board sizes", "To speed up routing"], ans: 0 },
+                        { q: "What does footprint refer to in electronic component sourcing?", options: ["Physical package size and layout of solder pads on the PCB", "The carbon footprint of shipping", "The power dissipation rate"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Build a complete component budget sheet for an IoT sensor hub.",
+                    components: ["Part datasheet access", "Sourcing portal access"],
+                    procedure: ["Find MCU, voltage regulator, sensor, and passive models.", "List quantities, package specs, and costs for 1000 unit production.", "Verify price scaling limits."],
+                    expectedOutput: "A structured BOM CSV sheet showing total build cost under $12 per board."
+                }
+            },
+            {
+                title: "Module 3: Multi-layer PCB Layout Design",
+                desc: "Handling differential trace impedances, multi-layer stackups, and shielding rings.",
+                duration: "90 Min",
+                lessons: [
+                    {
+                        title: "Lesson 3.1: Multi-layer Stackup Configurations",
+                        content: `<p class="mb-4">High-speed and dense designs require 4 or more layer PCBs. Ground planes and power planes occupy inner layers. This provides low-impedance signal return paths, reducing electromagnetic interference (EMI) loops.</p>`
+                    },
+                    {
+                        title: "Lesson 3.2: Controlled Impedance and High-Speed Routing",
+                        content: `<p class="mb-4">High-frequency signals (e.g., USB, Ethernet, RF) must be routed over transmission lines with matched characteristic impedance (e.g., 90 or 50 Ohms) calculated from track width and dielectric height parameters.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the benefit of routing ground planes directly beneath high-speed signals?", options: ["Minimizes loop area and reduces EMI", "It decreases track resistance", "It increases voltage values"], ans: 0 },
+                        { q: "What trace geometry parameters determine its characteristic impedance?", options: ["Length only", "Trace width, dielectric height, and dielectric constant", "Voltage levels"], ans: 1 },
+                        { q: "Why are vias avoided in high-frequency RF transmission traces?", options: ["They introduce capacitive and inductive impedance discontinuities", "They are too expensive", "They disconnect tracks"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Route a USB differential data pair in KiCad.",
+                    components: ["KiCad Layout Editor Software"],
+                    procedure: ["Configure differential pair constraints (90 Ohm impedance).", "Route lines in parallel.", "Keep length matching within 1mm tolerances."],
+                    expectedOutput: "Routed board layout passes DRC check with correct differential pair widths and matched lengths."
+                }
+            },
+            {
+                title: "Module 4: Testing, Verification & Compliance",
+                desc: "Developing hardware test plans, utilizing debug probes, and preparing FCC/CE folders.",
+                duration: "90 Min",
+                lessons: [
+                    {
+                        title: "Lesson 4.1: Prototype Bring-up Procedures",
+                        content: `<p class="mb-4">Bringing up a new hardware board requires structured tests. Before applying power, check for shorts between power rails and ground. Power the board using a current-limiting power supply, check voltage regulator outputs, and probe clocks.</p>`
+                    },
+                    {
+                        title: "Lesson 4.2: EMC Compliance and Certifications",
+                        content: `<p class="mb-4">Commercial electronics must undergo electromagnetic compatibility (EMC) testing. Radiated and conducted emissions must stay below limits defined by agencies (FCC Part 15 in the US, CE in Europe) before product sales are legally allowed.</p>`
+                    }
+                ],
+                quiz: {
+                    questions: [
+                        { q: "What is the very first step in bringing up a newly manufactured prototype board?", options: ["Check for short circuits between power rails and ground", "Flash the main operating system", "Run at full power overnight"], ans: 0 },
+                        { q: "What regulatory certification is required to legally sell digital electronics in the United States?", options: ["FCC Certification", "IEEE Standard Approval", "CE Mark"], ans: 0 },
+                        { q: "What is the difference between radiated and conducted emissions?", options: ["Radiated travels through air; conducted travels along power cables", "Conducted is digital; radiated is analog", "There is no difference"], ans: 0 }
+                    ]
+                },
+                project: {
+                    objective: "Author a detailed hardware test plan document for a wireless gateway.",
+                    components: ["Documentation editor or Markdown processor"],
+                    procedure: ["Write step-by-step procedures for power checks.", "Define firmware flashing diagnostics.", "Include radio power validation tests."],
+                    expectedOutput: "A detailed test plan specifying voltage limits, diagnostic steps, and pass/fail criteria."
                 }
             }
         ]
