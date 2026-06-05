@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Learning Experience</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .academy-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .academy-card:hover {
+            border-color: rgba(94, 106, 210, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .academy-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .group:hover .dropdown-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .classroom-sidebar-btn.active {
+            background: rgba(94, 106, 210, 0.15);
+            border-color: rgba(94, 106, 210, 0.4);
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        .classroom-tab-btn.active {
+            border-bottom: 2px solid #5E6AD2;
+            color: #FFFFFF;
+        }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #printable-certificate, #printable-certificate * { visibility: visible; }
+            #printable-certificate { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Tools</a>
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace Container -->
+    <div id="course-page-wrapper" class="hidden relative z-10 pt-36 px-4 md:px-6 pb-24 max-w-[1280px] mx-auto">
+        <!-- Navigation Tab Menu Bar -->
+        <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-8">
+            <div class="flex items-center gap-6 text-xs font-mono uppercase tracking-widest">
+                <button onclick="switchView('overview')" id="tab-overview" class="classroom-tab-btn active py-2 hover:text-white transition-colors">Course Home</button>
+                <button onclick="switchView('classroom')" id="tab-classroom" class="classroom-tab-btn py-2 hover:text-white transition-colors flex items-center gap-2">
+                    Classroom Workspace <span id="workspace-badge" class="px-1.5 py-0.5 rounded-full bg-accent/20 text-[9px] text-accent-bright border border-accent/30 font-sans tracking-normal font-bold">Live</span>
+                </button>
+                <button onclick="switchView('certification')" id="tab-certification" class="classroom-tab-btn py-2 hover:text-white transition-colors">Certification</button>
+            </div>
+            
+            <a href="academy.html" class="text-[10px] font-mono text-white/60 hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wider">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Hub
+            </a>
+        </div>
+
+        <!-- VIEW 1: CLASSROOM LANDING VIEW -->
+        <div id="view-overview" class="space-y-16">
+            <!-- Hero Card -->
+            <section id="course-hero" class="academy-card p-8 md:p-12 rounded-[2.5rem] relative overflow-hidden group">
+                <div class="spotlight"></div>
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="flex flex-wrap gap-2">
+                            <span id="hero-category" class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 text-accent-bright text-[9px] font-mono uppercase tracking-widest">Category</span>
+                            <span id="hero-difficulty" class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-[9px] font-mono uppercase tracking-widest">--</span>
+                        </div>
+                        <h1 id="hero-title" class="text-3xl md:text-5xl font-display font-extrabold tracking-tight text-white leading-tight">Course Title</h1>
+                        <p id="hero-desc" class="text-[#BFC5D2] text-sm md:text-base font-light leading-relaxed max-w-3xl">Course Description</p>
+                        
+                        <div class="flex flex-wrap gap-6 items-center pt-4">
+                            <button onclick="startLearningAction()" class="px-8 py-3.5 bg-white text-black hover:bg-accent hover:text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all shadow-xl hover-target">
+                                Start Learning
+                            </button>
+                            <button onclick="continueLearningAction()" id="hero-btn-continue" class="px-8 py-3.5 bg-white/5 border border-white/10 hover:bg-white/15 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all hover-target hidden">
+                                Continue Learning
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Card -->
+                    <div class="academy-card p-6 rounded-3xl border border-white/10 bg-black/40 space-y-4 flex flex-col justify-between">
+                        <div class="flex justify-between items-center font-mono">
+                            <span class="text-[9px] uppercase text-white/40 tracking-wider">Overall Progress</span>
+                            <span id="progress-pct" class="text-xs text-accent-bright font-bold">0%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div id="progress-bar" class="h-full bg-gradient-to-r from-accent to-accent-bright transition-all duration-700" style="width: 0%;"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-[10px] font-mono border-t border-white/5 pt-3">
+                            <div class="flex flex-col">
+                                <span class="text-white/30 text-[8px] uppercase">Duration</span>
+                                <span id="hero-duration" class="font-bold text-white">--</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-white/30 text-[8px] uppercase">Lessons</span>
+                                <span id="hero-lessons" class="font-bold text-white">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Grid Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Overview details -->
+                <div class="lg:col-span-2 space-y-12">
+                    <section class="space-y-4">
+                        <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                            <span class="w-1.5 h-5 rounded bg-accent"></span> Course Overview
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div class="academy-card p-5 rounded-2xl space-y-2">
+                                <h4 class="font-mono text-accent-bright uppercase text-[10px] tracking-wider">What you will learn</h4>
+                                <ul id="learn-list" class="space-y-2 text-[#BFC5D2] list-disc pl-4"></ul>
+                            </div>
+                            <div class="academy-card p-5 rounded-2xl space-y-2">
+                                <h4 class="font-mono text-emerald-400 uppercase text-[10px] tracking-wider">Skills gained</h4>
+                                <ul id="skills-list" class="space-y-2 text-[#BFC5D2] list-disc pl-4"></ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Learning Path vertical roadmap -->
+                    <section class="space-y-6">
+                        <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                            <span class="w-1.5 h-5 rounded bg-purple-500"></span> Learning Roadmap
+                        </h2>
+                        <div id="learning-roadmap-path" class="relative pl-8 border-l border-white/10 space-y-8">
+                            <!-- Dynamic roadmap steps -->
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Sidebar Metadata Box -->
+                <div class="space-y-8">
+                    <section class="academy-card p-6 rounded-[2rem] space-y-4">
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-white/5 pb-2">
+                            <i data-lucide="info" class="w-4 h-4 text-accent-bright"></i> Career & Requirements
+                        </h3>
+                        <div class="space-y-4 text-xs">
+                            <div>
+                                <span class="text-[#D1D5DB] block text-[9px] uppercase tracking-wider font-mono mb-1">Career Relevance</span>
+                                <p id="career-relevance" class="text-[#BFC5D2] font-light leading-relaxed">--</p>
+                            </div>
+                            <div>
+                                <span class="text-[#D1D5DB] block text-[9px] uppercase tracking-wider font-mono mb-1">Tools Required</span>
+                                <p id="tools-required" class="text-[#BFC5D2] font-mono text-[10px] leading-relaxed">--</p>
+                            </div>
+                            <div>
+                                <span class="text-[#D1D5DB] block text-[9px] uppercase tracking-wider font-mono mb-1">Prerequisites</span>
+                                <ul id="prerequisites-list" class="space-y-1 list-disc pl-4 text-[#BFC5D2]"></ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="academy-card p-6 rounded-[2rem] bg-gradient-to-br from-accent/10 to-transparent border border-accent/20 space-y-4">
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="award" class="w-4 h-4 text-emerald-400"></i> Certification Met
+                        </h3>
+                        <div id="cert-requirements-checklist" class="space-y-2 text-[10.5px] font-mono text-[#BFC5D2]">
+                            <!-- Dynamic checklist indicators -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: ACTIVE CLASSROOM WORKSPACE -->
+        <div id="view-classroom" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Left Navigation Sidebar -->
+            <aside class="lg:col-span-1 academy-card rounded-3xl p-5 bg-surface/80 border border-white/10 h-[calc(100vh-250px)] min-h-[500px] flex flex-col justify-between overflow-y-auto scrollbar-hide">
+                <div class="space-y-6">
+                    <h3 class="text-[10px] font-mono text-[#D1D5DB] uppercase tracking-widest border-b border-white/5 pb-2 flex items-center gap-2">
+                        <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Course Syllabus
+                    </h3>
+                    <div id="classroom-syllabus-tree" class="space-y-4 text-xs">
+                        <!-- Dynamic Sidebar Accordions -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content panel -->
+            <main class="lg:col-span-3 academy-card rounded-3xl p-8 bg-black/60 border border-white/10 min-h-[600px] flex flex-col justify-between relative overflow-hidden group">
+                <div class="spotlight"></div>
+                <div class="relative z-10 flex-1 flex flex-col justify-between" id="classroom-content-pane">
+                    <!-- Dynamic Classroom active viewer content -->
+                </div>
+            </main>
+        </div>
+
+        <!-- VIEW 3: CERTIFICATION HUB -->
+        <div id="view-certification" class="hidden">
+            <div id="certificate-status-box" class="max-w-2xl mx-auto text-center space-y-8 py-12">
+                <div class="w-20 h-20 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent-bright mx-auto">
+                    <i data-lucide="award" class="w-10 h-10"></i>
+                </div>
+                <div class="space-y-3">
+                    <h2 class="text-2xl font-display font-extrabold text-white">Course Certification Gate</h2>
+                    <p class="text-[#BFC5D2] text-xs max-w-sm mx-auto font-light leading-relaxed">
+                        Earn your official THRULABS academic certificate by completing all lessons, passing module quizzes, and compiling the capstone project checklist.
+                    </p>
+                </div>
+                
+                <!-- Requirements progress ticks -->
+                <div class="academy-card p-6 rounded-2xl max-w-md mx-auto text-left font-mono text-xs space-y-4">
+                    <h4 class="text-[9px] uppercase tracking-wider text-white/40 border-b border-white/5 pb-2 font-mono">Completion Checklist</h4>
+                    <div class="space-y-2.5 text-[#BFC5D2]">
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2"><i id="cert-chk-lessons-ico" data-lucide="square" class="w-4 h-4 text-zinc-500"></i> Completed Lessons</span>
+                            <span id="cert-chk-lessons-val" class="font-bold">0 / 0</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2"><i id="cert-chk-quizzes-ico" data-lucide="square" class="w-4 h-4 text-zinc-500"></i> Passed Module Quizzes</span>
+                            <span id="cert-chk-quizzes-val" class="font-bold">0 / 0</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2"><i id="cert-chk-projects-ico" data-lucide="square" class="w-4 h-4 text-zinc-500"></i> Approved Projects</span>
+                            <span id="cert-chk-projects-val" class="font-bold">0 / 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="certificate-unlock-pane" class="pt-4">
+                    <!-- Dynamic button state -->
+                </div>
+            </div>
+            
+            <!-- Printable Certificate Box (Hidden by default, shown when printing or unlocked) -->
+            <div id="printable-certificate" class="hidden mt-12 academy-card p-12 md:p-16 rounded-[2.5rem] border border-accent/20 bg-[#0B0C10] max-w-4xl mx-auto shadow-2xl relative text-center space-y-8 font-sans overflow-hidden">
+                <div class="absolute inset-0 bg-radial-gradient(circle at center, rgba(94,106,210,0.06) 0%, transparent 80%) pointer-events-none"></div>
+                <div class="flex justify-between items-center border-b border-white/10 pb-6">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded bg-white flex items-center justify-center">
+                            <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                        </div>
+                        <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase">THRULABS</span>
+                    </div>
+                    <span class="text-[9px] font-mono text-zinc-500 tracking-wider">ACADEMIC ECOSYSTEM</span>
+                </div>
+                
+                <div class="space-y-6 py-6">
+                    <span class="text-xs font-mono text-accent-bright tracking-[0.25em] uppercase font-bold">Certificate of Completion</span>
+                    <h1 class="text-3xl md:text-5xl font-display font-extrabold text-white leading-tight">Alex Mercer</h1>
+                    <p class="text-[#BFC5D2] text-sm font-light leading-relaxed max-w-xl mx-auto">
+                        has successfully completed all laboratory exercises, hardware assessments, and final examinations required to demonstrate technical proficiency in
+                    </p>
+                    <h2 id="cert-course-name" class="text-xl md:text-2xl font-mono font-bold text-white tracking-wide">ARDUINO FUNDAMENTALS</h2>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-6 pt-8 border-t border-white/10 font-mono text-[10px] text-left text-zinc-400">
+                    <div>
+                        <span class="text-[8px] uppercase tracking-wider block text-white/40 mb-1">Issue Date</span>
+                        <span id="cert-issue-date" class="text-white font-bold">June 4, 2026</span>
+                    </div>
+                    <div>
+                        <span class="text-[8px] uppercase tracking-wider block text-white/40 mb-1">Verification Code</span>
+                        <span id="cert-verification-code" class="text-white font-bold">TL-2026-XXXXX</span>
+                    </div>
+                    <div class="col-span-2 md:col-span-1 text-right">
+                        <span class="text-[8px] uppercase tracking-wider block text-white/40 mb-1">Grading Authority</span>
+                        <span class="text-emerald-400 font-bold uppercase">Passed with Distinction</span>
+                    </div>
+                </div>
+                
+                <button onclick="window.print()" class="no-print mt-6 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Print Certificate
+                </button>
+                <a id="cert-verify-link" href="#" class="no-print mt-6 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> View Verification Page
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Screen container -->
+    <div id="error-screen" class="hidden">
+        <div class="flex flex-col items-center justify-center h-screen space-y-4 bg-base font-sans text-white text-center p-6">
+            <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h1 class="text-xl font-display font-extrabold tracking-wide uppercase">Course Not Found</h1>
+            <p class="text-[#BFC5D2] text-xs max-w-sm">The requested course could not be found.</p>
+            <a href="academy.html" class="px-6 py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-accent hover:text-white transition-all shadow-xl font-mono">
+                Return to Academy
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50 relative z-10">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-gray-300 uppercase">Academy Ecosystem</span>
+            </div>
+            <div class="flex gap-8 font-mono text-[9px] text-gray-300 uppercase tracking-[0.2em]">
+                <a href="academy.html" class="hover:text-white hover-target transition-colors">Learning LMS</a>
+                <a href="academy.html#section-verification" class="hover:text-white hover-target transition-colors">Certification Verify</a>
+            </div>
+            <p class="text-[8px] text-gray-300/40 font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL LEARNING AUTHORITY</p>
+        </div>
+    </footer>
+
+    <!-- Course Database Content -->
+    <script src="learn_content.js"></script>
+
+    <!-- Learning App Logic -->
+    <script>
+        lucide.createIcons();
+
+        // Canvas Coordinates listener
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        // Spotlight
+        function addSpotlightEffect(card) {
+            const spotlight = card.querySelector('.spotlight');
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (spotlight) {
+                    spotlight.style.transform = `translate3d(${x - 200}px, ${y - 200}px, 0)`;
+                }
+            });
+        }
+
+        // Active State variables
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course') || 'arduino-fundamentals';
+        const course = courses[courseId];
+
+        // State Manager
+        let currentModuleIndex = 0;
+        let currentLessonIndex = 0;
+        let currentContentType = 'lesson'; // 'lesson', 'quiz', 'project', 'exam'
+
+        // Local Storage State Init
+        let progressData = {
+            lessons: {},
+            quizzes: {},
+            projects: {},
+            examPassed: false
+        };
+
+        function initLocalStorage() {
+            const stored = localStorage.getItem(`thrulabs_progress_${courseId}`);
+            if (stored) {
+                progressData = JSON.parse(stored);
+            } else {
+                saveProgress();
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem(`thrulabs_progress_${courseId}`, JSON.stringify(progressData));
+            updateProgressMetrics();
+        }
+
+        // Calculations for dynamic progress values
+        function calculateMetrics() {
+            let totalLessons = 0;
+            let completedLessons = 0;
+            course.modules.forEach((mod, mIdx) => {
+                mod.lessons.forEach((les, lIdx) => {
+                    totalLessons++;
+                    if (progressData.lessons[`${mIdx}-${lIdx}`]) completedLessons++;
+                });
+            });
+
+            let totalQuizzes = course.modules.length;
+            let passedQuizzes = 0;
+            course.modules.forEach((mod, mIdx) => {
+                if (progressData.quizzes[mIdx] >= 2) passedQuizzes++; // minimum passing score (2/3 correct)
+            });
+
+            let totalProjects = course.modules.length;
+            let submittedProjects = 0;
+            course.modules.forEach((mod, mIdx) => {
+                if (progressData.projects[mIdx]) submittedProjects++;
+            });
+
+            const totalItems = totalLessons + totalQuizzes + totalProjects;
+            const completedItems = completedLessons + passedQuizzes + submittedProjects;
+            const pct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+            return {
+                totalLessons, completedLessons,
+                totalQuizzes, passedQuizzes,
+                totalProjects, submittedProjects,
+                pct
+            };
+        }
+
+        function updateProgressMetrics() {
+            const metrics = calculateMetrics();
+            
+            // Hero progress
+            document.getElementById('progress-pct').innerText = `${metrics.pct}%`;
+            document.getElementById('progress-bar').style.width = `${metrics.pct}%`;
+
+            // Roadmap buttons / checklist
+            const certChkLessons = document.getElementById('cert-chk-lessons-val');
+            const certChkQuizzes = document.getElementById('cert-chk-quizzes-val');
+            const certChkProjects = document.getElementById('cert-chk-projects-val');
+            
+            if (certChkLessons) certChkLessons.innerText = `${metrics.completedLessons} / ${metrics.totalLessons}`;
+            if (certChkQuizzes) certChkQuizzes.innerText = `${metrics.passedQuizzes} / ${metrics.totalQuizzes}`;
+            if (certChkProjects) certChkProjects.innerText = `${metrics.submittedProjects} / ${metrics.totalProjects}`;
+
+            // Icons updates
+            updateCheckIcon('cert-chk-lessons-ico', metrics.completedLessons === metrics.totalLessons);
+            updateCheckIcon('cert-chk-quizzes-ico', metrics.passedQuizzes === metrics.totalQuizzes);
+            updateCheckIcon('cert-chk-projects-ico', metrics.submittedProjects === metrics.totalProjects);
+
+            // Unlock button check
+            const unlockPane = document.getElementById('certificate-unlock-pane');
+            const isEligible = metrics.pct === 100;
+            
+            if (unlockPane) {
+                if (isEligible) {
+                    unlockPane.innerHTML = `
+                        <div class="space-y-4">
+                            <div class="text-xs font-mono text-emerald-400 font-bold uppercase">Congratulations! You have completed all requirements.</div>
+                            <button onclick="generateCertificate()" class="px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all shadow-xl hover-target">
+                                Generate Official Certificate
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    unlockPane.innerHTML = `
+                        <button disabled class="px-8 py-3.5 bg-white/5 border border-white/5 text-white/30 rounded-xl text-[10px] font-mono uppercase tracking-widest cursor-not-allowed">
+                            Certificate Locked (Complete 100%)
+                        </button>
+                    `;
+                }
+            }
+
+            // Continue Learning buttons configuration
+            const continueBtn = document.getElementById('hero-btn-continue');
+            if (continueBtn) {
+                if (metrics.pct > 0 && metrics.pct < 100) {
+                    continueBtn.classList.remove('hidden');
+                } else {
+                    continueBtn.classList.add('hidden');
+                }
+            }
+
+            // Sync Certification Meta on Overview
+            const certChecklist = document.getElementById('cert-requirements-checklist');
+            if (certChecklist) {
+                certChecklist.innerHTML = `
+                    <div class="flex items-center justify-between pb-1.5 border-b border-white/5">
+                        <span>Lessons Completed:</span>
+                        <span class="font-bold ${metrics.completedLessons === metrics.totalLessons ? 'text-emerald-400' : 'text-zinc-500'}">${metrics.completedLessons}/${metrics.totalLessons}</span>
+                    </div>
+                    <div class="flex items-center justify-between pb-1.5 border-b border-white/5">
+                        <span>Quizzes Passed:</span>
+                        <span class="font-bold ${metrics.passedQuizzes === metrics.totalQuizzes ? 'text-emerald-400' : 'text-zinc-500'}">${metrics.passedQuizzes}/${metrics.totalQuizzes}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Projects Approved:</span>
+                        <span class="font-bold ${metrics.submittedProjects === metrics.totalProjects ? 'text-emerald-400' : 'text-zinc-500'}">${metrics.submittedProjects}/${metrics.totalProjects}</span>
+                    </div>
+                `;
+            }
+
+            lucide.createIcons();
+        }
+
+        function updateCheckIcon(id, complete) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (complete) {
+                el.setAttribute('data-lucide', 'check-square');
+                el.className = 'w-4 h-4 text-emerald-400 shrink-0';
+            } else {
+                el.setAttribute('data-lucide', 'square');
+                el.className = 'w-4 h-4 text-zinc-500 shrink-0';
+            }
+        }
+
+        // View Tabs switching controller
+        function switchView(viewName) {
+            document.querySelectorAll('.classroom-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${viewName}`).classList.add('active');
+
+            if (viewName === 'overview') {
+                document.getElementById('view-overview').classList.remove('hidden');
+                document.getElementById('view-classroom').classList.add('hidden');
+                document.getElementById('view-certification').classList.add('hidden');
+                renderOverviewRoadmap();
+            } else if (viewName === 'classroom') {
+                document.getElementById('view-overview').classList.add('hidden');
+                document.getElementById('view-classroom').classList.remove('hidden');
+                document.getElementById('view-certification').classList.add('hidden');
+                renderClassroomSidebar();
+                loadClassroomContent();
+            } else if (viewName === 'certification') {
+                document.getElementById('view-overview').classList.add('hidden');
+                document.getElementById('view-classroom').classList.add('hidden');
+                document.getElementById('view-certification').classList.remove('hidden');
+                updateProgressMetrics();
+            }
+        }
+
+        // Render functions for Landing/Overview Vertical Roadmap
+        function renderOverviewRoadmap() {
+            const container = document.getElementById('learning-roadmap-path');
+            container.innerHTML = course.modules.map((mod, mIdx) => {
+                // Check module completion (all lessons, quiz, and project finished)
+                let allLessonsFinished = true;
+                mod.lessons.forEach((l, lIdx) => {
+                    if (!progressData.lessons[`${mIdx}-${lIdx}`]) allLessonsFinished = false;
+                });
+                const quizPassed = (progressData.quizzes[mIdx] || 0) >= 2;
+                const projectSubmitted = progressData.projects[mIdx] || false;
+                const isComplete = allLessonsFinished && quizPassed && projectSubmitted;
+
+                const statusDotColor = isComplete ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] border-emerald-400' : 'bg-zinc-800 border-zinc-700';
+                const statusLabel = isComplete ? 'COMPLETED' : 'IN PROGRESS';
+                const labelColor = isComplete ? 'text-emerald-400' : 'text-accent-bright';
+
+                return `
+                    <div class="relative academy-card p-6 rounded-2xl border border-white/5 hover:border-white/10 bg-white/[0.01]">
+                        <span class="absolute -left-12 top-6 w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-mono font-bold text-white ${statusDotColor}">
+                            ${isComplete ? '<i data-lucide="check" class="w-4 h-4 text-white"></i>' : mIdx + 1}
+                        </span>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-sm font-display font-bold text-white">${mod.title}</h3>
+                            <span class="text-[8px] font-mono tracking-widest font-bold ${labelColor}">${statusLabel}</span>
+                        </div>
+                        <p class="text-[#BFC5D2] text-[11px] font-light mb-4">${mod.desc}</p>
+                        <div class="flex items-center gap-6 font-mono text-[9px] text-[#BFC5D2]/50">
+                            <span class="flex items-center gap-1"><i data-lucide="book-open" class="w-3.5 h-3.5"></i> ${mod.lessons.length} Lessons</span>
+                            <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> ${mod.duration || '1 Hour'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Active classroom navigation renderer
+        function renderClassroomSidebar() {
+            const container = document.getElementById('classroom-sidebar-btn');
+            const tree = document.getElementById('classroom-syllabus-tree');
+            tree.innerHTML = course.modules.map((mod, mIdx) => {
+                const isModuleOpen = currentModuleIndex === mIdx;
+                const lessonsList = mod.lessons.map((les, lIdx) => {
+                    const isSelected = currentModuleIndex === mIdx && currentLessonIndex === lIdx && currentContentType === 'lesson';
+                    const isFinished = progressData.lessons[`${mIdx}-${lIdx}`] || false;
+                    const completionDot = isFinished ? '<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>' : '<i data-lucide="circle" class="w-3.5 h-3.5 text-white/30 shrink-0"></i>';
+
+                    return `
+                        <button onclick="selectClassroomItem(${mIdx}, ${lIdx}, 'lesson')" class="classroom-sidebar-btn flex items-center justify-between w-full p-2.5 rounded-lg border border-transparent font-mono text-[10px] tracking-wide text-left text-zinc-400 hover:text-white hover:bg-white/5 transition-all ${isSelected ? 'active text-white bg-white/5 border-white/10' : ''}">
+                            <span class="flex items-center gap-2 truncate pr-2">
+                                ${completionDot}
+                                <span class="truncate">${les.title}</span>
+                            </span>
+                        </button>
+                    `;
+                }).join('');
+
+                const quizSelected = currentModuleIndex === mIdx && currentContentType === 'quiz';
+                const quizScore = progressData.quizzes[mIdx] || 0;
+                const quizPassed = quizScore >= 2;
+                const quizStatusDot = quizPassed ? '<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>' : '<i data-lucide="circle" class="w-3.5 h-3.5 text-white/30 shrink-0"></i>';
+
+                const projectSelected = currentModuleIndex === mIdx && currentContentType === 'project';
+                const projectSubmitted = progressData.projects[mIdx] || false;
+                const projectStatusDot = projectSubmitted ? '<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>' : '<i data-lucide="circle" class="w-3.5 h-3.5 text-white/30 shrink-0"></i>';
+
+                return `
+                    <div class="border-b border-white/5 pb-3">
+                        <div class="flex justify-between items-center text-white py-1 mb-1 border-l-2 ${isModuleOpen ? 'border-accent pl-2' : 'border-transparent pl-0'}">
+                            <span class="font-bold text-[11px] truncate uppercase tracking-wider">${mod.title.split(': ')[0]}</span>
+                        </div>
+                        <div class="space-y-1 pl-2">
+                            ${lessonsList}
+                            <button onclick="selectClassroomItem(${mIdx}, 0, 'quiz')" class="classroom-sidebar-btn flex items-center justify-between w-full p-2.5 rounded-lg border border-transparent font-mono text-[10px] tracking-wide text-left text-zinc-400 hover:text-white hover:bg-white/5 transition-all ${quizSelected ? 'active text-white bg-white/5 border-white/10' : ''}">
+                                <span class="flex items-center gap-2">
+                                    ${quizStatusDot}
+                                    <span>Module Quiz</span>
+                                </span>
+                                <span class="text-[8px] font-mono text-zinc-500 font-bold">${quizPassed ? `Passed (${quizScore}/3)` : ''}</span>
+                            </button>
+                            <button onclick="selectClassroomItem(${mIdx}, 0, 'project')" class="classroom-sidebar-btn flex items-center justify-between w-full p-2.5 rounded-lg border border-transparent font-mono text-[10px] tracking-wide text-left text-zinc-400 hover:text-white hover:bg-white/5 transition-all ${projectSelected ? 'active text-white bg-white/5 border-white/10' : ''}">
+                                <span class="flex items-center gap-2">
+                                    ${projectStatusDot}
+                                    <span>Hands-on Project</span>
+                                </span>
+                                <span class="text-[8px] font-mono text-zinc-500 font-bold">${projectSubmitted ? 'Submitted' : ''}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Selection handler for classroom items
+        function selectClassroomItem(mIdx, lIdx, type) {
+            currentModuleIndex = mIdx;
+            currentLessonIndex = lIdx;
+            currentContentType = type;
+            renderClassroomSidebar();
+            loadClassroomContent();
+        }
+
+        // Active classroom loader logic
+        function loadClassroomContent() {
+            const pane = document.getElementById('classroom-content-pane');
+            const mod = course.modules[currentModuleIndex];
+            
+            if (currentContentType === 'lesson') {
+                const les = mod.lessons[currentLessonIndex];
+                const isFinished = progressData.lessons[`${currentModuleIndex}-${currentLessonIndex}`] || false;
+                
+                pane.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-4">
+                            <div>
+                                <span class="text-[9px] font-mono text-accent-bright uppercase tracking-wider block">${mod.title}</span>
+                                <h2 class="text-xl font-display font-extrabold text-white">${les.title}</h2>
+                            </div>
+                            <span class="text-[8px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/50">LESSON</span>
+                        </div>
+                        <div class="text-xs text-[#BFC5D2] leading-relaxed space-y-4 font-sans font-light">
+                            ${les.content}
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-white/10 pt-6 mt-8 font-mono text-[9px]">
+                        <button onclick="navigateClassroom('prev')" class="px-4 py-2 hover:bg-white/5 rounded-lg border border-white/10 text-white flex items-center gap-1.5 uppercase transition-colors">
+                            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Prev
+                        </button>
+                        <button onclick="toggleLessonComplete(${currentModuleIndex}, ${currentLessonIndex})" class="px-5 py-2.5 bg-accent hover:bg-accent-bright text-white rounded-xl flex items-center gap-2 uppercase tracking-wider font-bold transition-all shadow-lg">
+                            <i data-lucide="${isFinished ? 'check-square' : 'square'}" class="w-3.5 h-3.5"></i>
+                            ${isFinished ? 'Mark Incomplete' : 'Mark Completed & Next'}
+                        </button>
+                        <button onclick="navigateClassroom('next')" class="px-4 py-2 hover:bg-white/5 rounded-lg border border-white/10 text-white flex items-center gap-1.5 uppercase transition-colors">
+                            Next <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+            } else if (currentContentType === 'quiz') {
+                const quizScore = progressData.quizzes[currentModuleIndex] || 0;
+                const quizPassed = quizScore >= 2;
+                
+                let quizHtml = `
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-4">
+                            <div>
+                                <span class="text-[9px] font-mono text-purple-400 uppercase tracking-wider block">${mod.title}</span>
+                                <h2 class="text-xl font-display font-extrabold text-white">Module Quiz Assessment</h2>
+                            </div>
+                            <span class="text-[8px] font-mono px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 font-bold uppercase">QUIZ</span>
+                        </div>
+                        <div class="space-y-6">
+                `;
+
+                mod.quiz.questions.forEach((q, qIdx) => {
+                    quizHtml += `
+                        <div class="space-y-2">
+                            <p class="font-bold text-white text-xs font-mono">${qIdx + 1}. ${q.q}</p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    `;
+                    q.options.forEach((opt, oIdx) => {
+                        quizHtml += `
+                            <label class="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.02] border border-white/10 hover:bg-white/5 cursor-pointer transition-all">
+                                <input type="radio" name="classroom-q-${qIdx}" value="${oIdx}" class="accent-accent">
+                                <span class="text-[10.5px] text-[#BFC5D2]">${opt}</span>
+                            </label>
+                        `;
+                    });
+                    quizHtml += `</div></div>`;
+                });
+
+                quizHtml += `
+                        </div>
+                        <div id="quiz-classroom-results" class="hidden"></div>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-white/10 pt-6 mt-8 font-mono text-[9px]">
+                        <button onclick="navigateClassroom('prev')" class="px-4 py-2 hover:bg-white/5 rounded-lg border border-white/10 text-white flex items-center gap-1.5 uppercase transition-colors">
+                            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Prev
+                        </button>
+                        <button onclick="gradeModuleQuiz(${currentModuleIndex})" class="px-6 py-2.5 bg-accent hover:bg-accent-bright text-white rounded-xl flex items-center gap-2 uppercase tracking-wider font-bold transition-all shadow-lg">
+                            <i data-lucide="award" class="w-3.5 h-3.5"></i> Submit Quiz
+                        </button>
+                        <button onclick="navigateClassroom('next')" class="px-4 py-2 hover:bg-white/5 rounded-lg border border-white/10 text-white flex items-center gap-1.5 uppercase transition-colors">
+                            Next <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+                pane.innerHTML = quizHtml;
+
+                if (quizPassed) {
+                    showQuizPassMessage(quizScore);
+                }
+            } else if (currentContentType === 'project') {
+                const projectSubmitted = progressData.projects[currentModuleIndex] || false;
+                const proj = mod.project;
+
+                pane.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-4">
+                            <div>
+                                <span class="text-[9px] font-mono text-emerald-400 uppercase tracking-wider block">${mod.title}</span>
+                                <h2 class="text-xl font-display font-extrabold text-white">Hands-on Laboratory Project</h2>
+                            </div>
+                            <span class="text-[8px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold uppercase">LAB</span>
+                        </div>
+                        <div class="space-y-5 text-xs text-[#BFC5D2]">
+                            <div class="academy-card p-5 rounded-2xl bg-white/[0.01]">
+                                <h4 class="font-mono text-white font-bold uppercase text-[9px] mb-2">Objective:</h4>
+                                <p class="font-light leading-relaxed">${proj.objective}</p>
+                            </div>
+                            <div class="academy-card p-5 rounded-2xl bg-white/[0.01]">
+                                <h4 class="font-mono text-white font-bold uppercase text-[9px] mb-2">Components Required:</h4>
+                                <ul class="list-disc pl-4 space-y-1">
+                                    ${proj.components.map(c => `<li>${c}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="academy-card p-5 rounded-2xl bg-white/[0.01]">
+                                <h4 class="font-mono text-white font-bold uppercase text-[9px] mb-2">Procedure & Instructions:</h4>
+                                <ol class="list-decimal pl-4 space-y-1.5 leading-relaxed">
+                                    ${proj.procedure.map(step => `<li>${step}</li>`).join('')}
+                                </ol>
+                            </div>
+                            <div class="academy-card p-5 rounded-2xl bg-white/[0.01]">
+                                <h4 class="font-mono text-white font-bold uppercase text-[9px] mb-2">Expected Results:</h4>
+                                <p class="font-light leading-relaxed">${proj.expectedOutput}</p>
+                            </div>
+                            
+                            <div class="space-y-2 mt-4">
+                                <label class="text-[9px] font-mono uppercase text-white/50 block">Lab Log / Code Submission Upload:</label>
+                                <textarea id="project-submission-text" placeholder="Write serial output diagnostics or source code configuration files here to submit..." class="w-full h-24 p-3 bg-black border border-white/10 rounded-xl text-[10.5px] font-mono text-emerald-400 focus:outline-none focus:border-accent resize-none placeholder-zinc-700 leading-relaxed">${projectSubmitted ? '// LAB PROJECT SUBMITTED successfully\n// Verification status: COMPLETED' : ''}</textarea>
+                            </div>
+                            <div id="project-results-box" class="hidden"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-white/10 pt-6 mt-8 font-mono text-[9px]">
+                        <button onclick="navigateClassroom('prev')" class="px-4 py-2 hover:bg-white/5 rounded-lg border border-white/10 text-white flex items-center gap-1.5 uppercase transition-colors">
+                            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Prev
+                        </button>
+                        <button onclick="submitModuleProject(${currentModuleIndex})" class="px-6 py-2.5 bg-accent hover:bg-accent-bright text-white rounded-xl flex items-center gap-2 uppercase tracking-wider font-bold transition-all shadow-lg">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Submit Laboratory Work
+                        </button>
+                        <button onclick="navigateClassroom('next')" class="px-4 py-2 hover:bg-white/5 rounded-lg border border-white/10 text-white flex items-center gap-1.5 uppercase transition-colors">
+                            Next <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        // Module Quiz Grade Engine
+        function gradeModuleQuiz(mIdx) {
+            const mod = course.modules[mIdx];
+            let score = 0;
+            let answeredAll = true;
+
+            mod.quiz.questions.forEach((q, qIdx) => {
+                const radios = document.getElementsByName(`classroom-q-${qIdx}`);
+                let selected = -1;
+                for (let i = 0; i < radios.length; i++) {
+                    if (radios[i].checked) {
+                        selected = parseInt(radios[i].value);
+                        break;
+                    }
+                }
+                if (selected === -1) answeredAll = false;
+                if (selected === q.ans) score++;
+            });
+
+            const results = document.getElementById('quiz-classroom-results');
+            results.classList.remove('hidden');
+
+            if (!answeredAll) {
+                results.className = "p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-[10.5px] mt-4 flex items-center gap-2";
+                results.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i> Please answer all quiz questions before submitting.`;
+                lucide.createIcons();
+                return;
+            }
+
+            progressData.quizzes[mIdx] = score;
+            saveProgress();
+            renderClassroomSidebar();
+
+            if (score >= 2) {
+                showQuizPassMessage(score);
+            } else {
+                results.className = "p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-[10.5px] mt-4 space-y-1.5";
+                results.innerHTML = `
+                    <div class="font-bold flex items-center gap-2"><i data-lucide="x-circle" class="w-4 h-4 shrink-0"></i> Grade Failed: ${score}/3 Correct (Passing: 2/3)</div>
+                    <p class="text-[9.5px]">Please study the lesson content again and re-attempt the quiz to progress.</p>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function showQuizPassMessage(score) {
+            const results = document.getElementById('quiz-classroom-results');
+            if (!results) return;
+            results.classList.remove('hidden');
+            results.className = "p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10.5px] mt-4 space-y-1.5";
+            results.innerHTML = `
+                <div class="font-bold flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Grade Approved: ${score}/3 Correct!</div>
+                <p class="text-[9.5px] text-white">Your quiz results have been compiled and logged in the academic record files.</p>
+            `;
+        }
+
+        // Project Submission Engine
+        function submitModuleProject(mIdx) {
+            const val = document.getElementById('project-submission-text').value.trim();
+            const results = document.getElementById('project-results-box');
+            results.classList.remove('hidden');
+
+            if (!val || val.length < 10) {
+                results.className = "p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-[10.5px] mt-4 flex items-center gap-2";
+                results.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i> Please submit a complete C++ compiler snippet or serial diagnosis log (min. 10 chars).`;
+                lucide.createIcons();
+                return;
+            }
+
+            progressData.projects[mIdx] = true;
+            saveProgress();
+            renderClassroomSidebar();
+
+            results.className = "p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10.5px] mt-4 space-y-1";
+            results.innerHTML = `
+                <div class="font-bold flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Project Approved!</div>
+                <p class="text-[9.5px] text-white">Laboratory files compiled successfully. Progress updated.</p>
+            `;
+            lucide.createIcons();
+        }
+
+        // Navigate Classroom view (prev/next)
+        function navigateClassroom(dir) {
+            const mod = course.modules[currentModuleIndex];
+            
+            if (dir === 'next') {
+                if (currentContentType === 'lesson') {
+                    if (currentLessonIndex < mod.lessons.length - 1) {
+                        currentLessonIndex++;
+                    } else {
+                        currentContentType = 'quiz';
+                    }
+                } else if (currentContentType === 'quiz') {
+                    currentContentType = 'project';
+                } else if (currentContentType === 'project') {
+                    if (currentModuleIndex < course.modules.length - 1) {
+                        currentModuleIndex++;
+                        currentLessonIndex = 0;
+                        currentContentType = 'lesson';
+                    } else {
+                        // End of course redirection
+                        alert('You have reached the end of the course syllabus modules. Navigating to the certification gate...');
+                        switchView('certification');
+                        return;
+                    }
+                }
+            } else if (dir === 'prev') {
+                if (currentContentType === 'project') {
+                    currentContentType = 'quiz';
+                } else if (currentContentType === 'quiz') {
+                    currentLessonIndex = mod.lessons.length - 1;
+                    currentContentType = 'lesson';
+                } else if (currentContentType === 'lesson') {
+                    if (currentLessonIndex > 0) {
+                        currentLessonIndex--;
+                    } else {
+                        if (currentModuleIndex > 0) {
+                            currentModuleIndex--;
+                            const prevMod = course.modules[currentModuleIndex];
+                            currentLessonIndex = 0;
+                            currentContentType = 'project';
+                        }
+                    }
+                }
+            }
+            renderClassroomSidebar();
+            loadClassroomContent();
+        }
+
+        // Toggle lesson complete checkmark
+        function toggleLessonComplete(mIdx, lIdx) {
+            const key = `${mIdx}-${lIdx}`;
+            if (progressData.lessons[key]) {
+                delete progressData.lessons[key];
+            } else {
+                progressData.lessons[key] = true;
+                // Auto advance to next page if possible
+                setTimeout(() => { navigateClassroom('next'); }, 300);
+            }
+            saveProgress();
+            renderClassroomSidebar();
+            loadClassroomContent();
+        }
+
+        // Actions
+        function startLearningAction() {
+            switchView('classroom');
+        }
+
+        function continueLearningAction() {
+            // Locate first incomplete lesson path
+            let mIdx = 0, lIdx = 0, type = 'lesson';
+            let found = false;
+
+            for (let m = 0; m < course.modules.length; m++) {
+                const mod = course.modules[m];
+                
+                // check lessons
+                for (let l = 0; l < mod.lessons.length; l++) {
+                    if (!progressData.lessons[`${m}-${l}`]) {
+                        mIdx = m; lIdx = l; type = 'lesson';
+                        found = true; break;
+                    }
+                }
+                if (found) break;
+
+                // check quiz
+                const quizScore = progressData.quizzes[m] || 0;
+                if (quizScore < 2) {
+                    mIdx = m; type = 'quiz';
+                    found = true; break;
+                }
+
+                // check project
+                if (!progressData.projects[m]) {
+                    mIdx = m; type = 'project';
+                    found = true; break;
+                }
+            }
+
+            selectClassroomItem(mIdx, lIdx, type);
+            switchView('classroom');
+        }
+
+        function viewCertRequirements() {
+            switchView('certification');
+        }
+
+        // Certificate generation logic
+        function generateCertificate() {
+            // Set Printable info
+            document.getElementById('cert-course-name').innerText = course.title.toUpperCase();
+            document.getElementById('cert-verification-code').innerText = course.certDetail.idPrefix;
+            document.getElementById('cert-issue-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // Set verify link href
+            document.getElementById('cert-verify-link').href = `verify.html?id=${course.certDetail.idPrefix}`;
+            
+            // Append certificate to global database in localStorage so it registers in academy.html certificate verification box!
+            const globalDb = JSON.parse(localStorage.getItem('thrulabs_certificate_database')) || {};
+            globalDb[course.certDetail.idPrefix] = {
+                name: "Alex Mercer",
+                program: `${course.title} Certification`,
+                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                status: "Verified & Active",
+                grade: "Distinction (100%)"
+            };
+            localStorage.setItem('thrulabs_certificate_database', JSON.stringify(globalDb));
+
+            // Show Certificate UI
+            document.getElementById('printable-certificate').classList.remove('hidden');
+            document.getElementById('printable-certificate').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // WebGL Particle Canvas
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.BufferGeometry();
+        const ptsArr = new Float32Array(1000 * 3);
+        for(let i=0; i<1000*3; i++) ptsArr[i] = (Math.random() - 0.5) * 120;
+        geo.setAttribute('position', new THREE.BufferAttribute(ptsArr, 3));
+        const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.2 }));
+        scene.add(pts);
+        camera.position.z = 50;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            pts.rotation.y += 0.0003;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 100) nav.classList.add('nav-shrink');
+            else nav.classList.remove('nav-shrink');
+        });
+
+        // Initialize active course load
+        window.onload = () => {
+            if (!course) {
+                document.getElementById('error-screen').classList.remove('hidden');
+                lucide.createIcons();
+            } else {
+                document.getElementById('course-page-wrapper').classList.remove('hidden');
+                
+                // Document Title
+                document.title = `THRULABS | ${course.title}`;
+
+                // Populate Hero
+                document.getElementById('hero-category').innerText = course.category;
+                document.getElementById('hero-title').innerText = course.title;
+                document.getElementById('hero-desc').innerText = course.desc;
+                document.getElementById('hero-difficulty').innerText = course.difficulty;
+                document.getElementById('hero-duration').innerText = course.duration;
+                document.getElementById('hero-lessons').innerText = `${course.lessons} Lessons`;
+
+                // Overview dynamic details lists
+                document.getElementById('learn-list').innerHTML = course.whatYouWillLearn.map(topic => `<li>${topic}</li>`).join('');
+                document.getElementById('skills-list').innerHTML = course.skillsGained.map(skill => `<li>${skill}</li>`).join('');
+                document.getElementById('career-relevance').innerText = course.careerRelevance;
+                document.getElementById('tools-required').innerText = course.toolsRequired;
+                document.getElementById('prerequisites-list').innerHTML = course.prerequisites.map(p => `<li>${p}</li>`).join('');
+
+                // Init localStorage status & progress bars
+                initLocalStorage();
+
+                // Setup tabs
+                switchView('overview');
+            }
+
+            // Trigger animations
+            setTimeout(() => {
+                document.querySelectorAll('.reveal-text').forEach(el => el.classList.add('active'));
+            }, 10);
+        };
+    </script>
+</body>
+</html>

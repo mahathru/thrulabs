@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Contact</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root { --accent: #5E6AD2; }
+        
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .dropdown-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .group:hover .dropdown-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .reveal-text-container {
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: bottom;
+            padding-right: 0.2em;
+        }
+
+        .reveal-text {
+            display: inline-block;
+            transform: translateY(110%);
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .is-visible .reveal-text {
+            transform: translateY(0);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(to right, #fff, #a5b4fc, #5e6ad2, #a5b4fc, #fff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-flow 8s linear infinite;
+        }
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-card:hover {
+            border-color: rgba(94, 106, 210, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateY(-4px);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .contact-card:hover .spotlight { opacity: 1; }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            background: rgba(94, 106, 210, 0.04);
+            outline: none;
+        }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .scroll-reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    
+                    <!-- Tools Dropdown -->
+                    <div class="relative group">
+                        <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target flex items-center gap-1.5 py-2">
+                            Tools <i data-lucide="chevron-down" class="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform"></i>
+                        </a>
+                        <div class="absolute top-full left-0 pt-4 dropdown-panel w-[22rem]">
+                            <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-2xl space-y-4">
+                                <!-- Header -->
+                                <div class="border-b border-white/5 pb-3 px-1">
+                                    <span class="text-[9px] font-display font-extrabold text-white uppercase tracking-widest block">Tools Hub</span>
+                                    <p class="text-[8px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Browse engineering tools and utilities.</p>
+                                </div>
+                                <div class="space-y-3 font-mono text-[9px]">
+                                    <a href="tools.html#calculators" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="cpu" class="w-4 h-4 text-accent mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-accent transition-colors">Engineering Calculators &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Electronics, communication systems, and circuit calculations.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#converters" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="binary" class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-emerald-400 transition-colors">Converters &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Binary, hexadecimal, and engineering conversions.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#utilities" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-purple-300 transition-colors">Student Utilities &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Academic productivity and student tools.</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="flex items-center justify-between pt-3 border-t border-white/5 px-1 font-mono text-[8.5px]">
+                                    <a href="tools.html" class="group/all flex flex-col hover-target font-mono">
+                                        <span class="text-white/50 hover:text-white uppercase tracking-widest font-bold">All Tools &rarr;</span>
+                                        <span class="text-[7px] text-white/30 font-sans normal-case mt-0.5">View complete tool directory.</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative z-10 pt-44 px-6 pb-32">
+        <section class="max-w-[1200px] mx-auto text-center mb-32">
+            <h1 class="text-5xl md:text-8xl font-display font-extrabold tracking-tight text-white mb-8">
+                <div class="reveal-text-container">
+                    <span class="reveal-text hero-gradient">DISCOURSE</span>
+                </div>
+                <br>
+                <div class="reveal-text-container -ml-4">
+                    <span class="reveal-text text-white/30 italic font-light">Connect.</span>
+                </div>
+            </h1>
+            <p class="text-white/40 text-sm md:text-lg max-w-xl mx-auto font-light leading-relaxed scroll-reveal">
+                High-fidelity inquiry terminal. Global node synchronization for architectural discourse.
+            </p>
+        </section>
+
+        <section class="max-w-[1200px] mx-auto mb-40">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Inquiry Terminal -->
+                <div class="lg:col-span-8 contact-card p-10 md:p-14 rounded-[2.5rem] scroll-reveal">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10">
+                        <span class="font-mono text-[9px] text-accent uppercase tracking-[0.3em] mb-10 block">MOD-09 // INQUIRY TERMINAL</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="space-y-2">
+                                <label class="font-mono text-[8px] text-white/20 uppercase tracking-widest ml-1">Identity Name</label>
+                                <input type="text" placeholder="John Doe" class="w-full h-12 px-4 rounded-xl input-field text-white text-xs placeholder-white/10">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="font-mono text-[8px] text-white/20 uppercase tracking-widest ml-1">Secure Email</label>
+                                <input type="email" placeholder="john@thrulabs.com" class="w-full h-12 px-4 rounded-xl input-field text-white text-xs placeholder-white/10">
+                            </div>
+                        </div>
+                        <div class="space-y-2 mb-10">
+                            <label class="font-mono text-[8px] text-white/20 uppercase tracking-widest ml-1">Node Message</label>
+                            <textarea rows="5" placeholder="Elaborate on your architectural requirements..." class="w-full p-4 rounded-xl input-field text-white text-xs placeholder-white/10 resize-none"></textarea>
+                        </div>
+                        <button class="w-full py-4 bg-white text-black hover:bg-accent hover:text-white rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] transition-all shadow-xl active:scale-95 hover-target">
+                            Transmit Discourse
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Connect Links -->
+                <div class="lg:col-span-4 space-y-6">
+                    <a href="https://instagram.com" target="_blank" class="block contact-card p-8 rounded-[2rem] scroll-reveal hover-target" style="transition-delay: 0.1s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                                    <i data-lucide="instagram" class="w-5 h-5 text-rose-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-display font-bold text-white">Instagram</h3>
+                                    <span class="font-mono text-[8px] text-white/20 uppercase tracking-widest">Visual Log // @thrulabs</span>
+                                </div>
+                            </div>
+                            <i data-lucide="external-link" class="w-4 h-4 text-white/10"></i>
+                        </div>
+                    </a>
+
+                    <a href="https://discord.com" target="_blank" class="block contact-card p-8 rounded-[2rem] scroll-reveal hover-target" style="transition-delay: 0.2s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                                    <i data-lucide="message-square" class="w-5 h-5 text-indigo-500"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-display font-bold text-white">Discord</h3>
+                                    <span class="font-mono text-[8px] text-white/20 uppercase tracking-widest">Comm Hub // 4.2k active</span>
+                                </div>
+                            </div>
+                            <i data-lucide="external-link" class="w-4 h-4 text-white/10"></i>
+                        </div>
+                    </a>
+
+                    <a href="mailto:ops@thrulabs.com" class="block contact-card p-8 rounded-[2rem] scroll-reveal hover-target" style="transition-delay: 0.3s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                                    <i data-lucide="mail" class="w-5 h-5 text-accent"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-display font-bold text-white">Direct Mail</h3>
+                                    <span class="font-mono text-[8px] text-white/20 uppercase tracking-widest">ops@thrulabs.com</span>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-white/10"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50 relative z-10">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white/40 uppercase">THRULABS Ecosystem</span>
+            </div>
+            <p class="text-[8px] text-white/10 font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL AUTHORITY</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // WebGL Mouse Coordinate Tracking
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        document.querySelectorAll('.contact-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.querySelector('.spotlight').style.transform = `translate3d(${x - 200}px, ${y - 200}px, 0)`;
+            });
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 100) nav.classList.add('nav-shrink');
+            else nav.classList.remove('nav-shrink');
+        });
+
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const partGeo = new THREE.BufferGeometry();
+        const partPos = new Float32Array(800 * 3);
+        for(let i=0; i<800*3; i++) partPos[i] = (Math.random() - 0.5) * 150;
+        partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+        const pts = new THREE.Points(partGeo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.3 }));
+        scene.add(pts);
+        camera.position.z = 80;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            pts.rotation.y -= 0.0002;
+            const targetX = (mouseX / window.innerWidth - 0.5) * 6;
+            const targetY = -(mouseY / window.innerHeight - 0.5) * 6;
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (targetY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            document.querySelectorAll('.reveal-text').forEach(el => el.parentElement.classList.add('is-visible'));
+            animate();
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+
+    </script>
+</body>
+</html>

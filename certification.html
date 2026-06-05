@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Certification Portal</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="academy_data.js"></script>
+
+    <style>
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .academy-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .academy-card:hover {
+            border-color: rgba(94, 106, 210, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .academy-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .glow-border {
+            box-shadow: 0 0 25px rgba(94, 106, 210, 0.15);
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Tools</a>
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 pt-36 px-4 md:px-6 pb-24 max-w-[1200px] mx-auto space-y-12">
+        
+        <!-- Header / Back Navigation -->
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+            <h1 class="text-xl font-display font-bold text-white tracking-widest uppercase flex items-center gap-2">
+                <span class="w-1.5 h-6 rounded bg-emerald-500"></span>
+                Certification Details
+            </h1>
+            <a href="academy.html" class="text-[10px] font-mono text-[#BFC5D2] hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wider">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Academy
+            </a>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left 2 Columns: Certification Profile -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Profile Card -->
+                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <span id="cert-level" class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] font-mono uppercase tracking-widest">--</span>
+                            <span id="cert-duration" class="text-[10px] font-mono text-[#BFC5D2] flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> --</span>
+                        </div>
+                        <h2 id="cert-title" class="text-2xl md:text-3xl font-display font-extrabold text-white leading-tight">Loading Certification...</h2>
+                        <p id="cert-overview" class="text-[#BFC5D2] text-sm font-light leading-relaxed">--</p>
+                    </div>
+                </div>
+
+                <!-- Eligibility & Requirements -->
+                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-4">
+                        <h3 class="text-sm font-display font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i> Requirements & Eligibility
+                        </h3>
+                        <p id="cert-eligibility" class="text-[#BFC5D2] text-xs font-light leading-relaxed">--</p>
+                        
+                        <div class="pt-2 border-t border-white/5 space-y-2 text-xs">
+                            <div class="flex items-center justify-between text-[#BFC5D2]">
+                                <span>Assessment Method:</span>
+                                <span id="cert-assessment" class="font-mono text-white text-[11px]">--</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[#BFC5D2]">
+                                <span>Verification Code:</span>
+                                <span class="font-mono text-emerald-400 text-[11px] font-bold">Standard Database Log (TL-2026-XXXX)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Matrix -->
+                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-4">
+                        <h3 class="text-sm font-display font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i> Skills Verified
+                        </h3>
+                        <div id="skills-container" class="flex flex-wrap gap-2.5">
+                            <!-- Dynamic skills badges -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Assessment Sandbox -->
+                <div class="academy-card p-8 rounded-[2rem] border-emerald-500/20 relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-6">
+                        <div>
+                            <h3 class="text-base font-display font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="terminal" class="w-5 h-5 text-emerald-400"></i> Interactive Assessment Sandbox
+                            </h3>
+                            <p class="text-[#BFC5D2] text-xs font-light mt-1.5 leading-relaxed">
+                                Answer the certification verification questions below to test your hardware logic and log your credential into the verification database.
+                            </p>
+                        </div>
+
+                        <!-- Quiz Form container -->
+                        <div id="quiz-container" class="space-y-6 pt-4 border-t border-white/5">
+                            <!-- Dynamic quiz questions -->
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="pt-4 flex items-center gap-4 flex-wrap">
+                            <button onclick="submitExam()" class="px-8 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover-target shadow-lg">
+                                Submit Assessment
+                            </button>
+                            <span class="text-[10px] font-mono text-[#BFC5D2]/50">Passing Score Required: 3/3 (100%)</span>
+                        </div>
+
+                        <!-- Result Box -->
+                        <div id="exam-result" class="hidden p-5 rounded-2xl border font-mono text-xs"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Live Certificate Preview -->
+            <div class="space-y-6">
+                <h3 class="text-xs font-mono font-bold text-[#BFC5D2] uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i> Certificate Preview
+                </h3>
+                
+                <!-- Printable/Preview Frame -->
+                <div id="certificate-preview" class="academy-card p-6 md:p-8 rounded-[2rem] text-center border-emerald-500/20 shadow-2xl relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    
+                    <!-- Decorative border design -->
+                    <div class="absolute inset-4 border border-white/5 rounded-[1.5rem] pointer-events-none"></div>
+                    <div class="absolute inset-5 border border-emerald-500/10 rounded-[1.4rem] pointer-events-none"></div>
+                    
+                    <div class="relative z-10 space-y-6 py-6">
+                        <div class="flex justify-center mb-1">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                <i data-lucide="award" class="w-6 h-6 text-emerald-400"></i>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="font-display font-extrabold text-[8px] tracking-[0.4em] text-white uppercase block">THRULABS ACADEMY</span>
+                            <span class="text-[7px] text-[#BFC5D2]/40 font-mono tracking-widest uppercase block mt-1">GLOBAL ENGINEERING AUTHORITY</span>
+                        </div>
+
+                        <div class="space-y-1">
+                            <span class="text-[7.5px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">This is to certify that</span>
+                            <span class="text-lg font-display font-bold text-white block select-all">ENGINEERING GRADUATE</span>
+                            <span class="text-[7.5px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">has successfully met all academic standards for</span>
+                        </div>
+
+                        <div class="py-2.5 px-4 bg-white/[0.02] border border-white/5 rounded-xl inline-block max-w-full">
+                            <span id="preview-cert-title" class="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider block">Arduino Fundamentals</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-left border-t border-white/5 pt-4 text-[8px] text-[#BFC5D2] font-mono">
+                            <div>
+                                <span class="text-[#BFC5D2]/40 block uppercase tracking-wider">Date of Issue</span>
+                                <span class="text-white font-bold" id="preview-date">June 4, 2026</span>
+                            </div>
+                            <div>
+                                <span class="text-[#BFC5D2]/40 block uppercase tracking-wider">Credential ID</span>
+                                <span class="text-white font-bold block" id="preview-cert-id">TL-2026-ARD-XXXXX</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center pt-2">
+                            <div class="text-[7px] text-[#BFC5D2]/30 font-mono uppercase tracking-widest border border-white/5 px-3 py-1 rounded">
+                                STATUS: PREVIEW ONLY
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="academy-card p-6 rounded-[2rem] space-y-4">
+                    <h4 class="text-xs font-display font-bold text-white uppercase tracking-wider">How to verify?</h4>
+                    <p class="text-[#BFC5D2] text-[11px] font-light leading-relaxed">
+                        Once you pass the assessment, the credential ID is recorded globally. You can share this ID with recruiters or paste it in the Verification search box.
+                    </p>
+                    <a href="verify.html" class="inline-flex items-center gap-1.5 text-[9px] font-mono text-emerald-400 hover:text-emerald-300 transition-colors uppercase tracking-widest">
+                        Go to Verification Portal &rarr;
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 pt-16 pb-12 bg-surface/50 relative z-10 mt-12">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-gray-300 uppercase">Academy Ecosystem</span>
+            </div>
+            <p class="text-[8px] text-gray-300/40 font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL LEARNING AUTHORITY</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Spotlight helper function
+        function initSpotlights() {
+            document.querySelectorAll('.academy-card').forEach(card => {
+                const spotlight = card.querySelector('.spotlight');
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    if (spotlight) {
+                        spotlight.style.transform = `translate3d(${x - 225}px, ${y - 225}px, 0)`;
+                    }
+                });
+            });
+        }
+
+        // WebGL Particle Canvas System
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.BufferGeometry();
+        const ptsArr = new Float32Array(500 * 3);
+        for(let i=0; i<500*3; i++) ptsArr[i] = (Math.random() - 0.5) * 120;
+        geo.setAttribute('position', new THREE.BufferAttribute(ptsArr, 3));
+        const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.2 }));
+        scene.add(pts);
+        camera.position.z = 50;
+
+        function animateParticles() {
+            requestAnimationFrame(animateParticles);
+            pts.rotation.y += 0.0003;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Load Certification Details Dynamically
+        let activeCert = null;
+        window.onload = () => {
+            animateParticles();
+            initSpotlights();
+            
+            const params = new URLSearchParams(window.location.search);
+            const certId = params.get('cert') || 'arduino';
+            
+            activeCert = academyData.certifications[certId];
+            if (!activeCert) {
+                // Default to arduino if not found
+                activeCert = academyData.certifications['arduino'];
+            }
+            
+            renderCertProfile();
+        };
+
+        function renderCertProfile() {
+            if (!activeCert) return;
+
+            document.getElementById('cert-level').innerText = activeCert.level;
+            document.getElementById('cert-duration').innerText = activeCert.duration;
+            document.getElementById('cert-title').innerText = activeCert.title;
+            document.getElementById('cert-overview').innerText = activeCert.overview;
+            document.getElementById('cert-eligibility').innerText = activeCert.eligibility;
+            document.getElementById('cert-assessment').innerText = activeCert.assessment;
+            
+            document.getElementById('preview-cert-title').innerText = activeCert.title;
+            document.getElementById('preview-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('preview-cert-id').innerText = `${activeCert.certIdPrefix}-XXXXX`;
+
+            // Render skills badges
+            const skillsContainer = document.getElementById('skills-container');
+            skillsContainer.innerHTML = '';
+            activeCert.skills.forEach(skill => {
+                const badge = document.createElement('span');
+                badge.className = 'px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-medium';
+                badge.innerText = skill;
+                skillsContainer.appendChild(badge);
+            });
+
+            // Render MCQ Quiz questions
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = '';
+            activeCert.questions.forEach((qObj, qIdx) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'space-y-2.5';
+                
+                let optionsHtml = '';
+                qObj.options.forEach((opt, optIdx) => {
+                    optionsHtml += `
+                        <label class="flex items-center gap-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 rounded-xl cursor-pointer text-xs text-[#BFC5D2] transition-all hover-target">
+                            <input type="radio" name="q-${qIdx}" value="${optIdx}" class="w-3.5 h-3.5 accent-emerald-500">
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+
+                qDiv.innerHTML = `
+                    <h4 class="text-xs font-mono font-bold text-white">${qIdx + 1}. ${qObj.q}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        ${optionsHtml}
+                    </div>
+                `;
+                quizContainer.appendChild(qDiv);
+            });
+            
+            lucide.createIcons();
+        }
+
+        function submitExam() {
+            if (!activeCert) return;
+            const resultBox = document.getElementById('exam-result');
+            let score = 0;
+            
+            for(let i = 0; i < activeCert.questions.length; i++) {
+                const options = document.getElementsByName(`q-${i}`);
+                let selected = -1;
+                for(let j = 0; j < options.length; j++) {
+                    if (options[j].checked) {
+                        selected = parseInt(options[j].value);
+                        break;
+                    }
+                }
+                if (selected === activeCert.questions[i].ans) {
+                    score++;
+                }
+            }
+            
+            if (score < 3) {
+                resultBox.className = "p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 space-y-2 mt-6 block";
+                resultBox.innerHTML = `
+                    <div class="flex items-center gap-2 font-bold text-sm uppercase tracking-wider">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Assessment Failed (${score}/3 Correct)
+                    </div>
+                    <p class="text-[#BFC5D2] text-[11px] leading-relaxed">
+                        To earn this certification, you must achieve a perfect score of 3/3. Please review the topics and try again.
+                    </p>
+                `;
+            } else {
+                // Issue certificate ID
+                const randomIdSuffix = Math.floor(10000 + Math.random() * 90000);
+                const issuedId = `${activeCert.certIdPrefix}-${randomIdSuffix}`;
+                
+                // Save to local storage database
+                const db = JSON.parse(localStorage.getItem('thrulabs_certificate_database')) || {};
+                db[issuedId] = {
+                    name: "Thrulabs Student",
+                    program: activeCert.title,
+                    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    status: "Verified & Active",
+                    grade: "Distinction (100%)"
+                };
+                localStorage.setItem('thrulabs_certificate_database', JSON.stringify(db));
+
+                // Update Preview Frame
+                document.getElementById('preview-cert-id').innerText = issuedId;
+                const previewCard = document.getElementById('certificate-preview');
+                previewCard.classList.add('glow-border', 'border-emerald-500/40');
+                
+                resultBox.className = "p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 space-y-4 mt-6 block text-left";
+                resultBox.innerHTML = `
+                    <div class="flex items-center gap-2 font-bold text-sm uppercase tracking-wider">
+                        <i data-lucide="award" class="w-5 h-5"></i> Certification Earned!
+                    </div>
+                    <p class="text-white text-xs leading-relaxed">
+                        Congratulations! Your answers were verified, and your credential has been registered in the database.
+                    </p>
+                    <div class="p-4 bg-black/50 border border-white/5 rounded-xl space-y-1.5 text-xs text-[#BFC5D2] font-mono">
+                        <div>Credential ID: <span class="text-emerald-400 font-bold select-all">${issuedId}</span></div>
+                        <div>Program: <span class="text-white">${activeCert.title}</span></div>
+                        <div>Status: <span class="text-emerald-400 font-bold">VERIFIED</span></div>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="verify.html?id=${issuedId}" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all hover-target">
+                            View Official Verification Page
+                        </a>
+                        <button onclick="window.print()" class="px-5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all hover-target">
+                            Print / Save PDF
+                        </button>
+                    </div>
+                `;
+            }
+            resultBox.scrollIntoView({ behavior: 'smooth' });
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

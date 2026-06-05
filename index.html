@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Precision Engineering</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                        'grid-line': 'rgba(255, 255, 255, 0.03)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root { --accent: #5E6AD2; }
+        
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            will-change: transform;
+        }
+
+        .bg-grid {
+            background-image: 
+                linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(circle at center, black, transparent 90%);
+        }
+
+        .reveal-text-container {
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: bottom;
+            padding-right: 0.15em;
+        }
+
+        .reveal-text {
+            display: inline-block;
+            transform: translateY(110%);
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .is-visible .reveal-text {
+            transform: translateY(0);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(to right, #ffffff, #a5b4fc, #5e6ad2, #a5b4fc, #ffffff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-flow 8s linear infinite;
+        }
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .dropdown-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .group:hover .dropdown-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px) scale(0.98);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .scroll-reveal.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(94, 106, 210, 0.3);
+            transform: translateY(-8px);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .glass-card:hover .spotlight {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white">
+
+    <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+    <canvas id="webgl-canvas"></canvas>
+    
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Home</a>
+                    
+                    <!-- Tools Dropdown -->
+                    <div class="relative group">
+                        <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target flex items-center gap-1.5 py-2">
+                            Tools <i data-lucide="chevron-down" class="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform"></i>
+                        </a>
+                        <div class="absolute top-full left-0 pt-4 dropdown-panel w-[22rem]">
+                            <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-2xl space-y-4">
+                                <!-- Header -->
+                                <div class="border-b border-white/5 pb-3 px-1">
+                                    <span class="text-[9px] font-display font-extrabold text-white uppercase tracking-widest block">Tools Hub</span>
+                                    <p class="text-[8px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Browse engineering tools and utilities.</p>
+                                </div>
+                                <div class="space-y-3 font-mono text-[9px]">
+                                    <a href="tools.html#calculators" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="cpu" class="w-4 h-4 text-accent mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-accent transition-colors">Engineering Calculators &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Electronics, communication systems, and circuit calculations.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#converters" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="binary" class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-emerald-400 transition-colors">Converters &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Binary, hexadecimal, and engineering conversions.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#utilities" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-purple-300 transition-colors">Student Utilities &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Academic productivity and student tools.</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="flex items-center justify-between pt-3 border-t border-white/5 px-1 font-mono text-[8.5px]">
+                                    <a href="tools.html" class="group/all flex flex-col hover-target">
+                                        <span class="text-white/50 hover:text-white uppercase tracking-widest font-bold">All Tools &rarr;</span>
+                                        <span class="text-[7px] text-white/30 font-sans normal-case mt-0.5">View complete tool directory.</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative z-10">
+        <!-- Hero Section -->
+        <section class="min-h-[90vh] flex flex-col justify-center items-center px-6 pt-20">
+            <div id="hero-trigger" class="w-full max-w-[1200px] mx-auto text-center">
+                <div class="inline-flex items-center gap-3 mb-8 px-4 py-1.5 border border-white/5 bg-white/[0.02] rounded-full font-mono text-[9px] text-white/40 tracking-[0.3em] uppercase opacity-0 transition-all duration-1000 scroll-reveal">
+                    ENGINEERING PLATFORM FOR STUDENTS
+                </div>
+
+                <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[0.95] mb-12">
+                    <div class="reveal-text-container">
+                        <span class="reveal-text text-white" style="transition-delay: 0.1s;">ENGINEERING.</span>
+                    </div>
+                    <br>
+                    <div class="reveal-text-container">
+                        <span class="reveal-text hero-gradient" style="transition-delay: 0.3s;">SIMPLIFIED.</span>
+                    </div>
+                </h1>
+
+                <p class="max-w-xl mx-auto text-white/40 text-sm md:text-base font-light leading-relaxed mb-12 scroll-reveal" style="transition-delay: 0.5s;">
+                    Practical tools, resources, project guidance, and career roadmaps for Electronics, Embedded Systems, AIoT, and UAV engineering students.
+                </p>
+
+                <div class="flex flex-wrap justify-center gap-4 scroll-reveal" style="transition-delay: 0.7s;">
+                    <a href="#featured-tools" class="px-10 py-4 bg-accent hover:bg-accent-bright text-white rounded-lg font-bold text-[10px] tracking-[0.2em] uppercase transition-all shadow-xl shadow-accent/20 hover-target active:scale-95 flex items-center justify-center">
+                        Explore Tools
+                    </a>
+                    <a href="#resources" class="px-10 py-4 border border-white/10 hover:border-white/30 text-white rounded-lg font-bold text-[10px] tracking-[0.2em] uppercase transition-all hover-target active:scale-95 inline-flex items-center justify-center">
+                        Browse Resources
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 1 — Featured Tools -->
+        <section id="featured-tools" class="py-32 border-t border-white/5 bg-surface/10">
+            <div class="max-w-[1200px] mx-auto px-6">
+                <div class="text-center mb-20 scroll-reveal">
+                    <span class="font-mono text-[9px] text-accent uppercase tracking-widest mb-3 block">01 // Academic Utilities</span>
+                    <h2 class="text-3xl md:text-5xl font-display font-extrabold text-white mb-4">Essential Engineering Tools</h2>
+                    <p class="text-white/40 text-sm max-w-md mx-auto">Frequently used tools for engineering students.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Tool 1: ADC Resolution Calculator -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(94, 106, 210, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent transition-all duration-500">
+                                    <i data-lucide="cpu" class="w-5 h-5 text-accent group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">ADC // v1.0</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-accent transition-colors">ADC Resolution Calculator</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Calculate resolution, step size, and accuracy for ADC systems.</p>
+                            <a href="tools.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all text-center uppercase tracking-widest hover-target">Launch Tool</a>
+                        </div>
+                    </div>
+
+                    <!-- Tool 2: Quantization Calculator -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.1s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 transition-all duration-500">
+                                    <i data-lucide="layers" class="w-5 h-5 text-emerald-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">DSP // v1.1</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">Quantization Calculator</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Analyze quantization levels and quantization error.</p>
+                            <a href="tools.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all text-center uppercase tracking-widest hover-target">Launch Tool</a>
+                        </div>
+                    </div>
+
+                    <!-- Tool 3: Ohm's Law Calculator -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.2s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:bg-amber-500 transition-all duration-500">
+                                    <i data-lucide="zap" class="w-5 h-5 text-amber-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">ELEC // v1.0</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">Ohm's Law Calculator</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Quickly calculate voltage, current, resistance, and power.</p>
+                            <a href="tools.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all text-center uppercase tracking-widest hover-target">Launch Tool</a>
+                        </div>
+                    </div>
+
+                    <!-- Tool 4: RC Time Constant Calculator -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.3s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(244, 63, 94, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center group-hover:bg-rose-500 transition-all duration-500">
+                                    <i data-lucide="timer" class="w-5 h-5 text-rose-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">CIRC // v1.3</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-rose-400 transition-colors">RC Time Constant Calculator</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Determine charging and discharging characteristics.</p>
+                            <a href="tools.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-rose-500 group-hover:text-white group-hover:border-rose-500 transition-all text-center uppercase tracking-widest hover-target">Launch Tool</a>
+                        </div>
+                    </div>
+
+                    <!-- Tool 5: Binary & Hex Converter -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.4s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center group-hover:bg-purple-500 transition-all duration-500">
+                                    <i data-lucide="calculator" class="w-5 h-5 text-purple-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">MATH // v2.0</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">Binary & Hex Converter</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Convert between binary, decimal, hexadecimal, and octal.</p>
+                            <a href="tools.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-purple-500 group-hover:text-white group-hover:border-purple-500 transition-all text-center uppercase tracking-widest hover-target">Launch Tool</a>
+                        </div>
+                    </div>
+
+                    <!-- Tool 6: Sampling Frequency Calculator -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.5s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500 transition-all duration-500">
+                                    <i data-lucide="activity" class="w-5 h-5 text-blue-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">NYQ // v1.2</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Sampling Frequency Calculator</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Calculate Nyquist rate and sampling requirements.</p>
+                            <a href="tools.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500 transition-all text-center uppercase tracking-widest hover-target">Launch Tool</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2 — Learning Domains -->
+        <section id="learning-domains" class="py-32 border-t border-white/5 bg-surface/20">
+            <div class="max-w-[1200px] mx-auto px-6">
+                <div class="text-center mb-20 scroll-reveal">
+                    <span class="font-mono text-[9px] text-accent uppercase tracking-widest mb-3 block">02 // Disciplinary Hubs</span>
+                    <h2 class="text-3xl md:text-5xl font-display font-extrabold text-white mb-4">Explore Engineering Domains</h2>
+                    <p class="text-white/40 text-sm max-w-md mx-auto">Focused learning hubs for modern engineering disciplines.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Domain 1: Electronics & Communication -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(94, 106, 210, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-12">
+                                <div class="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent transition-all duration-500">
+                                    <i data-lucide="radio" class="w-6 h-6 text-accent group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">ECE</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-accent transition-colors">Electronics & Communication</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Circuits, communication systems, signal processing, and digital electronics.</p>
+                            <a href="academy.html" class="text-[9px] font-mono text-accent group-hover:text-accent-bright font-bold uppercase tracking-widest flex items-center gap-1.5 hover-target">
+                                Explore Hub <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Domain 2: Embedded Systems -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.1s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-12">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500 transition-all duration-500">
+                                    <i data-lucide="cpu" class="w-6 h-6 text-emerald-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">Embedded</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-emerald-400 transition-colors">Embedded Systems</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Microcontrollers, Arduino, ESP32, sensors, and real-world applications.</p>
+                            <a href="academy.html" class="text-[9px] font-mono text-emerald-400 group-hover:text-emerald-300 font-bold uppercase tracking-widest flex items-center gap-1.5 hover-target">
+                                Explore Hub <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Domain 3: AIoT -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.2s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-12">
+                                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:bg-amber-500 transition-all duration-500">
+                                    <i data-lucide="network" class="w-6 h-6 text-amber-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">AIoT</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-amber-400 transition-colors">AIoT</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Artificial intelligence integrated with IoT and edge devices.</p>
+                            <a href="academy.html" class="text-[9px] font-mono text-amber-400 group-hover:text-amber-300 font-bold uppercase tracking-widest flex items-center gap-1.5 hover-target">
+                                Explore Hub <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Domain 4: UAV & Drone Technology -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.3s;">
+                        <div class="spotlight" style="background: radial-gradient(circle, rgba(244, 63, 94, 0.12) 0%, transparent 70%);"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-12">
+                                <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center group-hover:bg-rose-500 transition-all duration-500">
+                                    <i data-lucide="navigation" class="w-6 h-6 text-rose-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">UAV</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-rose-400 transition-colors">UAV & Drone Technology</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Drone design, aerodynamics, flight systems, and mission planning.</p>
+                            <a href="academy.html" class="text-[9px] font-mono text-rose-400 group-hover:text-rose-300 font-bold uppercase tracking-widest flex items-center gap-1.5 hover-target">
+                                Explore Hub <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3 — Project Library -->
+        <section id="project-library" class="py-32 border-t border-white/5 bg-surface/10">
+            <div class="max-w-[1200px] mx-auto px-6">
+                <div class="text-center mb-20 scroll-reveal">
+                    <span class="font-mono text-[9px] text-accent uppercase tracking-widest mb-3 block">03 // Blueprint Library</span>
+                    <h2 class="text-3xl md:text-5xl font-display font-extrabold text-white mb-4">Build Real Engineering Projects</h2>
+                    <p class="text-white/40 text-sm max-w-md mx-auto">Learn through practical implementation.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Project 1 -->
+                    <div class="glass-card rounded-[2.5rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between">
+                        <div class="spotlight"></div>
+                        <div class="relative overflow-hidden aspect-[16/10]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-[#0A0A0C]/40 to-transparent z-10"></div>
+                            <img src="file:///C:/Users/mahat/.gemini/antigravity-ide/brain/8f27947c-33b0-40b3-ac11-13b620098c00/autonomous_rover_1780474136453.png" alt="Arduino-Based Autonomous Rover" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </div>
+                        <div class="p-8 relative z-20 -mt-8 flex flex-col h-full bg-[#0A0A0C]/90 backdrop-blur-md rounded-t-[2rem]">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-mono text-[8px] text-accent uppercase tracking-widest block">Robotics & Arduino</span>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono uppercase tracking-widest">Beginner</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-accent transition-colors">Arduino-Based Autonomous Rover</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Build a self-driving vehicle equipped with ultrasonic obstacle sensors, motor drivers, and customized autonomous navigation logic.</p>
+                            <a href="projects.html" class="w-full py-3.5 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/80 group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all text-center uppercase tracking-widest hover-target">View Project</a>
+                        </div>
+                    </div>
+
+                    <!-- Project 2 -->
+                    <div class="glass-card rounded-[2.5rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.1s;">
+                        <div class="spotlight"></div>
+                        <div class="relative overflow-hidden aspect-[16/10]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-[#0A0A0C]/40 to-transparent z-10"></div>
+                            <img src="file:///C:/Users/mahat/.gemini/antigravity-ide/brain/8f27947c-33b0-40b3-ac11-13b620098c00/smart_agriculture_1780474153829.png" alt="Smart Agriculture Monitoring System" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </div>
+                        <div class="p-8 relative z-20 -mt-8 flex flex-col h-full bg-[#0A0A0C]/90 backdrop-blur-md rounded-t-[2rem]">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-mono text-[8px] text-emerald-400 uppercase tracking-widest block">AIoT & Sensors</span>
+                                <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[8px] font-mono uppercase tracking-widest">Intermediate</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-emerald-400 transition-colors">Smart Agriculture Monitoring System</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Develop an automated environmental monitor reading soil moisture, ambient temperature, and humidity, linked to a web-based dashboard.</p>
+                            <a href="projects.html" class="w-full py-3.5 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/80 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all text-center uppercase tracking-widest hover-target">View Project</a>
+                        </div>
+                    </div>
+
+                    <!-- Project 3 -->
+                    <div class="glass-card rounded-[2.5rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.2s;">
+                        <div class="spotlight"></div>
+                        <div class="relative overflow-hidden aspect-[16/10]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-[#0A0A0C]/40 to-transparent z-10"></div>
+                            <img src="file:///C:/Users/mahat/.gemini/antigravity-ide/brain/8f27947c-33b0-40b3-ac11-13b620098c00/line_follower_1780474171969.png" alt="Line Following Robot Using IR Sensors" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </div>
+                        <div class="p-8 relative z-20 -mt-8 flex flex-col h-full bg-[#0A0A0C]/90 backdrop-blur-md rounded-t-[2rem]">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-mono text-[8px] text-amber-400 uppercase tracking-widest block">Embedded Systems</span>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono uppercase tracking-widest">Beginner</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-amber-400 transition-colors">Line Following Robot Using IR Sensors</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Construct a high-speed pathfinding robot that utilizes infrared reflective arrays to track visual lanes with sub-millisecond corrections.</p>
+                            <a href="projects.html" class="w-full py-3.5 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/80 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all text-center uppercase tracking-widest hover-target">View Project</a>
+                        </div>
+                    </div>
+
+                    <!-- Project 4 -->
+                    <div class="glass-card rounded-[2.5rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.3s;">
+                        <div class="spotlight"></div>
+                        <div class="relative overflow-hidden aspect-[16/10]">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0A0A0C] via-[#0A0A0C]/40 to-transparent z-10"></div>
+                            <img src="file:///C:/Users/mahat/.gemini/antigravity-ide/brain/8f27947c-33b0-40b3-ac11-13b620098c00/obstacle_avoidance_1780474188524.png" alt="Obstacle Avoidance Robot Using Ultrasonic Sensors" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        </div>
+                        <div class="p-8 relative z-20 -mt-8 flex flex-col h-full bg-[#0A0A0C]/90 backdrop-blur-md rounded-t-[2rem]">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-mono text-[8px] text-rose-400 uppercase tracking-widest block">UAV & Robotics</span>
+                                <span class="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[8px] font-mono uppercase tracking-widest">Advanced</span>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-rose-400 transition-colors">Obstacle Avoidance Robot Using Ultrasonic Sensors</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-8 flex-grow">Implement an autonomous wheeled robot that continuously measures front clearances to recalculate pathing vectors dynamically.</p>
+                            <a href="projects.html" class="w-full py-3.5 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/80 group-hover:bg-rose-500 group-hover:text-white group-hover:border-rose-500 transition-all text-center uppercase tracking-widest hover-target">View Project</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4 — Career Roadmaps -->
+        <section id="career-roadmaps" class="py-32 border-t border-white/5 bg-surface/20">
+            <div class="max-w-[1200px] mx-auto px-6">
+                <div class="text-center mb-20 scroll-reveal">
+                    <span class="font-mono text-[9px] text-accent uppercase tracking-widest mb-3 block">04 // Career Pipelines</span>
+                    <h2 class="text-3xl md:text-5xl font-display font-extrabold text-white mb-4">Engineering Career Paths</h2>
+                    <p class="text-white/40 text-sm max-w-md mx-auto">Structured learning paths for future engineers.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Path 1: Embedded Systems Engineer -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-accent transition-all duration-500">
+                                    <i data-lucide="cpu" class="w-5 h-5 text-accent group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">Path 01</span>
+                            </div>
+                            <h3 class="text-base font-display font-bold text-white mb-2 group-hover:text-accent transition-colors">Embedded Systems Engineer</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Pathway from basic circuit layout, C programming, and RTOS development to enterprise embedded firmware engineering.</p>
+                            
+                            <div class="border-t border-white/5 pt-4 mb-6">
+                                <div class="flex items-center gap-2 font-mono text-[8px] text-white/30 uppercase">
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Firmware</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">RTOS</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Hardware</span>
+                                </div>
+                            </div>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all text-center uppercase tracking-widest hover-target">Initialize Path</a>
+                        </div>
+                    </div>
+
+                    <!-- Path 2: AIoT Engineer -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.1s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-emerald-500 transition-all duration-500">
+                                    <i data-lucide="network" class="w-5 h-5 text-emerald-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">Path 02</span>
+                            </div>
+                            <h3 class="text-base font-display font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">AIoT Engineer</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Roadmap combining neural network model optimization, Edge AI hardware deployment, sensor integration, and cloud architectures.</p>
+                            
+                            <div class="border-t border-white/5 pt-4 mb-6">
+                                <div class="flex items-center gap-2 font-mono text-[8px] text-white/30 uppercase">
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Sensors</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Edge AI</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Cloud</span>
+                                </div>
+                            </div>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all text-center uppercase tracking-widest hover-target">Initialize Path</a>
+                        </div>
+                    </div>
+
+                    <!-- Path 3: UAV Systems Engineer -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.2s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-rose-500 transition-all duration-500">
+                                    <i data-lucide="navigation" class="w-5 h-5 text-rose-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">Path 03</span>
+                            </div>
+                            <h3 class="text-base font-display font-bold text-white mb-2 group-hover:text-rose-400 transition-colors">UAV Systems Engineer</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Master drone structures, aerodynamic engineering, flight controller firmware customization, and flight simulation suites.</p>
+                            
+                            <div class="border-t border-white/5 pt-4 mb-6">
+                                <div class="flex items-center gap-2 font-mono text-[8px] text-white/30 uppercase">
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Aero</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Avionics</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Control</span>
+                                </div>
+                            </div>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-rose-500 group-hover:text-white group-hover:border-rose-500 transition-all text-center uppercase tracking-widest hover-target">Initialize Path</a>
+                        </div>
+                    </div>
+
+                    <!-- Path 4: Government Jobs for ECE -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.3s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-amber-500 transition-all duration-500">
+                                    <i data-lucide="briefcase" class="w-5 h-5 text-amber-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">Path 04</span>
+                            </div>
+                            <h3 class="text-base font-display font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">Government Jobs for ECE</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Dedicated preparation tracks for public sector engineering examinations, technical officer roles, and defense laboratory careers.</p>
+                            
+                            <div class="border-t border-white/5 pt-4 mb-6">
+                                <div class="flex items-center gap-2 font-mono text-[8px] text-white/30 uppercase">
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">Syllabus</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">GATE</span>
+                                    <i data-lucide="chevron-right" class="w-2.5 h-2.5 opacity-45"></i>
+                                    <span class="px-1.5 py-0.5 rounded bg-white/5">PSU Prep</span>
+                                </div>
+                            </div>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all text-center uppercase tracking-widest hover-target">Initialize Path</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5 — Resource Center -->
+        <section id="resources" class="py-32 border-t border-white/5 bg-surface/10">
+            <div class="max-w-[1200px] mx-auto px-6">
+                <div class="text-center mb-20 scroll-reveal">
+                    <span class="font-mono text-[9px] text-accent uppercase tracking-widest mb-3 block">05 // Learning Material</span>
+                    <h2 class="text-3xl md:text-5xl font-display font-extrabold text-white mb-4">Engineering Resources</h2>
+                    <p class="text-white/40 text-sm max-w-md mx-auto">Curated learning materials and preparation resources.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Category 1: Formula Sheets -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-accent transition-all duration-500">
+                                    <i data-lucide="file-text" class="w-5 h-5 text-accent group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">Syllabus</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-accent transition-colors">Formula Sheets</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Cheat sheets and reference guides for formulas in electronics, signal processing, and electromagnetics.</p>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all text-center uppercase tracking-widest hover-target">Access Library</a>
+                        </div>
+                    </div>
+
+                    <!-- Category 2: Viva Questions -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.1s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-emerald-500 transition-all duration-500">
+                                    <i data-lucide="help-circle" class="w-5 h-5 text-emerald-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">VIVA</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">Viva Questions</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Comprehensive question banks covering lab experiments, hardware design, and academic coursework defense.</p>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all text-center uppercase tracking-widest hover-target">Access Library</a>
+                        </div>
+                    </div>
+
+                    <!-- Category 3: Interview Preparation -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.2s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-amber-500 transition-all duration-500">
+                                    <i data-lucide="briefcase" class="w-5 h-5 text-amber-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">Prep</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-amber-400 transition-colors">Interview Preparation</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Technical interview prep modules for ECE, embedded systems design, and firmware developers.</p>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-amber-500 group-hover:text-white group-hover:border-amber-500 transition-all text-center uppercase tracking-widest hover-target">Access Library</a>
+                        </div>
+                    </div>
+
+                    <!-- Category 4: Free Certifications -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.3s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-rose-500 transition-all duration-500">
+                                    <i data-lucide="award" class="w-5 h-5 text-rose-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">PORTFOLIO</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-rose-400 transition-colors">Free Certifications</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Curated list of free courses, platform tracks, and credentials to build your engineering portfolio.</p>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-rose-500 group-hover:text-white group-hover:border-rose-500 transition-all text-center uppercase tracking-widest hover-target">Access Library</a>
+                        </div>
+                    </div>
+
+                    <!-- Category 5: Study Notes -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.4s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-purple-500 transition-all duration-500">
+                                    <i data-lucide="book-open" class="w-5 h-5 text-purple-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">NOTES</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">Study Notes</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Well-structured semester notes, textbook summaries, and reference books sorted by engineering domains.</p>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-purple-500 group-hover:text-white group-hover:border-purple-500 transition-all text-center uppercase tracking-widest hover-target">Access Library</a>
+                        </div>
+                    </div>
+
+                    <!-- Category 6: Learning Guides -->
+                    <div class="glass-card p-8 rounded-[2rem] group transition-all duration-500 hover:-translate-y-2 relative overflow-hidden scroll-reveal flex flex-col justify-between" style="transition-delay: 0.5s;">
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-8">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-blue-500 transition-all duration-500">
+                                    <i data-lucide="compass" class="w-5 h-5 text-blue-500 group-hover:text-white"></i>
+                                </div>
+                                <span class="font-mono text-[8px] text-white/20 tracking-[0.2em] uppercase">GUIDES</span>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Learning Guides</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 flex-grow">Step-by-step guides, project tutorials, and system architectural blueprints for hardware construction.</p>
+                            <a href="academy.html" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-500 transition-all text-center uppercase tracking-widest hover-target">Access Library</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6 — Community (Stay Updated) -->
+        <section class="py-24 border-t border-white/5 bg-surface/20">
+            <div class="max-w-[800px] mx-auto px-6 text-center scroll-reveal">
+                <div class="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-8">
+                    <i data-lucide="mail" class="w-6 h-6 text-accent"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-display font-extrabold text-white mb-4">Stay Updated</h2>
+                <p class="text-white/40 text-sm max-w-md mx-auto mb-10 leading-relaxed">Receive updates about new tools, resources, projects, and engineering opportunities.</p>
+                <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto relative z-20" onsubmit="event.preventDefault(); alert('Subscribed successfully!');">
+                    <input type="email" required placeholder="Enter your email address..." class="flex-grow h-12 px-5 rounded-xl bg-white/[0.02] border border-white/[0.08] text-sm text-white placeholder-white/20 focus:outline-none focus:border-accent/40 transition-all">
+                    <button type="submit" class="h-12 px-8 bg-white hover:bg-accent hover:text-white text-black text-[10px] font-extrabold rounded-xl transition-all hover-target uppercase tracking-widest shadow-xl flex items-center justify-center shrink-0">
+                        Subscribe
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50">
+            <div class="max-w-[1200px] mx-auto px-6">
+                <div class="flex flex-col md:flex-row justify-between items-start gap-16 mb-24">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded bg-accent flex items-center justify-center">
+                                <i data-lucide="component" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <span class="font-display font-extrabold text-[13px] tracking-[0.3em] text-white uppercase">THRULABS</span>
+                        </div>
+                        <p class="text-white/20 text-[10px] font-mono leading-relaxed max-w-[220px] uppercase tracking-widest">
+                            THE ENGINEERING PLATFORM FOR ELECTRONICS, EMBEDDED, AIoT & UAVs.
+                        </p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-16 md:gap-20">
+                        <div class="space-y-6">
+                            <span class="text-[10px] font-bold text-white/10 uppercase tracking-widest block">Sitemap</span>
+                            <div class="flex flex-col gap-3 font-mono text-[10px] text-white/40">
+                                <a href="index.html" class="hover:text-white hover-target transition-colors">Home</a>
+                                <a href="tools.html" class="hover:text-white hover-target transition-colors">Tools</a>
+                                <a href="academy.html" class="hover:text-white hover-target transition-colors">Resources</a>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <span class="text-[10px] font-bold text-white/10 uppercase tracking-widest block">Learn</span>
+                            <div class="flex flex-col gap-3 font-mono text-[10px] text-white/40">
+                                <a href="projects.html" class="hover:text-white hover-target transition-colors">Projects</a>
+                                <a href="academy.html" class="hover:text-white hover-target transition-colors">Roadmaps</a>
+                                <a href="about.html" class="hover:text-white hover-target transition-colors">About</a>
+                            </div>
+                        </div>
+                        <div class="space-y-6 col-span-2 sm:col-span-1">
+                            <span class="text-[10px] font-bold text-white/10 uppercase tracking-widest block">Connect</span>
+                            <div class="flex flex-col gap-3 font-mono text-[10px] text-white/40">
+                                <a href="contact.html" class="hover:text-white hover-target transition-colors">Contact</a>
+                                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-white hover-target transition-colors flex items-center gap-1.5">GitHub <i data-lucide="external-link" class="w-3 h-3"></i></a>
+                                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="hover:text-white hover-target transition-colors flex items-center gap-1.5">LinkedIn <i data-lucide="external-link" class="w-3 h-3"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pt-10 border-t border-white/[0.03] flex flex-col sm:flex-row justify-between items-center gap-4 font-mono text-[8px] text-white/10 uppercase tracking-[0.4em]">
+                    <span>© 2026 THRULABS Engineering Systems</span>
+                    <div class="flex gap-8">
+                        <span>Status: Operational</span>
+                        <span>Discipline: ECE/Embedded/AIoT/UAV</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // High-Performance Coordinate Interaction for WebGL Particles
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // Intersection Observer for Scroll Reveals
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active', 'is-visible');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.scroll-reveal, #hero-trigger').forEach(el => revealObserver.observe(el));
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 100) {
+                nav.classList.add('nav-shrink');
+            } else {
+                nav.classList.remove('nav-shrink');
+            }
+        });
+
+        // Spotlight Effect for Glass Cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const spotlight = card.querySelector('.spotlight');
+                if (spotlight) {
+                    spotlight.style.transform = `translate3d(${x - 250}px, ${y - 250}px, 0)`;
+                }
+            });
+        });
+
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const partGeo = new THREE.BufferGeometry();
+        const partCount = 2200;
+        const partPos = new Float32Array(partCount * 3);
+        for (let i = 0; i < partCount * 3; i++) {
+            partPos[i] = (Math.random() - 0.5) * 130;
+        }
+        partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+        const partMat = new THREE.PointsMaterial({
+            size: 0.1,
+            color: 0x5E6AD2,
+            transparent: true,
+            opacity: 0.76,
+            blending: THREE.AdditiveBlending
+        });
+        const particles = new THREE.Points(partGeo, partMat);
+        scene.add(particles);
+
+        const coreGeo = new THREE.IcosahedronGeometry(22, 1);
+        const coreMat = new THREE.MeshBasicMaterial({
+            color: 0x5E6AD2,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.1
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        camera.position.z = 75;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const scrollY = window.scrollY;
+            
+            particles.rotation.y += 0.0004;
+            core.rotation.y -= 0.0002;
+            
+            const targetX = (mouseX / window.innerWidth - 0.5) * 5;
+            const targetY = -(mouseY / window.innerHeight - 0.5) * 5;
+            camera.position.x += (targetX - camera.position.x) * 0.04;
+            camera.position.y += (targetY - camera.position.y) * 0.04;
+            camera.lookAt(scene.position);
+            
+            particles.position.y = scrollY * 0.015;
+            core.position.y = scrollY * 0.012;
+
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            setTimeout(() => {
+                const trigger = document.getElementById('hero-trigger');
+                if (trigger) trigger.classList.add('is-visible');
+            }, 100);
+            animate();
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

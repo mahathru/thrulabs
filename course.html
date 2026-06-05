@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Course Detail</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .academy-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .academy-card:hover {
+            border-color: rgba(94, 106, 210, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .academy-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .group:hover .dropdown-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    
+                    <!-- Tools Dropdown -->
+                    <div class="relative group">
+                        <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target flex items-center gap-1.5 py-2">
+                            Tools <i data-lucide="chevron-down" class="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform"></i>
+                        </a>
+                        <div class="absolute top-full left-0 pt-4 dropdown-panel w-[22rem]">
+                            <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-2xl space-y-4">
+                                <div class="border-b border-white/5 pb-3 px-1">
+                                    <span class="text-[9px] font-display font-extrabold text-white uppercase tracking-widest block">Tools Hub</span>
+                                    <p class="text-[8px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Browse engineering tools and utilities.</p>
+                                </div>
+                                <div class="space-y-3 font-mono text-[9px]">
+                                    <a href="tools.html#calculators" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="cpu" class="w-4 h-4 text-accent mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-accent transition-colors">Engineering Calculators &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Electronics, communication systems, and circuit calculations.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#converters" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="binary" class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-emerald-400 transition-colors">Converters &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Binary, hexadecimal, and engineering conversions.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#utilities" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-purple-300 transition-colors">Student Utilities &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Academic productivity and student tools.</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="flex items-center justify-between pt-3 border-t border-white/5 px-1 font-mono text-[8.5px]">
+                                    <a href="tools.html" class="group/all flex flex-col hover-target font-mono">
+                                        <span class="text-white/50 hover:text-white uppercase tracking-widest font-bold">All Tools &rarr;</span>
+                                        <span class="text-[7px] text-white/30 font-sans normal-case mt-0.5">View complete tool directory.</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 pt-40 px-6 pb-32 max-w-[1000px] mx-auto space-y-16">
+        
+        <!-- Back Link -->
+        <div class="reveal-text">
+            <a href="academy.html" class="inline-flex items-center gap-2 text-xs font-mono text-white/60 hover:text-white transition-colors hover-target">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Academy Hub
+            </a>
+        </div>
+
+        <!-- SECTION 1: COURSE HERO -->
+        <section id="course-hero" class="academy-card p-8 md:p-12 rounded-[2.5rem] relative overflow-hidden group reveal-text">
+            <div class="spotlight"></div>
+            <div class="relative z-10 space-y-6">
+                <div class="flex flex-wrap gap-2">
+                    <span id="hero-category" class="px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/30 text-accent-bright text-[9px] font-mono uppercase tracking-widest">
+                        Category
+                    </span>
+                    <span id="hero-instructor" class="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-[9px] font-mono uppercase tracking-widest">
+                        THRULABS
+                    </span>
+                </div>
+                
+                <h1 id="hero-title" class="text-3xl md:text-5xl font-display font-extrabold tracking-tight text-white leading-tight">
+                    Course Title
+                </h1>
+                
+                <p id="hero-desc" class="text-[#BFC5D2] text-sm md:text-base font-light leading-relaxed max-w-3xl">
+                    Course Description
+                </p>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6 border-y border-white/5 text-xs font-mono">
+                    <div>
+                        <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Difficulty</span>
+                        <span id="hero-difficulty" class="text-white font-bold">--</span>
+                    </div>
+                    <div>
+                        <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Duration</span>
+                        <span id="hero-duration" class="text-white font-bold">--</span>
+                    </div>
+                    <div>
+                        <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Syllabus</span>
+                        <span id="hero-lessons" class="text-white font-bold">-- Lessons</span>
+                    </div>
+                    <div>
+                        <span class="text-white/40 block text-[9px] uppercase tracking-wider mb-0.5">Certification</span>
+                        <span id="hero-certification" class="text-emerald-400 font-bold">Available</span>
+                    </div>
+                </div>
+                
+                <button onclick="startCourseAction()" class="px-8 py-4 bg-white text-black hover:bg-accent hover:text-white rounded-xl text-xs font-extrabold uppercase tracking-widest transition-all shadow-xl hover-target">
+                    Start Learning
+                </button>
+            </div>
+        </section>
+
+        <!-- Dynamic Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 reveal-text" style="transition-delay: 0.1s;">
+            <!-- Left 2 Columns -->
+            <div class="lg:col-span-2 space-y-16">
+                <!-- SECTION 2: WHAT YOU WILL LEARN -->
+                <section id="course-learn" class="space-y-4">
+                    <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                        <span class="w-1.5 h-5 rounded bg-accent"></span>
+                        What You Will Learn
+                    </h2>
+                    <ul id="learn-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs text-[#BFC5D2]">
+                        <!-- Dynamic -->
+                    </ul>
+                </section>
+
+                <!-- SECTION 3: COURSE MODULES -->
+                <section id="course-modules" class="space-y-4">
+                    <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                        <span class="w-1.5 h-5 rounded bg-purple-500"></span>
+                        Course Syllabus & Modules
+                    </h2>
+                    <div id="modules-accordion" class="space-y-3">
+                        <!-- Dynamic Accordions -->
+                    </div>
+                </section>
+
+                <!-- SECTION 4: COURSE OUTCOMES -->
+                <section id="course-outcomes" class="space-y-4">
+                    <h2 class="text-lg font-display font-bold text-white border-b border-white/10 pb-3 flex items-center gap-3">
+                        <span class="w-1.5 h-5 rounded bg-emerald-500"></span>
+                        Course Outcomes
+                    </h2>
+                    <div class="space-y-3" id="outcomes-container">
+                        <!-- Dynamic outcomes -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right 1 Column -->
+            <div class="space-y-12">
+                <!-- SECTION 5: REQUIREMENTS -->
+                <section id="course-requirements" class="academy-card p-6 rounded-[2rem] space-y-4">
+                    <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-accent-bright"></i> Requirements
+                    </h3>
+                    <ul id="requirements-list" class="space-y-2.5 text-[11px] text-[#BFC5D2] leading-relaxed list-disc pl-4">
+                        <!-- Dynamic requirements -->
+                    </ul>
+                </section>
+
+                <!-- SECTION 6: CERTIFICATION -->
+                <section id="course-certification-detail" class="academy-card p-6 rounded-[2rem] space-y-4">
+                    <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="award" class="w-4 h-4 text-emerald-400"></i> Certification
+                    </h3>
+                    <div id="certification-meta" class="space-y-3 text-[11px] text-[#BFC5D2] font-mono">
+                        <!-- Dynamic certification info -->
+                    </div>
+                </section>
+
+                <!-- SECTION 7: START LEARNING CTA -->
+                <section id="course-cta" class="academy-card p-6 rounded-[2rem] bg-gradient-to-br from-accent/15 to-transparent border border-accent/20 space-y-5">
+                    <div class="space-y-1">
+                        <h3 class="text-base font-display font-extrabold text-white">Ready to Begin?</h3>
+                        <p class="text-[11px] text-[#BFC5D2]">Enroll instantly and start your practical engineering learning path today.</p>
+                    </div>
+                    <div class="space-y-2.5">
+                        <button onclick="startCourseAction()" class="w-full py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover-target">
+                            Start Course
+                        </button>
+                        <button onclick="viewCertRequirements()" class="w-full py-3 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover-target">
+                            View Certification Requirements
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50 relative z-10">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-gray-300 uppercase">Academy Ecosystem</span>
+            </div>
+            <div class="flex gap-8 font-mono text-[9px] text-gray-300 uppercase tracking-[0.2em]">
+                <a href="academy.html" class="hover:text-white hover-target transition-colors">Learning LMS</a>
+                <a href="academy.html#section-verification" class="hover:text-white hover-target transition-colors">Certification Verify</a>
+            </div>
+            <p class="text-[8px] text-gray-300/40 font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL LEARNING AUTHORITY</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Cursor coordinates
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        // Spotlight
+        function addSpotlightEffect(card) {
+            const spotlight = card.querySelector('.spotlight');
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (spotlight) {
+                    spotlight.style.transform = `translate3d(${x - 200}px, ${y - 200}px, 0)`;
+                }
+            });
+        }
+        document.querySelectorAll('.academy-card').forEach(addSpotlightEffect);
+
+        // Course Database
+        const coursesData = {
+            "arduino-fundamentals": {
+                category: "Embedded Systems",
+                title: "Arduino Fundamentals",
+                desc: "Master the basics of prototyping with Arduino. Learn electronics fundamentals, sensory interfacing, actuator controls, UART communication, and build full-scale autonomous hardware prototypes.",
+                difficulty: "Beginner",
+                duration: "6 Hours",
+                lessons: 18,
+                instructor: "THRULABS Engineering Faculty",
+                whatYouWillLearn: [
+                    "Introduction to Arduino & Microcontrollers",
+                    "Arduino IDE Setup & Driver installation",
+                    "Digital Inputs & Outputs (GPIO)",
+                    "Pulse Width Modulation (PWM) Control",
+                    "Serial Communication (UART)",
+                    "Interfacing Analog Sensors (ADC)",
+                    "Controlling DC & Servo Motors",
+                    "Building Automated Prototyping Systems"
+                ],
+                modules: [
+                    { title: "Module 1: Introduction to Arduino", desc: "Brief history of microcontrollers, ATmega328P architecture block diagram, and setting up the hardware board pins." },
+                    { title: "Module 2: Arduino Programming Basics", desc: "Understanding setup() and loop() structures, variable types, logical conditions, registers, and delays." },
+                    { title: "Module 3: Working with Sensors", desc: "Connecting digital and analog sensors (LDRs, ultrasonic sensors, DHT11) and reading inputs via ADC." },
+                    { title: "Module 4: Actuators and Motors", desc: "Driving DC motors using L298N dual H-bridge chip, controlling speed with PWM, and angular positioning of Servos." },
+                    { title: "Module 5: Communication Protocols", desc: "Sending sensor logs over the Serial Monitor, understanding baud rates, and interfacing characters I2C LCDs." },
+                    { title: "Module 6: Capstone Project", desc: "Designing and programming a fully automated home intelligence safety module, blending sensors, relays, and alarms." }
+                ],
+                outcomes: [
+                    "Build fully custom Arduino electronics projects",
+                    "Interface analog and digital sensor arrays",
+                    "Control DC, stepper, and servo actuators safely",
+                    "Analyze and debug low-level hardware bugs",
+                    "Create and implement actual engineering prototypes"
+                ],
+                requirements: [
+                    "Basic computer literacy (installing programs, navigating files)",
+                    "No prior electronics or programming experience required"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "Practical Project & Quiz Assessment Required",
+                    verification: "Supported (Cataloged under global database)",
+                    idPrefix: "TL-2026-00001"
+                }
+            },
+            "embedded-systems": {
+                category: "Embedded Systems",
+                title: "Embedded Systems Essentials",
+                desc: "Delve deep into bare-metal C programming and microcontroller architecture. Configure registers directly, handle high-speed interrupts, interface UART, SPI, and I2C buses, and write efficient hardware programs.",
+                difficulty: "Intermediate",
+                duration: "12 Hours",
+                lessons: 32,
+                instructor: "THRULABS Microelectronics Lab",
+                whatYouWillLearn: [
+                    "Microcontroller Architecture & Memory Map",
+                    "Register-level Programming & Masking",
+                    "System Clock Configuration & PLLs",
+                    "Hardware Interrupts & NVIC Controllers",
+                    "UART, SPI, and I2C Protocols",
+                    "Analog to Digital Converters (ADC)",
+                    "Direct Memory Access (DMA) Basics",
+                    "Firmware Architecture & State Machines"
+                ],
+                modules: [
+                    { title: "Module 1: Microcontroller Core Fundamentals", desc: "Reviewing CPU registers, pipeline stages, SRAM, Flash memory structures, and clock trees." },
+                    { title: "Module 2: GPIO Register Configuration", desc: "Setting MODER, OTYPER, OSPEEDR, and PUPDR registers directly in C/C++ without abstraction libraries." },
+                    { title: "Module 3: Interrupts and Timers", desc: "Configuring SysTick timer, general-purpose timers, and mapping pins to EXTI lines in the Nested Vectored Interrupt Controller (NVIC)." },
+                    { title: "Module 4: Serial Communication Protocols", desc: "Writing custom driver code for UART telemetry, configuring Baud rate generators, and transmitting frames." },
+                    { title: "Module 5: Hardware Bus Interfacing", desc: "Configuring SPI master mode and I2C start/stop registers to interface external EEPROM and sensor modules." },
+                    { title: "Module 6: Real-Time Debugging", desc: "Using SWD debuggers, analyzing register status flags, reading stack overflows, and compiling optimization levels." }
+                ],
+                outcomes: [
+                    "Write highly optimized bare-metal C code",
+                    "Configure clock trees and CPU register modes",
+                    "Implement low-latency ISR handlers",
+                    "Design communication drivers from raw datasheet specifications",
+                    "Resolve real-time runtime hardware locks"
+                ],
+                requirements: [
+                    "Prior C programming basics (pointers, loops, variables)",
+                    "Understanding of basic digital logic states"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "Hardware Registers Config Lab Required",
+                    verification: "Supported (Verifiable internationally)",
+                    idPrefix: "TL-2026-00002"
+                }
+            },
+            "esp32-iot-development": {
+                category: "AIoT",
+                title: "ESP32 & IoT Development",
+                desc: "Architect robust connected solutions. Learn how to interface ESP32 with Wi-Fi, run lightweight MQTT clients, transmit telemetry payloads, integrate with cloud platforms, and implement low-power sleep cycles.",
+                difficulty: "Intermediate",
+                duration: "10 Hours",
+                lessons: 25,
+                instructor: "THRULABS AIoT Division",
+                whatYouWillLearn: [
+                    "ESP32 dual-core Xtensa architecture",
+                    "Wi-Fi Client/Access Point configurations",
+                    "HTTP and RESTful API integrations",
+                    "MQTT Protocol and Pub/Sub telemetry",
+                    "Low-power management & deep sleep",
+                    "IoT cloud dashboard pipelines",
+                    "JSON data serialization & parsing",
+                    "Over-The-Air (OTA) firmware updates"
+                ],
+                modules: [
+                    { title: "Module 1: Getting Started with ESP32", desc: "Understanding the silicon architecture, dual cores, flash mapping, and ESP-IDF toolchain versus Arduino framework." },
+                    { title: "Module 2: Wireless Interfacing", desc: "Configuring Wi-Fi connections, handling disconnected callbacks, and implementing local web servers." },
+                    { title: "Module 3: MQTT & Telemetry Systems", desc: "Connecting to MQTT brokers (Mosquitto/HiveMQ), setting QoS levels, and publishing/subscribing to sensor topics." },
+                    { title: "Module 4: JSON Parsing & Cloud Databases", desc: "Using ArduinoJson to parse configurations, and publishing fields directly to cloud pipelines." },
+                    { title: "Module 5: Power Saving Architectures", desc: "Implementing Deep Sleep cycles, configuring RTC pins and timer wakes to achieve micro-Amp draw states." },
+                    { title: "Module 6: IoT System Assembly", desc: "Designing a full sensor node that wakes up, takes pressure and lux measurements, posts data via MQTT, and enters deep sleep." }
+                ],
+                outcomes: [
+                    "Build low-power smart sensing hardware nodes",
+                    "Design telemetry data streams using MQTT and JSON",
+                    "Integrate physical devices with cloud data structures",
+                    "Implement battery saving deep sleep wake states",
+                    "Deploy secure Over-The-Air remote firmwares"
+                ],
+                requirements: [
+                    "Basic microcontroller programming skills",
+                    "Basic knowledge of internet protocols"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "Telemetry Dashboard Capstone Project Required",
+                    verification: "Supported (Digital verification)",
+                    idPrefix: "TL-2026-00003"
+                }
+            },
+            "digital-electronics": {
+                category: "Electronics & Communication",
+                title: "Digital Electronics Fundamentals",
+                desc: "Explore the building blocks of modern computer systems. Study logic gate operations, Boolean minimization, combinational circuits, flip-flop registers, sequential counters, and Finite State Machines.",
+                difficulty: "Beginner",
+                duration: "8 Hours",
+                lessons: 20,
+                instructor: "THRULABS ECE Department",
+                whatYouWillLearn: [
+                    "Binary, Hexadecimal, and BCD Number Systems",
+                    "Logic Gate Operations & Universality",
+                    "Boolean Algebra Theorems & De Morgan's Laws",
+                    "Karnaugh Maps (K-Maps) Minimization",
+                    "Combinational Circuits (Adders, Multiplexers)",
+                    "Flip-Flops (SR, D, JK, T) and Registers",
+                    "Sequential Counter States and Registers",
+                    "Finite State Machine (FSM) Design"
+                ],
+                modules: [
+                    { title: "Module 1: Number Systems and Logic Gates", desc: "Exploring binary addition, codes, AND/OR/NOT operations, and building other gates using Universal NAND/NOR gates." },
+                    { title: "Module 2: Boolean Simplification", desc: "Applying theorems and Karnaugh Maps to minimize logic gate counts for cost-effective hardware layouts." },
+                    { title: "Module 3: Combinational Logic Circuits", desc: "Designing half/full adders, binary subtractors, 2-to-4 decoders, and 8-to-1 data multiplexers (MUX)." },
+                    { title: "Module 4: Sequential Logic Fundamentals", desc: "Understanding latch circuits, clock transitions, SR/D/JK flip-flops, and resolving race conditions." },
+                    { title: "Module 5: Counters and Shift Registers", desc: "Designing 4-bit ripple counters, synchronous counters, and Serial-In Parallel-Out (SIPO) registers." },
+                    { title: "Module 6: Finite State Machines", desc: "Mapping Moore and Mealy sequential state models to control systems (e.g. traffic light controllers)." }
+                ],
+                outcomes: [
+                    "Design and optimize logic gate structures",
+                    "Build combinational adders and multiplexers",
+                    "Implement registers and sequential state counters",
+                    "Analyze and design Finite State Machines",
+                    "Diagnose digital clock timing hazards"
+                ],
+                requirements: [
+                    "Basic algebra knowledge",
+                    "No prior electronics experience required"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "Logic Circuit Design Lab Exam Required",
+                    verification: "Supported",
+                    idPrefix: "TL-2026-00006"
+                }
+            },
+            "pcb-design-kicad": {
+                category: "Electronics & Communication",
+                title: "PCB Design with KiCad",
+                desc: "Learn to design industry-grade printed circuit boards using KiCad. Master schematic capture, footprint creation, component placement strategies, copper routing, ground pours, and manufacturing Gerber file exports.",
+                difficulty: "Intermediate",
+                duration: "7 Hours",
+                lessons: 15,
+                instructor: "THRULABS Electronics Lab",
+                whatYouWillLearn: [
+                    "PCB Design Flow & KiCad Interface",
+                    "Schematic Symbols & ERC Checks",
+                    "Footprint Associations & Custom Pads",
+                    "Layer Stackup & Clearance Rules",
+                    "Placement & Power Distribution Strategies",
+                    "Trace Routing & Current IPC Calculations",
+                    "Copper Ground Planes & Via Stitching",
+                    "Gerber Generation & Manufacturing Verification"
+                ],
+                modules: [
+                    { title: "Module 1: KiCad Environment & Schematics", desc: "Creating workspace grids, adding components, drawing wire buses, and running Electrical Rules Checks (ERC)." },
+                    { title: "Module 2: Custom Libraries & Footprints", desc: "Creating schematic symbols and designing mechanical footprint solder pads from component datasheets." },
+                    { title: "Module 3: Board Layout & Design Rules", desc: "Importing schematics to the layout view, setting board outlines, configuring track widths, and setting Design Rule Check (DRC) clearances." },
+                    { title: "Module 4: Component Placement & Bypass Caps", desc: "Arranging components to minimize signal loop areas, placing decoupling capacitors close to IC power pins." },
+                    { title: "Module 5: Routing and Ground Pours", desc: "Routing signals, designing solid ground planes (copper pours), stitching grounds using vias, and calculated trace widths." },
+                    { title: "Module 6: Manufacturing Preparation", desc: "Generating Gerber fabrication files, NC drill files, Bill of Materials (BOM), and checking 3D models." }
+                ],
+                outcomes: [
+                    "Design professional circuit schematics",
+                    "Create custom SMD and through-hole footprints",
+                    "Route multi-layer PCBs following signal integrity rules",
+                    "Calculate trace widths according to IPC current standards",
+                    "Generate standard Gerber files for PCB manufacturing"
+                ],
+                requirements: [
+                    "Basic understanding of electronic components (resistors, ICs)",
+                    "Familiarity with standard schematic diagrams"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "Schematic & Multi-layer Board Layout Submission Required",
+                    verification: "Supported",
+                    idPrefix: "TL-2026-00004"
+                }
+            },
+            "uav-drone-technology": {
+                category: "UAV & Drone Technology",
+                title: "UAV & Drone Technology",
+                desc: "Uncover the physics and mechanics of multirotor flight systems. Study flight controller hardware, brushless motors, ESC protocols, sensor fusion loops, and autonomous mission mapping tools.",
+                difficulty: "Intermediate",
+                duration: "10 Hours",
+                lessons: 22,
+                instructor: "THRULABS Aerospace & Robotics Lab",
+                whatYouWillLearn: [
+                    "Multirotor dynamics and thrust physics",
+                    "Brushless DC motors (BLDC) & ESC controls",
+                    "IMU sensors, Gyroscopes & fusion filtering",
+                    "PID control loop stabilization",
+                    "Radio frequency links & RC protocols",
+                    "GPS, compass and magnetometer calibrations",
+                    "Mission planning using QGroundControl",
+                    "Drone aviation regulations & safety guidelines"
+                ],
+                modules: [
+                    { title: "Module 1: Multirotor Flight Dynamics", desc: "Understanding pitch, roll, yaw, thrust-to-weight ratios, and lift aerodynamics." },
+                    { title: "Module 2: Propulsion System Hardware", desc: "Wiring BLDC outrunner motors, ESC timing, LiPo battery C-ratings, and PWM/DShot speed signals." },
+                    { title: "Module 3: Avionics & Sensor Integration", desc: "Understanding MEMS gyroscopes, accelerometers, barometers, and filtering sensor noise." },
+                    { title: "Module 4: Flight Stabilization & PID Loop", desc: "Implementing and tuning PID gains (P, I, D coefficients) to achieve stable hover and handle drag torque." },
+                    { title: "Module 5: Radio Telemetry & Receivers", desc: "Mapping channels on RC transmitters, receiver setups (SBUS/IBUS), and fail-safe safety triggers." },
+                    { title: "Module 6: Autonomous Navigation & Planning", desc: "Programming waypoint paths, flight bounds, and return-to-home parameters on QGroundControl." }
+                ],
+                outcomes: [
+                    "Understand drone physics and power requirements",
+                    "Assemble and wire brushless drone electronics",
+                    "Tune and adjust flight controller PID parameters",
+                    "Design and execute autonomous flight waypoints",
+                    "Operate drone telemetry packages safely"
+                ],
+                requirements: [
+                    "High school physics and algebra",
+                    "Basic knowledge of C/C++ or programming structures"
+                ],
+                certDetail: {
+                    available: "Yes",
+                    assessment: "PID Flight Stabilization Tuning Test Required",
+                    verification: "Supported",
+                    idPrefix: "TL-2026-00005"
+                }
+            }
+        };
+
+        // URL parsing logic
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('course') || 'arduino-fundamentals';
+        const course = coursesData[courseId];
+
+        if (!course) {
+            document.body.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-screen space-y-4 bg-base font-sans text-white text-center p-6">
+                    <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
+                        <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+                    </div>
+                    <h1 class="text-xl font-display font-extrabold tracking-wide">COURSE NOT FOUND</h1>
+                    <p class="text-[#BFC5D2] text-xs max-w-sm">The course key '${courseId}' could not be located in the Thrulabs database.</p>
+                    <a href="academy.html" class="px-6 py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-accent hover:text-white transition-all shadow-xl font-mono">
+                        Back to Academy
+                    </a>
+                </div>
+            `;
+            lucide.createIcons();
+        } else {
+            // Document Title
+            document.title = `THRULABS | ${course.title}`;
+
+            // Populate Hero
+            document.getElementById('hero-category').innerText = course.category;
+            document.getElementById('hero-title').innerText = course.title;
+            document.getElementById('hero-desc').innerText = course.desc;
+            document.getElementById('hero-difficulty').innerText = course.difficulty;
+            document.getElementById('hero-duration').innerText = course.duration;
+            document.getElementById('hero-lessons').innerText = `${course.lessons} Lessons`;
+            document.getElementById('hero-instructor').innerText = course.instructor;
+
+            // Section 2: What You Will Learn
+            const learnList = document.getElementById('learn-list');
+            learnList.innerHTML = course.whatYouWillLearn.map(topic => `
+                <li class="flex items-start gap-2 bg-white/[0.01] border border-white/5 p-3 rounded-xl hover:bg-white/[0.03] transition-colors">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-accent shrink-0 mt-0.5"></i>
+                    <span>${topic}</span>
+                </li>
+            `).join('');
+
+            // Section 3: Expandable Modules
+            const modulesContainer = document.getElementById('modules-accordion');
+            modulesContainer.innerHTML = course.modules.map((mod, idx) => `
+                <div class="academy-card rounded-2xl overflow-hidden">
+                    <button onclick="toggleModule(${idx})" class="w-full p-5 text-left flex justify-between items-center bg-white/[0.01] hover:bg-white/[0.03] transition-all">
+                        <span class="text-xs md:text-sm font-display font-bold text-white">${mod.title}</span>
+                        <i id="module-icon-${idx}" data-lucide="chevron-down" class="w-4 h-4 text-white/50 transition-transform"></i>
+                    </button>
+                    <div id="module-content-${idx}" class="hidden p-5 border-t border-white/5 bg-black/40 text-[11px] text-[#BFC5D2] leading-relaxed">
+                        ${mod.desc}
+                    </div>
+                </div>
+            `).join('');
+
+            // Section 4: Course Outcomes
+            const outcomesContainer = document.getElementById('outcomes-container');
+            outcomesContainer.innerHTML = course.outcomes.map(out => `
+                <div class="flex items-start gap-3 bg-white/[0.01] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.03] transition-colors">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                        <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <span class="text-white font-bold text-[11.5px] block">Expected Outcome</span>
+                        <p class="text-[11px] text-[#BFC5D2] mt-0.5">${out}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Section 5: Requirements
+            const reqList = document.getElementById('requirements-list');
+            reqList.innerHTML = course.requirements.map(req => `
+                <li>${req}</li>
+            `).join('');
+
+            // Section 6: Certification Meta
+            const certMeta = document.getElementById('certification-meta');
+            certMeta.innerHTML = `
+                <div class="flex justify-between border-b border-white/5 pb-2">
+                    <span class="text-white/40">Available:</span>
+                    <span class="text-emerald-400 font-bold">${course.certDetail.available}</span>
+                </div>
+                <div class="flex flex-col gap-1 border-b border-white/5 pb-2">
+                    <span class="text-white/40">Assessment:</span>
+                    <span class="text-white">${course.certDetail.assessment}</span>
+                </div>
+                <div class="flex justify-between border-b border-white/5 pb-2">
+                    <span class="text-white/40">Database verification:</span>
+                    <span class="text-white">${course.certDetail.verification}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-white/40">Default ID Ref:</span>
+                    <span class="text-accent-bright font-bold select-all">${course.certDetail.idPrefix}</span>
+                </div>
+            `;
+
+            lucide.createIcons();
+        }
+
+        // Accordion Toggle
+        function toggleModule(idx) {
+            const content = document.getElementById(`module-content-${idx}`);
+            const icon = document.getElementById(`module-icon-${idx}`);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Actions
+        function startCourseAction() {
+            alert(`Initiating enrollment pipeline for "${course.title}". Connecting workspace sandbox...`);
+            window.location.href = `academy.html`;
+        }
+
+        function viewCertRequirements() {
+            window.location.href = `#course-certification-detail`;
+        }
+
+        // WebGL Particle Canvas
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.BufferGeometry();
+        const ptsArr = new Float32Array(1000 * 3);
+        for(let i=0; i<1000*3; i++) ptsArr[i] = (Math.random() - 0.5) * 120;
+        geo.setAttribute('position', new THREE.BufferAttribute(ptsArr, 3));
+        const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.2 }));
+        scene.add(pts);
+        camera.position.z = 50;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            pts.rotation.y += 0.0003;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 100) nav.classList.add('nav-shrink');
+            else nav.classList.remove('nav-shrink');
+        });
+
+        // Trigger animations
+        setTimeout(() => {
+            document.querySelectorAll('.reveal-text').forEach(el => el.classList.add('active'));
+        }, 10);
+    </script>
+</body>
+</html>

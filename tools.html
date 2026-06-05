@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Engineering Tools</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root { --accent: #5E6AD2; }
+        
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .reveal-text-container {
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: bottom;
+            padding-right: 0.2em;
+        }
+
+        .reveal-text {
+            display: inline-block;
+            transform: translateY(110%);
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            transform: translateY(0);
+        }
+
+        .hero-gradient {
+            background: linear-gradient(to right, #fff, #a5b4fc, #5e6ad2, #a5b4fc, #fff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-flow 8s linear infinite;
+        }
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(94, 106, 210, 0.3);
+            transform: translateY(-8px);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .glass-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .scroll-reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .group:hover .dropdown-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    
+                    <!-- Tools Dropdown -->
+                    <div class="relative group">
+                        <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target flex items-center gap-1.5 py-2">
+                            Tools <i data-lucide="chevron-down" class="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform"></i>
+                        </a>
+                        <div class="absolute top-full left-0 pt-4 dropdown-panel w-[22rem]">
+                            <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-2xl space-y-4">
+                                <!-- Header -->
+                                <div class="border-b border-white/5 pb-3 px-1">
+                                    <span class="text-[9px] font-display font-extrabold text-white uppercase tracking-widest block">Tools Hub</span>
+                                    <p class="text-[8px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Browse engineering tools and utilities.</p>
+                                </div>
+                                <div class="space-y-3 font-mono text-[9px]">
+                                    <a href="tools.html#calculators" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="cpu" class="w-4 h-4 text-accent mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-accent transition-colors">Engineering Calculators &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Electronics, communication systems, and circuit calculations.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#converters" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="binary" class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-emerald-400 transition-colors">Converters &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Binary, hexadecimal, and engineering conversions.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#utilities" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-purple-300 transition-colors">Student Utilities &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Academic productivity and student tools.</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="flex items-center justify-between pt-3 border-t border-white/5 px-1 font-mono text-[8.5px]">
+                                    <a href="tools.html" class="group/all flex flex-col hover-target font-mono">
+                                        <span class="text-white/50 hover:text-white uppercase tracking-widest font-bold">All Tools &rarr;</span>
+                                        <span class="text-[7px] text-white/30 font-sans normal-case mt-0.5">View complete tool directory.</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative z-10 pt-44 px-6 pb-32">
+        <!-- Hero Section -->
+        <section class="max-w-[1200px] mx-auto text-center mb-16">
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-[10px] font-bold text-accent uppercase tracking-widest mb-8 reveal-text">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> TOOLS DIRECTORY
+            </div>
+            <h1 class="text-5xl md:text-8xl font-display font-extrabold tracking-tight text-white mb-8">
+                <div class="reveal-text-container">
+                    <span class="reveal-text hero-gradient">ENGINEERING</span>
+                </div>
+                <br>
+                <div class="reveal-text-container">
+                    <span class="reveal-text text-white/30 italic font-light">TOOLS.</span>
+                </div>
+            </h1>
+            <p class="text-white/40 text-sm md:text-lg max-w-xl mx-auto font-light leading-relaxed scroll-reveal">
+                Practical calculators, converters, and student utilities designed to simplify engineering workflows.
+            </p>
+        </section>
+
+        <!-- Search Section -->
+        <section class="max-w-[800px] mx-auto mb-20 scroll-reveal">
+            <div class="relative w-full">
+                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30"></i>
+                <input type="text" id="search-input" placeholder="Search tools, calculators, or utilities..." oninput="handleSearch(this.value)" class="w-full h-12 pl-11 pr-4 rounded-2xl bg-white/[0.02] border border-white/[0.08] text-sm text-white placeholder-white/20 focus:outline-none focus:border-accent/40 transition-all">
+            </div>
+        </section>
+
+        <!-- Dynamic Tool Lists by Categories -->
+        <section class="max-w-[1200px] mx-auto space-y-24" id="tools-container">
+            <!-- Calculators Section -->
+            <div id="section-engineering-calculators" class="space-y-8 scroll-reveal">
+                <h2 id="calculators" class="text-xl font-display font-bold text-white border-b border-accent/20 pb-3 scroll-mt-28 flex items-center gap-3">
+                    <span class="w-1.5 h-6 rounded bg-accent"></span>
+                    Engineering Calculators
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-calculators"></div>
+            </div>
+
+            <!-- Converters Section -->
+            <div id="section-converters" class="space-y-8 scroll-reveal">
+                <h2 id="converters" class="text-xl font-display font-bold text-white border-b border-emerald-500/20 pb-3 scroll-mt-28 flex items-center gap-3">
+                    <span class="w-1.5 h-6 rounded bg-emerald-500"></span>
+                    Converters
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-converters"></div>
+            </div>
+
+            <!-- Utilities Section -->
+            <div id="section-student-utilities" class="space-y-8 scroll-reveal">
+                <h2 id="utilities" class="text-xl font-display font-bold text-white border-b border-purple-500/20 pb-3 scroll-mt-28 flex items-center gap-3">
+                    <span class="w-1.5 h-6 rounded bg-purple-500"></span>
+                    Student Utilities
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-utilities"></div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center">
+                <i data-lucide="search-code" class="w-12 h-12 text-white/10 mb-4 animate-pulse"></i>
+                <h3 class="text-white/60 font-medium">No engineering tools match your search.</h3>
+            </div>
+        </section>
+    </main>
+
+    <!-- Tool Modal -->
+    <div id="tool-modal" class="fixed inset-0 z-[200] hidden opacity-0 pointer-events-none flex items-center justify-center p-4 md:p-10 transition-all duration-300">
+        <div class="absolute inset-0 bg-black/85 backdrop-blur-xl" onclick="closeToolModal()"></div>
+        <div class="bg-[#0A0A0C]/90 backdrop-blur-2xl border border-white/10 w-full max-w-lg rounded-[2.5rem] overflow-hidden flex flex-col relative z-10 shadow-2xl">
+            <!-- Modal Header -->
+            <div class="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div class="flex flex-col">
+                    <span id="modal-tool-category" class="text-[9px] font-mono text-accent uppercase tracking-widest mb-1">CATEGORY</span>
+                    <h2 id="modal-tool-name" class="text-2xl font-display font-extrabold text-white">Tool Name</h2>
+                </div>
+                <button onclick="closeToolModal()" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-rose-500 transition-all hover-target hover:text-white text-white/70">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Dynamic tool interface) -->
+            <div class="p-8 overflow-y-auto max-h-[60vh] scrollbar-hide text-white/80" id="modal-tool-body">
+                <!-- Injected via Javascript -->
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50 relative z-10">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white/40 uppercase">THRULABS Ecosystem</span>
+            </div>
+            <div class="flex gap-8 font-mono text-[9px] text-white/20 uppercase tracking-[0.2em]">
+                <a href="#" class="hover:text-white hover-target transition-colors">Documentation</a>
+                <a href="#" class="hover:text-white hover-target transition-colors">API Keys</a>
+                <a href="#" class="hover:text-white hover-target transition-colors">Systems</a>
+            </div>
+            <p class="text-[8px] text-white/10 font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL AUTHORITY</p>
+        </div>
+    </footer>
+
+    <script>
+        const tools = [
+            {
+                id: "adc",
+                name: "ADC Resolution Calculator",
+                category: "Engineering Calculators",
+                icon: "cpu",
+                desc: "Calculate ADC step size, quantization levels, and voltage LSB."
+            },
+            {
+                id: "quantization",
+                name: "Quantization Calculator",
+                category: "Engineering Calculators",
+                icon: "layers",
+                desc: "Analyze quantization levels, step size, and SQNR based on bit depth."
+            },
+            {
+                id: "ohmslaw",
+                name: "Ohm's Law Calculator",
+                category: "Engineering Calculators",
+                icon: "zap",
+                desc: "Compute Voltage, Current, Resistance, and Power dynamically using Ohm's Law."
+            },
+            {
+                id: "rctime",
+                name: "RC Time Constant Calculator",
+                category: "Engineering Calculators",
+                icon: "timer",
+                desc: "Determine time constants and charge intervals for resistor-capacitor networks."
+            },
+            {
+                id: "sampling",
+                name: "Sampling Frequency Calculator",
+                category: "Engineering Calculators",
+                icon: "activity",
+                desc: "Determine Nyquist sampling rates and interval constraints for analog signals."
+            },
+            {
+                id: "binary",
+                name: "Binary Converter",
+                category: "Converters",
+                icon: "binary",
+                desc: "Bidirectionally convert decimal numbers to binary string formats."
+            },
+            {
+                id: "hex",
+                name: "Hex Converter",
+                category: "Converters",
+                icon: "hash",
+                desc: "Convert decimal integer values to hexadecimal representation and vice versa."
+            },
+            {
+                id: "numbersystem",
+                name: "Number System Converter",
+                category: "Converters",
+                icon: "calculator",
+                desc: "Convert numbers across Binary, Octal, Decimal, and Hexadecimal systems."
+            },
+            {
+                id: "cgpa",
+                name: "CGPA Calculator",
+                category: "Student Utilities",
+                icon: "graduation-cap",
+                desc: "Input course credits and grade points to compute cumulative GPA."
+            },
+            {
+                id: "attendance",
+                name: "Attendance Calculator",
+                category: "Student Utilities",
+                icon: "calendar-check",
+                desc: "Calculate attendance percentage and consecutive classes needed to meet targets."
+            },
+            {
+                id: "resume",
+                name: "Resume Analyzer",
+                category: "Student Utilities",
+                icon: "file-text",
+                desc: "Analyze and benchmark resume keywords against target job description constraints."
+            }
+        ];
+
+        const toolUIs = {
+            ohmslaw: `
+                <div class="space-y-4">
+                    <p class="text-white/50 text-[10px] font-light">Input any 2 fields. The system will automatically compute the rest as you type.</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Voltage (V)</label>
+                            <div class="relative">
+                                <input type="number" id="ohm-v" placeholder="Volts" step="any" oninput="handleOhmInput('ohm-v')" class="w-full h-11 px-4 pr-8 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono text-white/30">V</span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Current (I)</label>
+                            <div class="relative">
+                                <input type="number" id="ohm-i" placeholder="Amps" step="any" oninput="handleOhmInput('ohm-i')" class="w-full h-11 px-4 pr-8 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono text-white/30">A</span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Resistance (R)</label>
+                            <div class="relative">
+                                <input type="number" id="ohm-r" placeholder="Ohms" step="any" oninput="handleOhmInput('ohm-r')" class="w-full h-11 px-4 pr-8 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono text-white/30">Ω</span>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Power (P)</label>
+                            <div class="relative">
+                                <input type="number" id="ohm-p" placeholder="Watts" step="any" oninput="handleOhmInput('ohm-p')" class="w-full h-11 px-4 pr-8 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono text-white/30">W</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ohmslaw-error" class="hidden text-rose-400 text-[10px] font-mono"></div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateOhmsLaw()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Calculate</button>
+                        <button id="ohmslaw-copy-btn" onclick="copyResult('ohmslaw')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('ohmslaw')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="ohmslaw-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('ohmslaw')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="ohmslaw-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="ohmslaw-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>Voltage:</strong> <code class="text-white/80">V = I * R = P / I = sqrt(P * R)</code></div>
+                            <div>• <strong>Current:</strong> <code class="text-white/80">I = V / R = P / V = sqrt(P / R)</code></div>
+                            <div>• <strong>Resistance:</strong> <code class="text-white/80">R = V / I = V^2 / P = P / I^2</code></div>
+                            <div>• <strong>Power:</strong> <code class="text-white/80">P = V * I = I^2 * R = V^2 / R</code></div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            adc: `
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">ADC Resolution (n Bits)</label>
+                            <input type="number" id="adc-bits" placeholder="e.g. 10, 12, 16" min="1" max="64" oninput="calculateADC()" class="w-full h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                            <div id="adc-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Reference Voltage (Vref)</label>
+                            <div class="relative">
+                                <input type="number" id="adc-vref" placeholder="e.g. 3.3, 5" step="any" oninput="calculateADC()" class="w-full h-11 px-4 pr-10 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono text-white/30">V</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateADC()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Calculate</button>
+                        <button id="adc-copy-btn" onclick="copyResult('adc')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('adc')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="adc-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('adc')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="adc-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="adc-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>Resolution (Step Size / LSB):</strong> <br><code class="text-white/80">V_LSB = Vref / (2^n)</code></div>
+                            <div>• <strong>Number of Levels:</strong> <br><code class="text-white/80">L = 2^n</code></div>
+                            <div>An ADC converts continuous analog voltage into discrete digital levels. For a 10-bit ADC at 5V reference, step size is 5V/1024 ≈ 4.88 mV.</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            quantization: `
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Signal Range (Peak-to-Peak Vp-p)</label>
+                            <div class="relative">
+                                <input type="number" id="quant-vpp" placeholder="e.g. 5" step="any" oninput="calculateQuantization()" class="w-full h-11 px-4 pr-10 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-mono text-white/30">V</span>
+                            </div>
+                            <div id="quant-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Number of Bits (N)</label>
+                            <input type="number" id="quant-bits" placeholder="e.g. 8, 12" min="1" max="64" oninput="calculateQuantization()" class="w-full h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateQuantization()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Calculate</button>
+                        <button id="quant-copy-btn" onclick="copyResult('quant')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('quant')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="quant-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('quant')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="quant-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="quant-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>Levels:</strong> <code class="text-white/80">L = 2^N</code></div>
+                            <div>• <strong>Step Size:</strong> <code class="text-white/80">q = Vpp / L</code></div>
+                            <div>• <strong>Max Quantization Error:</strong> <code class="text-white/80">e_max = ± q / 2</code></div>
+                            <div>• <strong>SQNR (dB):</strong> <code class="text-white/80">SQNR ≈ 6.02 * N + 1.76 dB</code></div>
+                            <div>This represents the signal degradation introduced during analog-to-digital conversion because of limited digital word length.</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            rctime: `
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Resistance (R)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="rc-r" placeholder="e.g. 10 or 4.7k" oninput="calculateRC()" class="flex-1 h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <select id="rc-r-unit" onchange="calculateRC()" class="w-24 h-11 px-2 rounded-xl bg-[#0A0A0C] border border-white/10 text-white text-xs focus:outline-none focus:border-accent">
+                                    <option value="1">Ω</option>
+                                    <option value="1000" selected>kΩ</option>
+                                    <option value="1000000">MΩ</option>
+                                </select>
+                            </div>
+                            <div id="rctime-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Capacitance (C)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="rc-c" placeholder="e.g. 100 or 0.1" oninput="calculateRC()" class="flex-1 h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <select id="rc-c-unit" onchange="calculateRC()" class="w-24 h-11 px-2 rounded-xl bg-[#0A0A0C] border border-white/10 text-white text-xs focus:outline-none focus:border-accent">
+                                    <option value="1">F</option>
+                                    <option value="0.001">mF</option>
+                                    <option value="0.000001" selected>µF</option>
+                                    <option value="0.000000001">nF</option>
+                                    <option value="0.000000000001">pF</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateRC()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Calculate</button>
+                        <button id="rctime-copy-btn" onclick="copyResult('rctime')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('rctime')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="rctime-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('rctime')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="rctime-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="rctime-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>Time Constant (τ):</strong> <code class="text-white/80">τ = R * C</code></div>
+                            <div>• <strong>63.2% Charge Time:</strong> <code class="text-white/80">t = 1τ</code></div>
+                            <div>• <strong>99% Charge Time:</strong> <code class="text-white/80">t ≈ 4.605τ</code> (often approximated as <code class="text-white/80">5τ</code> for 99.3%)</div>
+                            <div>• <strong>Cutoff Frequency:</strong> <code class="text-white/80">f_c = 1 / (2 * π * R * C)</code></div>
+                            <div>Supports scientific notation (e.g. 1.2e3 or 100e-6).</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            sampling: `
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Maximum Signal Frequency (fmax)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="samp-fmax" placeholder="e.g. 20k or 5000" oninput="calculateSampling()" class="flex-1 h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                                <select id="samp-fmax-unit" onchange="calculateSampling()" class="w-24 h-11 px-2 rounded-xl bg-[#0A0A0C] border border-white/10 text-white text-xs focus:outline-none focus:border-accent">
+                                    <option value="1">Hz</option>
+                                    <option value="1000" selected>kHz</option>
+                                    <option value="1000000">MHz</option>
+                                    <option value="1000000000">GHz</option>
+                                </select>
+                            </div>
+                            <div id="sampling-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateSampling()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Calculate</button>
+                        <button id="sampling-copy-btn" onclick="copyResult('sampling')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('sampling')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="samp-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('sampling')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="sampling-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="sampling-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>Nyquist Sampling Rate:</strong> <code class="text-white/80">fs >= 2 * fmax</code></div>
+                            <div>• <strong>Nyquist Sampling Interval:</strong> <code class="text-white/80">Ts = 1 / fs</code></div>
+                            <div>• <strong>Practical Recommended Rate:</strong> <code class="text-white/80">fs_rec ≈ 2.2 * fmax to 2.5 * fmax</code> (incorporates safety filter guard band, like 44.1 kHz for audio).</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            binary: `
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Binary Number</label>
+                            <input type="text" id="bin-val" placeholder="e.g. 101010" oninput="calculateBinary()" class="w-full h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                            <div id="binary-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateBinary()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Convert</button>
+                        <button id="binary-copy-btn" onclick="copyResult('binary')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('binary')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="binary-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('binary')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="binary-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="binary-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>Binary (base 2) uses only 0 and 1. To convert to base 10:</div>
+                            <div><code class="text-white/80">Sum(d_i * 2^i)</code> where d_i is the digit at index i from the right (0-indexed).</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            hex: `
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Hexadecimal Number</label>
+                            <input type="text" id="hex-val" placeholder="e.g. 2A or FF" oninput="calculateHex()" class="w-full h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                            <div id="hex-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateHex()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Convert</button>
+                        <button id="hex-copy-btn" onclick="copyResult('hex')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('hex')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="hex-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('hex')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="hex-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="hex-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>Hexadecimal (base 16) uses 0-9 and A-F. To convert to base 10:</div>
+                            <div><code class="text-white/80">Sum(d_i * 16^i)</code> where d_i is the digit value at index i from the right.</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            numbersystem: `
+                <div class="space-y-4">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Input Number</label>
+                            <input type="text" id="num-val" placeholder="Value to convert" oninput="convertNumberSystem()" class="w-full h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                            <div id="numbersystem-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Input Base (2-36)</label>
+                                <input type="number" id="num-from" min="2" max="36" value="10" oninput="convertNumberSystem()" class="w-full h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs focus:outline-none focus:border-accent">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Target Base (2-36)</label>
+                                <input type="number" id="num-to" min="2" max="36" value="2" oninput="convertNumberSystem()" class="w-full h-11 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs focus:outline-none focus:border-accent">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="convertNumberSystem()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Convert</button>
+                        <button id="numbersystem-copy-btn" onclick="copyResult('numbersystem')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('numbersystem')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="numbersystem-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright text-center"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('numbersystem')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="numbersystem-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="numbersystem-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>Converts numbers between any bases from 2 to 36.</div>
+                            <div>• <strong>Algorithm:</strong> Parse input string to base 10 using base-N digits, then convert base 10 integer to target base using successive division.</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            cgpa: `
+                <div class="space-y-4">
+                    <p class="text-white/50 text-[10px] font-light">Input credits and grade points for each subject to compute cumulative GPA.</p>
+                    <div class="max-h-[30vh] overflow-y-auto space-y-2.5 pr-1 scrollbar-hide" id="cgpa-courses">
+                        <div class="flex gap-2 items-center course-row">
+                            <input type="text" placeholder="Course Name (Optional)" class="flex-1 h-10 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-white text-xs placeholder-white/20 focus:outline-none">
+                            <input type="number" placeholder="Credits" oninput="calculateCGPA()" class="w-20 h-10 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-white text-xs placeholder-white/20 focus:outline-none course-credits" min="1" value="3">
+                            <select onchange="calculateCGPA()" class="w-24 h-10 px-2 rounded-xl bg-[#0A0A0C] border border-white/5 text-white text-xs focus:outline-none course-grade">
+                                <option value="10">S (10)</option>
+                                <option value="9">A (9)</option>
+                                <option value="8">B (8)</option>
+                                <option value="7">C (7)</option>
+                                <option value="6">D (6)</option>
+                                <option value="5">E (5)</option>
+                                <option value="0">F (0)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="cgpa-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                    <div class="flex gap-2">
+                        <button onclick="addCGPARow()" class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[9px] font-bold uppercase tracking-widest rounded-xl transition-all">Add Course</button>
+                        <button onclick="calculateCGPA()" class="flex-1 py-2.5 bg-accent hover:bg-accent-bright text-white text-[9px] font-bold uppercase tracking-widest rounded-xl transition-all">Calculate</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="cgpa-copy-btn" onclick="copyResult('cgpa')" class="flex-1 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all">Copy Results</button>
+                        <button onclick="clearTool('cgpa')" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="cgpa-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright text-center space-y-1"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('cgpa')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="cgpa-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="cgpa-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>CGPA Formula:</strong> <code class="text-white/80">CGPA = Sum(Grade_Points * Credits) / Sum(Credits)</code></div>
+                            <div>• <strong>AICTE Equivalent Percentage:</strong> <code class="text-white/80">Percentage = (CGPA - 0.75) * 10</code> or CBSE formula: <code class="text-white/80">Percentage = CGPA * 9.5</code>. We display the standard CBSE estimate here (<code class="text-white/80">CGPA * 9.5</code>).</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            attendance: `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[8px] uppercase tracking-wider text-white/40">Classes Attended</label>
+                            <input type="number" id="att-present" placeholder="Present" oninput="calculateAttendance()" class="w-full h-11 px-3 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[8px] uppercase tracking-wider text-white/40">Total Classes Held</label>
+                            <input type="number" id="att-total" placeholder="Total" oninput="calculateAttendance()" class="w-full h-11 px-3 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="font-mono text-[8px] uppercase tracking-wider text-white/40">Required %</label>
+                            <input type="number" id="att-required" placeholder="75" oninput="calculateAttendance()" class="w-full h-11 px-3 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none focus:border-accent" value="75">
+                        </div>
+                    </div>
+                    <div id="attendance-error" class="hidden text-rose-400 text-[10px] font-mono mt-1"></div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="calculateAttendance()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Calculate</button>
+                        <button id="attendance-copy-btn" onclick="copyResult('attendance')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('attendance')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    <div id="att-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] text-accent-bright space-y-1.5"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('attendance')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="attendance-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="attendance-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>Current Percentage:</strong> <code class="text-white/80">P_curr = (Attended / Total) * 100</code></div>
+                            <div>• <strong>If below target:</strong> Calculate minimum classes <code class="text-white/80">x</code> to attend consecutively such that <code class="text-white/80">(Attended + x) / (Total + x) >= Target / 100</code>.</div>
+                            <div>• <strong>If above target:</strong> Calculate maximum classes <code class="text-white/80">y</code> that can be missed consecutively such that <code class="text-white/80">Attended / (Total + y) >= Target / 100</code>.</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            resume: `
+                <div class="space-y-4 text-left">
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Upload Resume (PDF, DOCX, TXT)</label>
+                            <div id="res-dropzone" class="border border-dashed border-white/10 hover:border-accent/50 rounded-2xl p-4 bg-white/[0.01] hover:bg-white/[0.02] transition-all flex flex-col items-center justify-center cursor-pointer text-center relative">
+                                <input type="file" id="res-file-input" accept=".txt,.pdf,.docx,.doc" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleResumeUpload(event)">
+                                <i data-lucide="upload-cloud" class="w-6 h-6 text-white/30 mb-2"></i>
+                                <span class="text-[10px] text-white/60">Drag & drop your resume file or <span class="text-accent underline">browse</span></span>
+                                <span class="text-[8px] text-white/30 mt-1 font-mono uppercase">Supports TXT, PDF, DOCX (client-side scan)</span>
+                            </div>
+                            <div id="res-file-info" class="hidden flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 text-[9px] font-mono text-emerald-400 mt-1"></div>
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Or Paste Resume Text</label>
+                            <textarea id="res-text" rows="3" placeholder="Paste resume text if you don't upload a file..." oninput="clearError('resume')" class="w-full p-3 rounded-xl bg-[#020203] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none resize-none"></textarea>
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <label class="font-mono text-[9px] uppercase tracking-wider text-white/40">Job Description (Target Role)</label>
+                            <textarea id="res-desc" rows="3" placeholder="Paste target job description to match keywords..." oninput="clearError('resume')" class="w-full p-3 rounded-xl bg-[#020203] border border-white/10 text-white text-xs placeholder-white/20 focus:outline-none resize-none"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div id="resume-error" class="hidden text-rose-400 text-[10px] font-mono"></div>
+                    
+                    <div id="res-loader" class="hidden space-y-2">
+                        <div class="flex justify-between text-[9px] font-mono uppercase text-white/50">
+                            <span>ATS Engine Scanning Structure...</span>
+                            <span id="res-progress-percent">0%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div id="res-progress-bar" class="h-full bg-accent transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="analyzeResume()" class="flex-1 py-3 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">Analyze ATS Score</button>
+                        <button id="resume-copy-btn" onclick="copyResult('resume')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="clearTool('resume')" class="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                    
+                    <div id="res-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 text-xs text-white/70 space-y-3 max-h-[35vh] overflow-y-auto scrollbar-hide font-sans leading-relaxed"></div>
+                    
+                    <div>
+                        <button onclick="toggleFormula('resume')" class="w-full flex items-center justify-between py-2 border-t border-white/5 font-mono text-[9px] uppercase tracking-wider text-white/40 hover:text-white transition-colors mt-4">
+                            <span>Formulas & Theory</span>
+                            <i id="resume-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform duration-350"></i>
+                        </button>
+                        <div id="resume-formula" class="hidden py-2 font-mono text-[10px] text-white/50 leading-relaxed border-t border-white/5 border-dashed mt-1 space-y-2">
+                            <div>• <strong>ATS Scoring Algorithm:</strong></div>
+                            <div>Determines semantic overlap between resume nouns/adjectives and the job description keywords.</div>
+                            <div>Score weight: 60% keyword match density, 25% sections structure, 15% layout/formatting metrics.</div>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        let searchQuery = "";
+
+        function renderTools() {
+            const grids = {
+                "Engineering Calculators": document.getElementById('grid-calculators'),
+                "Converters": document.getElementById('grid-converters'),
+                "Student Utilities": document.getElementById('grid-utilities')
+            };
+
+            const catColors = {
+                "Engineering Calculators": {
+                    iconBg: "bg-accent/10",
+                    iconBorder: "border-accent/20",
+                    iconText: "text-accent",
+                    hoverBg: "group-hover:bg-accent",
+                    hoverText: "group-hover:text-accent-bright",
+                    hoverBorder: "group-hover:border-accent",
+                    spotlight: "rgba(94, 106, 210, 0.12)"
+                },
+                "Converters": {
+                    iconBg: "bg-emerald-500/10",
+                    iconBorder: "border-emerald-500/20",
+                    iconText: "text-emerald-400",
+                    hoverBg: "group-hover:bg-emerald-500",
+                    hoverText: "group-hover:text-emerald-400",
+                    hoverBorder: "group-hover:border-emerald-500",
+                    spotlight: "rgba(16, 185, 129, 0.12)"
+                },
+                "Student Utilities": {
+                    iconBg: "bg-purple-500/10",
+                    iconBorder: "border-purple-500/20",
+                    iconText: "text-purple-400",
+                    hoverBg: "group-hover:bg-purple-500",
+                    hoverText: "group-hover:text-purple-400",
+                    hoverBorder: "group-hover:border-purple-500",
+                    spotlight: "rgba(168, 85, 247, 0.12)"
+                }
+            };
+
+            // Clear existing
+            Object.values(grids).forEach(g => g.innerHTML = '');
+
+            const filtered = tools.filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.desc.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            const counts = {
+                "Engineering Calculators": 0,
+                "Converters": 0,
+                "Student Utilities": 0
+            };
+
+            filtered.forEach((tool, idx) => {
+                counts[tool.category]++;
+                const colors = catColors[tool.category];
+                const card = document.createElement('div');
+                card.className = 'glass-card p-8 rounded-[2rem] group flex flex-col justify-between scroll-reveal';
+                card.style.transitionDelay = `${idx * 0.03}s`;
+
+                card.innerHTML = `
+                    <div class="spotlight" style="background: radial-gradient(circle, ${colors.spotlight} 0%, transparent 70%);"></div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-6">
+                                <div class="w-10 h-10 rounded-xl ${colors.iconBg} border ${colors.iconBorder} flex items-center justify-center ${colors.hoverBg} transition-all duration-500">
+                                    <i data-lucide="${tool.icon}" class="w-5 h-5 ${colors.iconText} group-hover:text-white"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-display font-bold text-white mb-2 ${colors.hoverText} transition-colors">${tool.name}</h3>
+                            <p class="text-white/40 text-xs leading-relaxed mb-6 font-light">${tool.desc}</p>
+                        </div>
+                        <button onclick="openTool('${tool.id}')" class="w-full py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-bold text-white/60 ${colors.hoverBg} group-hover:text-white ${colors.hoverBorder} transition-all text-center uppercase tracking-widest hover-target">
+                            Open Tool
+                        </button>
+                    </div>
+                `;
+
+                grids[tool.category].appendChild(card);
+                setTimeout(() => card.classList.add('active'), 10);
+            });
+
+            // Toggle visibility of headers
+            Object.keys(grids).forEach(cat => {
+                const section = document.getElementById(`section-${cat.toLowerCase().replace(/ /g, '-')}`);
+                if (counts[cat] === 0) {
+                    section.classList.add('hidden');
+                } else {
+                    section.classList.remove('hidden');
+                }
+            });
+
+            // Empty state check
+            const emptyState = document.getElementById('empty-state');
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            lucide.createIcons();
+            hookSpotlights();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val;
+            renderTools();
+        }
+
+        function openTool(id) {
+            const tool = tools.find(t => t.id === id);
+            if (!tool) return;
+
+            document.getElementById('modal-tool-category').textContent = tool.category;
+            document.getElementById('modal-tool-name').textContent = tool.name;
+            document.getElementById('modal-tool-body').innerHTML = toolUIs[id];
+
+            const modal = document.getElementById('tool-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+            }, 50);
+
+            // Re-render any icons inside the modal
+            lucide.createIcons();
+        }
+
+        function closeToolModal() {
+            const modal = document.getElementById('tool-modal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function hookSpotlights() {
+            document.querySelectorAll('.glass-card').forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const spotlight = card.querySelector('.spotlight');
+                    if (spotlight) {
+                        spotlight.style.transform = `translate3d(${x - 250}px, ${y - 250}px, 0)`;
+                    }
+                });
+            });
+        }
+
+        // TOOL CALCULATORS LOGIC
+
+        // Validation helpers
+        function showError(toolId, msg) {
+            const errDiv = document.getElementById(`${toolId}-error`);
+            if (errDiv) {
+                errDiv.textContent = msg;
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        function clearError(toolId) {
+            const errDiv = document.getElementById(`${toolId}-error`);
+            if (errDiv) {
+                errDiv.classList.add('hidden');
+                errDiv.textContent = '';
+            }
+        }
+
+        // Copy Result Helper
+        function copyResult(toolId) {
+            const resultDiv = document.getElementById(`${toolId}-result`);
+            if (!resultDiv || resultDiv.classList.contains('hidden')) return;
+            
+            const text = resultDiv.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const copyBtn = document.getElementById(`${toolId}-copy-btn`);
+                if (copyBtn) {
+                    const origText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> <span class="text-emerald-400">Copied!</span>`;
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        copyBtn.innerHTML = origText;
+                        lucide.createIcons();
+                    }, 1500);
+                }
+            });
+        }
+
+        // Accordion Toggle Helper
+        function toggleFormula(toolId) {
+            const formulaDiv = document.getElementById(`${toolId}-formula`);
+            const chevron = document.getElementById(`${toolId}-chevron`);
+            if (formulaDiv) {
+                if (formulaDiv.classList.contains('hidden')) {
+                    formulaDiv.classList.remove('hidden');
+                    if (chevron) chevron.classList.add('rotate-180');
+                } else {
+                    formulaDiv.classList.add('hidden');
+                    if (chevron) chevron.classList.remove('rotate-180');
+                }
+            }
+        }
+
+        // Reset Tool Helper
+        function clearTool(toolId) {
+            clearError(toolId);
+            
+            const modalBody = document.getElementById('modal-tool-body');
+            if (!modalBody) return;
+            
+            const inputs = modalBody.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.tagName === 'SELECT') {
+                    if (input.id === 'num-from') input.value = '10';
+                    else if (input.id === 'num-to') input.value = '2';
+                    else if (input.id === 'att-required') input.value = '75';
+                    else if (input.classList.contains('course-grade')) input.value = '10';
+                    else if (input.id === 'rc-r-unit') input.value = '1000';
+                    else if (input.id === 'rc-c-unit') input.value = '0.000001';
+                    else if (input.id === 'samp-fmax-unit') input.value = '1000';
+                    else input.selectedIndex = 0;
+                } else if (input.type === 'number') {
+                    if (input.classList.contains('course-credits')) input.value = '3';
+                    else input.value = '';
+                } else {
+                    input.value = '';
+                }
+            });
+            
+            if (toolId === 'ohmslaw') {
+                ohmsModified = [];
+            }
+
+            if (toolId === 'cgpa') {
+                const container = document.getElementById('cgpa-courses');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="flex gap-2 items-center course-row">
+                            <input type="text" placeholder="Course Name (Optional)" class="flex-1 h-10 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-white text-xs placeholder-white/20 focus:outline-none">
+                            <input type="number" placeholder="Credits" oninput="calculateCGPA()" class="w-20 h-10 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-white text-xs placeholder-white/20 focus:outline-none course-credits" min="1" value="3">
+                            <select onchange="calculateCGPA()" class="w-24 h-10 px-2 rounded-xl bg-[#0A0A0C] border border-white/5 text-white text-xs focus:outline-none course-grade">
+                                <option value="10">S (10)</option>
+                                <option value="9">A (9)</option>
+                                <option value="8">B (8)</option>
+                                <option value="7">C (7)</option>
+                                <option value="6">D (6)</option>
+                                <option value="5">E (5)</option>
+                                <option value="0">F (0)</option>
+                            </select>
+                        </div>
+                    `;
+                }
+            }
+
+            const resultDiv = document.getElementById(`${toolId}-result`);
+            if (resultDiv) {
+                resultDiv.classList.add('hidden');
+                resultDiv.innerHTML = '';
+            }
+            
+            if (toolId === 'resume') {
+                const fileInfo = document.getElementById('res-file-info');
+                if (fileInfo) {
+                    fileInfo.classList.add('hidden');
+                    fileInfo.innerHTML = '';
+                }
+                selectedResumeFile = null;
+                const fileInput = document.getElementById('res-file-input');
+                if (fileInput) fileInput.value = '';
+                
+                const loader = document.getElementById('res-loader');
+                if (loader) loader.classList.add('hidden');
+            }
+        }
+
+        // Ohm's Law Calculator State & Functions
+        let ohmsModified = [];
+
+        function handleOhmInput(id) {
+            clearError('ohmslaw');
+            const input = document.getElementById(id);
+            if (!input) return;
+
+            if (input.value.trim() === '') {
+                ohmsModified = ohmsModified.filter(x => x !== id);
+                return;
+            }
+
+            ohmsModified = ohmsModified.filter(x => x !== id);
+            ohmsModified.push(id);
+            if (ohmsModified.length > 2) {
+                ohmsModified.shift();
+            }
+
+            if (ohmsModified.length === 2) {
+                calculateOhmsLaw();
+            }
+        }
+
+        function calculateOhmsLaw() {
+            clearError('ohmslaw');
+            const vInput = document.getElementById('ohm-v');
+            const iInput = document.getElementById('ohm-i');
+            const rInput = document.getElementById('ohm-r');
+            const pInput = document.getElementById('ohm-p');
+            const resultDiv = document.getElementById('ohmslaw-result');
+
+            if (!vInput || !iInput || !rInput || !pInput || !resultDiv) return;
+
+            let v = parseFloat(vInput.value);
+            let i = parseFloat(iInput.value);
+            let r = parseFloat(rInput.value);
+            let p = parseFloat(pInput.value);
+
+            if (ohmsModified.length < 2) {
+                ohmsModified = [];
+                if (vInput.value.trim() !== '') ohmsModified.push('ohm-v');
+                if (iInput.value.trim() !== '') ohmsModified.push('ohm-i');
+                if (rInput.value.trim() !== '' && ohmsModified.length < 2) ohmsModified.push('ohm-r');
+                if (pInput.value.trim() !== '' && ohmsModified.length < 2) ohmsModified.push('ohm-p');
+            }
+
+            if (ohmsModified.length < 2) {
+                showError('ohmslaw', 'Fill in at least 2 fields to calculate the remaining.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const field1 = ohmsModified[0];
+            const field2 = ohmsModified[1];
+            const val1 = parseFloat(document.getElementById(field1).value);
+            const val2 = parseFloat(document.getElementById(field2).value);
+
+            if (isNaN(val1) || isNaN(val2)) {
+                showError('ohmslaw', 'Inputs must be valid numbers.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (val1 < 0 || val2 < 0) {
+                showError('ohmslaw', 'Values must be positive.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            try {
+                if ((field1 === 'ohm-v' && field2 === 'ohm-i') || (field1 === 'ohm-i' && field2 === 'ohm-v')) {
+                    if (i === 0) { r = Infinity; p = 0; }
+                    else { r = v / i; p = v * i; }
+                } else if ((field1 === 'ohm-v' && field2 === 'ohm-r') || (field1 === 'ohm-r' && field2 === 'ohm-v')) {
+                    if (r === 0) { i = Infinity; p = Infinity; }
+                    else { i = v / r; p = (v * v) / r; }
+                } else if ((field1 === 'ohm-v' && field2 === 'ohm-p') || (field1 === 'ohm-p' && field2 === 'ohm-v')) {
+                    if (v === 0) { i = p === 0 ? 0 : Infinity; r = 0; }
+                    else { i = p / v; r = (v * v) / p; }
+                } else if ((field1 === 'ohm-i' && field2 === 'ohm-r') || (field1 === 'ohm-r' && field2 === 'ohm-i')) {
+                    v = i * r; p = i * i * r;
+                } else if ((field1 === 'ohm-i' && field2 === 'ohm-p') || (field1 === 'ohm-p' && field2 === 'ohm-i')) {
+                    if (i === 0) { v = p === 0 ? 0 : Infinity; r = Infinity; }
+                    else { v = p / i; r = p / (i * i); }
+                } else if ((field1 === 'ohm-r' && field2 === 'ohm-p') || (field1 === 'ohm-p' && field2 === 'ohm-r')) {
+                    if (r === 0) { v = 0; i = p === 0 ? 0 : Infinity; }
+                    else { v = Math.sqrt(p * r); i = Math.sqrt(p / r); }
+                }
+
+                if (!ohmsModified.includes('ohm-v')) vInput.value = isFinite(v) ? v.toFixed(4) : 'Infinity';
+                if (!ohmsModified.includes('ohm-i')) iInput.value = isFinite(i) ? i.toFixed(4) : 'Infinity';
+                if (!ohmsModified.includes('ohm-r')) rInput.value = isFinite(r) ? r.toFixed(4) : 'Infinity';
+                if (!ohmsModified.includes('ohm-p')) pInput.value = isFinite(p) ? p.toFixed(4) : 'Infinity';
+
+                resultDiv.innerHTML = `
+                    <div><strong>Voltage (V):</strong> ${isFinite(v) ? v.toFixed(6) + ' V' : 'Infinity'}</div>
+                    <div><strong>Current (I):</strong> ${isFinite(i) ? i.toFixed(6) + ' A' : 'Infinity'}</div>
+                    <div><strong>Resistance (R):</strong> ${isFinite(r) ? r.toFixed(6) + ' Ω' : 'Infinity'}</div>
+                    <div><strong>Power (P):</strong> ${isFinite(p) ? p.toFixed(6) + ' W' : 'Infinity'}</div>
+                `;
+                resultDiv.classList.remove('hidden');
+            } catch (e) {
+                showError('ohmslaw', 'Calculation error: Divide by zero.');
+                resultDiv.classList.add('hidden');
+            }
+        }
+
+        // ADC Resolution Calculator Logic
+        function calculateADC() {
+            clearError('adc');
+            const bitsInput = document.getElementById('adc-bits');
+            const vrefInput = document.getElementById('adc-vref');
+            const resultDiv = document.getElementById('adc-result');
+
+            if (!bitsInput || !vrefInput || !resultDiv) return;
+
+            const bitsVal = bitsInput.value.trim();
+            const vrefVal = vrefInput.value.trim();
+
+            if (bitsVal === '' && vrefVal === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const bits = parseInt(bitsVal);
+            const vref = parseFloat(vrefVal);
+
+            if (isNaN(bits) || bits < 1 || bits > 64) {
+                showError('adc', 'Bits must be a positive integer between 1 and 64.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(vref) || vref <= 0) {
+                showError('adc', 'Reference Voltage (Vref) must be positive.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const levels = Math.pow(2, bits);
+            const stepSize = vref / levels;
+            let stepText = '';
+
+            if (stepSize < 0.000001) {
+                stepText = `${(stepSize * 1000000000).toFixed(4)} nV`;
+            } else if (stepSize < 0.001) {
+                stepText = `${(stepSize * 1000000).toFixed(4)} µV`;
+            } else if (stepSize < 1) {
+                stepText = `${(stepSize * 1000).toFixed(4)} mV`;
+            } else {
+                stepText = `${stepSize.toFixed(6)} V`;
+            }
+
+            resultDiv.innerHTML = `
+                <div><strong>Quantization Levels:</strong> ${levels > 1e15 ? levels.toExponential(4) : levels.toLocaleString()}</div>
+                <div><strong>Step Size (LSB / Resolution):</strong> ${stepText}</div>
+                <div><strong>Resolution Percentage:</strong> ${(100 / levels).toFixed(8)}%</div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Quantization Calculator Logic
+        function calculateQuantization() {
+            clearError('quant');
+            const vppInput = document.getElementById('quant-vpp');
+            const bitsInput = document.getElementById('quant-bits');
+            const resultDiv = document.getElementById('quant-result');
+
+            if (!vppInput || !bitsInput || !resultDiv) return;
+
+            const vppVal = vppInput.value.trim();
+            const bitsVal = bitsInput.value.trim();
+
+            if (vppVal === '' && bitsVal === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const vpp = parseFloat(vppVal);
+            const bits = parseInt(bitsVal);
+
+            if (isNaN(vpp) || vpp <= 0) {
+                showError('quant', 'Signal range (Vp-p) must be a positive number.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(bits) || bits < 1 || bits > 64) {
+                showError('quant', 'Number of bits must be between 1 and 64.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const levels = Math.pow(2, bits);
+            const stepSize = vpp / levels;
+            const maxError = stepSize / 2;
+            const sqnr = 6.02 * bits + 1.76;
+
+            let stepText = '';
+            if (stepSize < 0.000001) {
+                stepText = `${(stepSize * 1000000000).toFixed(4)} nV`;
+            } else if (stepSize < 0.001) {
+                stepText = `${(stepSize * 1000000).toFixed(4)} µV`;
+            } else if (stepSize < 1) {
+                stepText = `${(stepSize * 1000).toFixed(4)} mV`;
+            } else {
+                stepText = `${stepSize.toFixed(6)} V`;
+            }
+
+            let errorText = '';
+            if (maxError < 0.000001) {
+                errorText = `±${(maxError * 1000000000).toFixed(4)} nV`;
+            } else if (maxError < 0.001) {
+                errorText = `±${(maxError * 1000000).toFixed(4)} µV`;
+            } else if (maxError < 1) {
+                errorText = `±${(maxError * 1000).toFixed(4)} mV`;
+            } else {
+                errorText = `±${maxError.toFixed(6)} V`;
+            }
+
+            resultDiv.innerHTML = `
+                <div><strong>Quantization Levels:</strong> ${levels > 1e15 ? levels.toExponential(4) : levels.toLocaleString()}</div>
+                <div><strong>Quantization Step Size (q):</strong> ${stepText}</div>
+                <div><strong>Maximum Quantization Error:</strong> ${errorText}</div>
+                <div><strong>Theoretical SQNR:</strong> ${sqnr.toFixed(2)} dB</div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Numeric unit parser helper supporting scientific notation and suffixes
+        function parseInputVal(inputId, unitId) {
+            const input = document.getElementById(inputId);
+            const unitSelect = document.getElementById(unitId);
+            if (!input) return NaN;
+            
+            const text = input.value.trim();
+            if (text === '') return NaN;
+            
+            const match = text.match(/^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*([a-zA-ZµΩ]*)$/);
+            if (!match) return NaN;
+            
+            let baseVal = parseFloat(match[1]);
+            let suffix = match[2].toLowerCase();
+            
+            let multiplier = 1.0;
+            if (unitSelect) {
+                multiplier = parseFloat(unitSelect.value);
+            }
+            
+            if (suffix !== '') {
+                if (suffix === 'k' || suffix === 'kΩ' || suffix === 'ko') multiplier = 1000;
+                else if (suffix === 'm' && inputId.includes('-r')) multiplier = 1000000;
+                else if (suffix === 'meg' || suffix === 'mΩ' || suffix === 'mo') multiplier = 1000000;
+                else if (suffix === 'm' && inputId.includes('-c')) multiplier = 0.001;
+                else if (suffix === 'u' || suffix === 'µ' || suffix === 'uf' || suffix === 'µf') multiplier = 0.000001;
+                else if (suffix === 'n' || suffix === 'nf') multiplier = 0.000000001;
+                else if (suffix === 'p' || suffix === 'pf') multiplier = 0.000000000001;
+            }
+            
+            return baseVal * multiplier;
+        }
+
+        // RC Time Constant Calculator Logic
+        function calculateRC() {
+            clearError('rctime');
+            const resultDiv = document.getElementById('rctime-result');
+            if (!resultDiv) return;
+
+            const r = parseInputVal('rc-r', 'rc-r-unit');
+            const c = parseInputVal('rc-c', 'rc-c-unit');
+
+            if (document.getElementById('rc-r').value.trim() === '' && document.getElementById('rc-c').value.trim() === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(r) || r <= 0) {
+                showError('rctime', 'Resistance must be a positive number.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(c) || c <= 0) {
+                showError('rctime', 'Capacitance must be a positive number.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const tau = r * c;
+            const time63 = tau;
+            const time99 = 4.60517 * tau;
+            const cutoff = 1 / (2 * Math.PI * r * c);
+
+            function formatTime(t) {
+                if (t < 1e-9) return `${(t * 1e12).toFixed(4)} ps`;
+                if (t < 1e-6) return `${(t * 1e9).toFixed(4)} ns`;
+                if (t < 0.001) return `${(t * 1e6).toFixed(4)} µs`;
+                if (t < 1) return `${(t * 1000).toFixed(4)} ms`;
+                return `${t.toFixed(6)} seconds`;
+            }
+
+            function formatFreq(f) {
+                if (f >= 1e9) return `${(f / 1e9).toFixed(4)} GHz`;
+                if (f >= 1e6) return `${(f / 1e6).toFixed(4)} MHz`;
+                if (f >= 1000) return `${(f / 1000).toFixed(4)} kHz`;
+                return `${f.toFixed(4)} Hz`;
+            }
+
+            resultDiv.innerHTML = `
+                <div><strong>Time Constant (τ = RC):</strong> ${formatTime(tau)}</div>
+                <div><strong>Time to 63.2% Charge (1τ):</strong> ${formatTime(time63)}</div>
+                <div><strong>Time to 99% Charge (4.6τ):</strong> ${formatTime(time99)}</div>
+                <div><strong>Cutoff Frequency (fc):</strong> ${formatFreq(cutoff)}</div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Sampling Frequency Calculator Logic
+        function calculateSampling() {
+            clearError('sampling');
+            const resultDiv = document.getElementById('samp-result');
+            if (!resultDiv) return;
+
+            const fmax = parseInputVal('samp-fmax', 'samp-fmax-unit');
+
+            if (document.getElementById('samp-fmax').value.trim() === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(fmax) || fmax <= 0) {
+                showError('sampling', 'Frequency must be a positive number.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const nyquistRate = 2 * fmax;
+            const recRate = 2.5 * fmax;
+            const nyquistInterval = 1 / nyquistRate;
+
+            function formatFreq(f) {
+                if (f >= 1e9) return `${(f / 1e9).toFixed(4)} GHz`;
+                if (f >= 1e6) return `${(f / 1e6).toFixed(4)} MHz`;
+                if (f >= 1000) return `${(f / 1000).toFixed(4)} kHz`;
+                return `${f.toLocaleString()} Hz`;
+            }
+
+            function formatTime(t) {
+                if (t < 1e-9) return `${(t * 1e12).toFixed(4)} ps`;
+                if (t < 1e-6) return `${(t * 1e9).toFixed(4)} ns`;
+                if (t < 0.001) return `${(t * 1e6).toFixed(4)} µs`;
+                if (t < 1) return `${(t * 1000).toFixed(4)} ms`;
+                return `${t.toFixed(6)} seconds`;
+            }
+
+            resultDiv.innerHTML = `
+                <div><strong>Nyquist Frequency (fN):</strong> ${formatFreq(fmax)}</div>
+                <div><strong>Nyquist Rate (Min fs):</strong> ${formatFreq(nyquistRate)}</div>
+                <div><strong>Nyquist Interval (Max Ts):</strong> ${formatTime(nyquistInterval)}</div>
+                <div><strong>Recommended Sampling Rate (2.5x):</strong> ${formatFreq(recRate)}</div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Binary Converter Logic
+        function calculateBinary() {
+            clearError('binary');
+            const valInput = document.getElementById('bin-val');
+            const resultDiv = document.getElementById('binary-result');
+            if (!valInput || !resultDiv) return;
+
+            const val = valInput.value.trim();
+            if (val === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (!/^[01]+$/.test(val)) {
+                showError('binary', 'Invalid binary string. Only 0 and 1 are allowed.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const dec = parseInt(val, 2);
+                const hex = dec.toString(16).toUpperCase();
+                const oct = dec.toString(8);
+
+                resultDiv.innerHTML = `
+                    <div><strong>Decimal:</strong> ${dec}</div>
+                    <div><strong>Hexadecimal:</strong> 0x${hex}</div>
+                    <div><strong>Octal:</strong> 0o${oct}</div>
+                `;
+                resultDiv.classList.remove('hidden');
+            } catch (e) {
+                showError('binary', 'Overflow error during conversion.');
+                resultDiv.classList.add('hidden');
+            }
+        }
+
+        // Hex Converter Logic
+        function calculateHex() {
+            clearError('hex');
+            const valInput = document.getElementById('hex-val');
+            const resultDiv = document.getElementById('hex-result');
+            if (!valInput || !resultDiv) return;
+
+            const val = valInput.value.trim();
+            if (val === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (!/^[0-9a-fA-F]+$/.test(val)) {
+                showError('hex', 'Invalid hex. Only 0-9 and A-F are allowed.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const dec = parseInt(val, 16);
+                const bin = dec.toString(2);
+                const oct = dec.toString(8);
+
+                resultDiv.innerHTML = `
+                    <div><strong>Decimal:</strong> ${dec}</div>
+                    <div><strong>Binary:</strong> ${bin}</div>
+                    <div><strong>Octal:</strong> 0o${oct}</div>
+                `;
+                resultDiv.classList.remove('hidden');
+            } catch (e) {
+                showError('hex', 'Overflow error during conversion.');
+                resultDiv.classList.add('hidden');
+            }
+        }
+
+        // Number System Converter Logic
+        function convertNumberSystem() {
+            clearError('numbersystem');
+            const valInput = document.getElementById('num-val');
+            const fromBaseInput = document.getElementById('num-from');
+            const toBaseInput = document.getElementById('num-to');
+            const resultDiv = document.getElementById('numbersystem-result');
+
+            if (!valInput || !fromBaseInput || !toBaseInput || !resultDiv) return;
+
+            const val = valInput.value.trim();
+            const fromBase = parseInt(fromBaseInput.value);
+            const toBase = parseInt(toBaseInput.value);
+
+            if (val === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(fromBase) || fromBase < 2 || fromBase > 36) {
+                showError('numbersystem', 'Source base must be between 2 and 36.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(toBase) || toBase < 2 || toBase > 36) {
+                showError('numbersystem', 'Target base must be between 2 and 36.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            let isValid = true;
+            for (let i = 0; i < val.length; i++) {
+                const char = val[i].toLowerCase();
+                const code = char.charCodeAt(0);
+                let digitVal;
+                if (code >= 48 && code <= 57) {
+                    digitVal = code - 48;
+                } else if (code >= 97 && code <= 122) {
+                    digitVal = code - 97 + 10;
+                } else {
+                    isValid = false;
+                    break;
+                }
+                if (digitVal >= fromBase) {
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (!isValid) {
+                showError('numbersystem', `Number digits are invalid for base ${fromBase}.`);
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const decimalVal = parseInt(val, fromBase);
+                const converted = decimalVal.toString(toBase).toUpperCase();
+
+                resultDiv.innerHTML = `
+                    <div><strong>Converted Result (Base ${toBase}):</strong></div>
+                    <div class="text-xs font-bold mt-1 text-white tracking-wide break-all">${converted}</div>
+                `;
+                resultDiv.classList.remove('hidden');
+            } catch (e) {
+                showError('numbersystem', 'Overflow or conversion error.');
+                resultDiv.classList.add('hidden');
+            }
+        }
+
+        // CGPA Calculator Logic
+        function addCGPARow() {
+            const container = document.getElementById('cgpa-courses');
+            if (!container) return;
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 items-center course-row';
+            row.innerHTML = `
+                <input type="text" placeholder="Course Name (Optional)" class="flex-1 h-10 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-white text-xs placeholder-white/20 focus:outline-none">
+                <input type="number" placeholder="Credits" oninput="calculateCGPA()" class="w-20 h-10 px-3 rounded-xl bg-white/[0.02] border border-white/5 text-white text-xs placeholder-white/20 focus:outline-none course-credits" min="1" value="3">
+                <select onchange="calculateCGPA()" class="w-24 h-10 px-2 rounded-xl bg-[#0A0A0C] border border-white/5 text-white text-xs focus:outline-none course-grade">
+                    <option value="10">S (10)</option>
+                    <option value="9">A (9)</option>
+                    <option value="8">B (8)</option>
+                    <option value="7">C (7)</option>
+                    <option value="6">D (6)</option>
+                    <option value="5">E (5)</option>
+                    <option value="0">F (0)</option>
+                </select>
+                <button onclick="this.parentElement.remove(); calculateCGPA();" class="w-10 h-10 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 transition-colors flex items-center justify-center shrink-0">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            `;
+            container.appendChild(row);
+            lucide.createIcons();
+            calculateCGPA();
+        }
+
+        function calculateCGPA() {
+            clearError('cgpa');
+            const container = document.getElementById('cgpa-courses');
+            const resultDiv = document.getElementById('cgpa-result');
+            if (!container || !resultDiv) return;
+
+            const rows = container.querySelectorAll('.course-row');
+            let totalCredits = 0;
+            let weightedGradeSum = 0;
+            let hasError = false;
+
+            rows.forEach(row => {
+                const creditsInput = row.querySelector('.course-credits');
+                const gradeSelect = row.querySelector('.course-grade');
+
+                const credits = parseFloat(creditsInput.value);
+                const grade = parseFloat(gradeSelect.value);
+
+                if (creditsInput.value.trim() !== '') {
+                    if (isNaN(credits) || credits <= 0) {
+                        hasError = true;
+                        return;
+                    }
+                    totalCredits += credits;
+                    weightedGradeSum += (credits * grade);
+                }
+            });
+
+            if (hasError) {
+                showError('cgpa', 'Credits must be positive numbers.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (totalCredits === 0) {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const cgpa = weightedGradeSum / totalCredits;
+            const percentage = cgpa * 9.5;
+
+            resultDiv.innerHTML = `
+                <div><strong>Total Course Credits:</strong> ${totalCredits}</div>
+                <div><strong>Calculated CGPA:</strong> ${cgpa.toFixed(3)} / 10.00</div>
+                <div><strong>Estimated Percentage:</strong> ${percentage.toFixed(2)}%</div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Attendance Calculator Logic
+        function calculateAttendance() {
+            clearError('attendance');
+            const presentInput = document.getElementById('att-present');
+            const totalInput = document.getElementById('att-total');
+            const requiredInput = document.getElementById('att-required');
+            const resultDiv = document.getElementById('att-result');
+
+            if (!presentInput || !totalInput || !requiredInput || !resultDiv) return;
+
+            const presentVal = presentInput.value.trim();
+            const totalVal = totalInput.value.trim();
+            const requiredVal = requiredInput.value.trim();
+
+            if (presentVal === '' && totalVal === '') {
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const present = parseInt(presentVal);
+            const total = parseInt(totalVal);
+            const required = parseFloat(requiredVal);
+
+            if (isNaN(present) || present < 0) {
+                showError('attendance', 'Classes attended cannot be negative.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(total) || total <= 0) {
+                showError('attendance', 'Total classes must be positive.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (present > total) {
+                showError('attendance', 'Attended classes cannot exceed total classes.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (isNaN(required) || required <= 0 || required >= 100) {
+                showError('attendance', 'Required attendance percentage must be between 1 and 99.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            const current = (present / total) * 100;
+            let report = `<div><strong>Current Attendance:</strong> <span class="${current >= required ? 'text-emerald-400' : 'text-rose-400'} font-bold">${current.toFixed(2)}%</span></div>`;
+
+            if (current >= required) {
+                let safeToMiss = 0;
+                let tempTotal = total;
+                let tempPresent = present;
+                while (true) {
+                    const nextPct = (tempPresent / (tempTotal + 1)) * 100;
+                    if (nextPct >= required) {
+                        safeToMiss++;
+                        tempTotal++;
+                    } else {
+                        break;
+                    }
+                }
+
+                report += `<div class="text-emerald-400 font-bold mt-1 uppercase text-[8px] tracking-wider">• On Track!</div>`;
+                if (safeToMiss > 0) {
+                    report += `<div class="mt-2 text-white/70">You can safely miss the next <strong>${safeToMiss}</strong> classes consecutively while maintaining attendance above ${required}%.</div>`;
+                } else {
+                    report += `<div class="mt-2 text-amber-400">Warning: You are right at the required boundary. If you miss the next class, you will fall below ${required}%.</div>`;
+                }
+            } else {
+                let classesNeeded = 0;
+                let tempTotal = total;
+                let tempPresent = present;
+                while (((tempPresent / tempTotal) * 100) < required) {
+                    classesNeeded++;
+                    tempTotal++;
+                    tempPresent++;
+                }
+
+                report += `<div class="text-rose-400 font-bold mt-1 uppercase text-[8px] tracking-wider">• Attendance Shortage</div>`;
+                report += `<div class="mt-2 text-white/70">You must attend the next <strong>${classesNeeded}</strong> classes consecutively to meet your required target of ${required}%.</div>`;
+            }
+
+            resultDiv.innerHTML = report;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Resume Analyzer States & Logic
+        let selectedResumeFile = null;
+
+        function handleResumeUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            processUploadedFile(file);
+        }
+
+        function processUploadedFile(file) {
+            selectedResumeFile = file;
+            const fileInfo = document.getElementById('res-file-info');
+            if (fileInfo) {
+                const sizeKB = (file.size / 1024).toFixed(1);
+                fileInfo.innerHTML = `<span><i data-lucide="file-check" class="w-3.5 h-3.5 inline mr-1 text-emerald-400"></i> ${file.name} (${sizeKB} KB)</span> <button onclick="removeResumeFile(event)" class="text-rose-400 hover:text-rose-300 font-bold ml-3">Remove</button>`;
+                fileInfo.classList.remove('hidden');
+                lucide.createIcons();
+            }
+            
+            if (file.type === "text/plain" || file.name.endsWith(".txt")) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('res-text').value = evt.target.result;
+                };
+                reader.readAsText(file);
+            }
+            clearError('resume');
+        }
+
+        function removeResumeFile(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            selectedResumeFile = null;
+            const fileInfo = document.getElementById('res-file-info');
+            if (fileInfo) {
+                fileInfo.classList.add('hidden');
+                fileInfo.innerHTML = '';
+            }
+            const fileInput = document.getElementById('res-file-input');
+            if (fileInput) fileInput.value = '';
+            
+            document.getElementById('res-text').value = '';
+        }
+
+        // Event delegation for resume drag-and-drop zone
+        document.addEventListener('dragover', (e) => {
+            const dz = document.getElementById('res-dropzone');
+            if (dz && dz.contains(e.target)) {
+                e.preventDefault();
+                dz.classList.add('border-accent', 'bg-white/[0.04]');
+            }
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            const dz = document.getElementById('res-dropzone');
+            if (dz && dz.contains(e.target)) {
+                dz.classList.remove('border-accent', 'bg-white/[0.04]');
+            }
+        });
+
+        document.addEventListener('drop', (e) => {
+            const dz = document.getElementById('res-dropzone');
+            if (dz && dz.contains(e.target)) {
+                e.preventDefault();
+                dz.classList.remove('border-accent', 'bg-white/[0.04]');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    processUploadedFile(e.dataTransfer.files[0]);
+                }
+            }
+        });
+
+        const stopWords = new Set([
+            "the", "and", "for", "you", "with", "this", "that", "your", "from", "have", "about", "will", "their", "they", "been",
+            "were", "what", "where", "when", "which", "also", "then", "some", "only", "other", "into", "than", "them", "more",
+            "most", "such", "both", "each", "few", "like", "over", "under", "again", "once", "here", "there", "why", "how", "all",
+            "any", "few", "same", "very", "just", "should", "now", "are", "was", "she", "her", "his", "him", "its", "but", "not"
+        ]);
+
+        function getKeywords(text) {
+            if (!text) return [];
+            return text.toLowerCase()
+                       .replace(/[^a-z0-9#+-\s]/g, ' ')
+                       .split(/\s+/)
+                       .filter(w => w.length > 2 && !stopWords.has(w));
+        }
+
+        function analyzeResume() {
+            clearError('resume');
+            const textInput = document.getElementById('res-text');
+            const descInput = document.getElementById('res-desc');
+            const resultDiv = document.getElementById('res-result');
+            const loader = document.getElementById('res-loader');
+            const progressBar = document.getElementById('res-progress-bar');
+            const progressPercent = document.getElementById('res-progress-percent');
+
+            if (!textInput || !descInput || !resultDiv || !loader || !progressBar || !progressPercent) return;
+
+            let resumeText = textInput.value.trim();
+            const jobDescription = descInput.value.trim();
+
+            if (resumeText === '' && !selectedResumeFile) {
+                showError('resume', 'Please upload a resume file or paste your resume text.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            if (jobDescription === '') {
+                showError('resume', 'Please paste the target job description.');
+                resultDiv.classList.add('hidden');
+                return;
+            }
+
+            resultDiv.classList.add('hidden');
+            loader.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = `${progress}%`;
+                progressPercent.textContent = `${progress}%`;
+                
+                if (progress === 30) {
+                    loader.querySelector('span').textContent = "Scanning document section headings...";
+                } else if (progress === 60) {
+                    loader.querySelector('span').textContent = "Cross-referencing technical skills...";
+                } else if (progress === 80) {
+                    loader.querySelector('span').textContent = "Evaluating ATS formatting rules...";
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        loader.classList.add('hidden');
+                        loader.querySelector('span').textContent = "ATS Engine Scanning Structure...";
+                        showResumeAnalysis(resumeText, jobDescription);
+                    }, 200);
+                }
+            }, 150);
+        }
+
+        function showResumeAnalysis(resumeText, jobDescription) {
+            const resultDiv = document.getElementById('res-result');
+            if (!resultDiv) return;
+
+            const jdWords = getKeywords(jobDescription);
+            const uniqueJDWords = Array.from(new Set(jdWords));
+
+            let matched = [];
+            let missing = [];
+            let textWords = new Set();
+
+            if (resumeText !== '') {
+                textWords = new Set(getKeywords(resumeText));
+            } else if (selectedResumeFile) {
+                const nameKeywords = getKeywords(selectedResumeFile.name);
+                nameKeywords.forEach(w => textWords.add(w));
+            }
+
+            uniqueJDWords.forEach(word => {
+                if (textWords.has(word)) {
+                    matched.push(word);
+                } else {
+                    missing.push(word);
+                }
+            });
+
+            let matchScore = 0;
+            if (uniqueJDWords.length > 0) {
+                matchScore = Math.round((matched.length / uniqueJDWords.length) * 100);
+            } else {
+                matchScore = 70;
+            }
+
+            let formattingTips = [];
+            let strengths = [];
+            
+            if (resumeText.length > 500) {
+                strengths.push("Excellent content density. Your resume has sufficient detailed experience.");
+            } else {
+                formattingTips.push("Resume text is quite short. Add more project descriptions and technical depth.");
+            }
+
+            const standardHeaders = [/experience/i, /education/i, /skills/i, /projects/i];
+            let headerMatches = 0;
+            standardHeaders.forEach(re => {
+                if (re.test(resumeText)) headerMatches++;
+            });
+
+            if (headerMatches >= 3) {
+                strengths.push("Standard ATS-friendly section headers detected (Skills, Experience, Projects).");
+            } else {
+                formattingTips.push("Use standard headers like 'Education', 'Technical Skills', and 'Projects' for optimal ATS parser compatibility.");
+            }
+
+            if (/@/g.test(resumeText)) {
+                strengths.push("Contact email address correctly identified.");
+            } else {
+                formattingTips.push("Ensure your email and contact information are clearly present at the top.");
+            }
+
+            if (selectedResumeFile && resumeText === '') {
+                formattingTips.push("<strong>PDF/DOCX Alert:</strong> Processed structural file metrics client-side. For a deep keyword scan, paste the plain text of your resume in the textbox.");
+                matchScore = Math.round(matchScore * 0.7);
+            }
+
+            matchScore = Math.max(12, Math.min(98, matchScore));
+
+            let scoreColorClass = 'text-rose-400';
+            if (matchScore >= 75) scoreColorClass = 'text-emerald-400';
+            else if (matchScore >= 50) scoreColorClass = 'text-amber-400';
+
+            let matchedSection = matched.length > 0 ? matched.slice(0, 15).join(', ') : 'None';
+            let missingSection = missing.length > 0 ? missing.slice(0, 15).join(', ') : 'None';
+
+            resultDiv.innerHTML = `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                    <span class="font-mono text-[9px] uppercase tracking-wider text-white/50">ATS Match Score</span>
+                    <span class="text-xl font-bold ${scoreColorClass}">${matchScore}%</span>
+                </div>
+
+                <div class="space-y-1">
+                    <span class="font-mono text-[9px] uppercase tracking-wider text-white/40 block">Matched Keywords</span>
+                    <div class="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-emerald-400/80 font-mono text-[10px] break-words">
+                        ${matchedSection}
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <span class="font-mono text-[9px] uppercase tracking-wider text-white/40 block">Missing Target Keywords</span>
+                    <div class="p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-400/80 font-mono text-[10px] break-words">
+                        ${missingSection}
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <span class="font-mono text-[9px] uppercase tracking-wider text-white/40 block">Key Strengths</span>
+                    <ul class="list-disc pl-4 space-y-1 text-[10px] text-emerald-400/80">
+                        ${strengths.map(s => `<li>${s}</li>`).join('') || '<li>No clear structural strengths detected. Refine headers.</li>'}
+                    </ul>
+                </div>
+
+                <div class="space-y-2">
+                    <span class="font-mono text-[9px] uppercase tracking-wider text-white/40 block">ATS Improvement Tips</span>
+                    <ul class="list-disc pl-4 space-y-1 text-[10px] text-amber-400/80">
+                        ${formattingTips.map(t => `<li>${t}</li>`).join('') || '<li>Formatting looks clean. Maintain standard fonts.</li>'}
+                    </ul>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // WebGL Particle and Sphere Background Logic
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        // Navigation scroll shrinking
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 100) nav.classList.add('nav-shrink');
+            else nav.classList.remove('nav-shrink');
+        });
+
+        // Intersection Observer for reveals
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        // Initialize Background 3D Canvas
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.IcosahedronGeometry(25, 2);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x5E6AD2, wireframe: true, transparent: true, opacity: 0.1 });
+        const nexus = new THREE.Mesh(geo, mat);
+        scene.add(nexus);
+
+        const partGeo = new THREE.BufferGeometry();
+        const partCount = 1800;
+        const partPos = new Float32Array(partCount * 3);
+        for(let i=0; i<partCount*3; i++) partPos[i] = (Math.random() - 0.5) * 150;
+        partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+        const particles = new THREE.Points(partGeo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.4 }));
+        scene.add(particles);
+
+        camera.position.z = 80;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            nexus.rotation.y += 0.0005;
+            nexus.rotation.x += 0.0002;
+            particles.rotation.y -= 0.0003;
+            
+            const targetX = (mouseX / window.innerWidth - 0.5) * 8;
+            const targetY = -(mouseY / window.innerHeight - 0.5) * 8;
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (targetY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            renderTools();
+            animate();
+            document.querySelectorAll('.scroll-reveal, .reveal-text').forEach(el => revealObserver.observe(el));
+            setTimeout(() => {
+                document.querySelectorAll('.reveal-text').forEach(el => el.classList.add('active'));
+            }, 100);
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Project Library</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root { --accent: #5E6AD2; }
+        
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .dropdown-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .group:hover .dropdown-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(94, 106, 210, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .glass-card:hover .spotlight { opacity: 1; }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1; transform: translateY(0);
+        }
+
+        @keyframes pulse-accent {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        .animate-accent-pulse { animation: pulse-accent 2s infinite; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1A1A1E; border-radius: 10px; }
+
+        #blueprint-modal {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .modal-glass {
+            background: rgba(5, 5, 7, 0.98);
+            backdrop-filter: blur(32px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,1);
+        }
+
+        .tab-btn.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .active-link {
+            color: white !important;
+            opacity: 1 !important;
+        }
+
+        /* Technical Loader Animation */
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        .scanline {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 50%;
+            background: linear-gradient(to bottom, transparent, rgba(94, 106, 210, 0.2), transparent);
+            animation: scan 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    
+                    <!-- Tools Dropdown -->
+                    <div class="relative group">
+                        <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target flex items-center gap-1.5 py-2">
+                            Tools <i data-lucide="chevron-down" class="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform"></i>
+                        </a>
+                        <div class="absolute top-full left-0 pt-4 dropdown-panel w-[22rem]">
+                            <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-2xl space-y-4">
+                                <!-- Header -->
+                                <div class="border-b border-white/5 pb-3 px-1">
+                                    <span class="text-[9px] font-display font-extrabold text-white uppercase tracking-widest block">Tools Hub</span>
+                                    <p class="text-[8px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Browse engineering tools and utilities.</p>
+                                </div>
+                                <div class="space-y-3 font-mono text-[9px]">
+                                    <a href="tools.html#calculators" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="cpu" class="w-4 h-4 text-accent mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-accent transition-colors">Engineering Calculators &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Electronics, communication systems, and circuit calculations.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#converters" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="binary" class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-emerald-400 transition-colors">Converters &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Binary, hexadecimal, and engineering conversions.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#utilities" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-purple-300 transition-colors">Student Utilities &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Academic productivity and student tools.</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="flex items-center justify-between pt-3 border-t border-white/5 px-1 font-mono text-[8.5px]">
+                                    <a href="tools.html" class="group/all flex flex-col hover-target font-mono">
+                                        <span class="text-white/50 hover:text-white uppercase tracking-widest font-bold">All Tools &rarr;</span>
+                                        <span class="text-[7px] text-white/30 font-sans normal-case mt-0.5">View complete tool directory.</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative z-10 pt-40 px-6 pb-32">
+        <section class="max-w-[1200px] mx-auto mb-16">
+            <div class="flex flex-col gap-6 text-center mb-16 reveal-text">
+                <h1 class="text-4xl md:text-6xl font-display font-extrabold tracking-tight text-white">Project Library.</h1>
+                <p class="text-white/40 text-sm md:text-base max-w-2xl mx-auto font-light leading-relaxed">Integrated technical terminal containing AI-synthesized engineering blueprints and reliable implementation modules.</p>
+            </div>
+
+            <div class="glass-nav p-3 rounded-[2rem] border border-white/5 flex flex-col gap-3 shadow-2xl reveal-text relative z-[60]" style="transition-delay: 0.2s;">
+                <div class="flex flex-col md:flex-row items-center gap-3 w-full border-b border-white/[0.06] pb-3">
+                    
+                    <button id="btn-foryou" class="group/foryou w-full md:w-auto px-5 h-11 rounded-xl bg-white/[0.02] border border-white/[0.08] text-[#8A8F98] hover:text-white hover:border-white/20 transition-all flex items-center justify-center gap-3 shrink-0 relative overflow-hidden">
+                        <div id="foryou-dot" class="w-1.5 h-1.5 rounded-full bg-[#8A8F98] transition-all duration-300"></div>
+                        <span class="text-sm font-semibold tracking-wide">For You</span>
+                        <i data-lucide="sparkles" class="w-4 h-4 opacity-50 group-hover/foryou:opacity-100 transition-opacity"></i>
+                    </button>
+                    
+                    <div class="relative flex-1 w-full">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20"></i>
+                        <input type="text" id="search-input" placeholder="Search architecture, modules, or tech stack..." class="w-full h-11 pl-11 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.08] text-sm text-white placeholder-white/20 focus:outline-none focus:border-accent/40 transition-all">
+                    </div>
+
+                </div>
+
+                <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="branch-filters">
+                    <button data-branch="All" class="branch-btn active px-5 py-2 rounded-lg bg-accent text-white text-[10px] font-bold uppercase tracking-widest transition-all">All Hubs</button>
+                    <button data-branch="CSE" class="branch-btn px-5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[#8A8F98] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all">CSE</button>
+                    <button data-branch="ECE" class="branch-btn px-5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[#8A8F98] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all">ECE</button>
+                    <button data-branch="EEE" class="branch-btn px-5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[#8A8F98] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all">EEE</button>
+                    <button data-branch="MECH" class="branch-btn px-5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[#8A8F98] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all">MECH</button>
+                    <button data-branch="CIVIL" class="branch-btn px-5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[#8A8F98] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all">CIVIL</button>
+                    <button data-branch="IT" class="branch-btn px-5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[#8A8F98] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all">IT</button>
+                    <button data-branch="AEROSPACE" class="branch-btn px-5 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[#8A8F98] text-[10px] font-bold uppercase tracking-widest hover:text-white transition-all">AERO</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="max-w-[1200px] mx-auto relative z-10 min-h-[400px]">
+            <div id="project-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            
+            <div id="empty-state" class="hidden flex-col items-center justify-center py-40 text-center">
+                <i data-lucide="folder-search" class="w-12 h-12 text-white/10 mb-4"></i>
+                <h3 class="text-white/60 font-medium">No results found for current disciplinary filters.</h3>
+            </div>
+        </section>
+    </main>
+
+    <div id="blueprint-modal" class="fixed inset-0 z-[200] hidden opacity-0 pointer-events-none flex items-center justify-center p-4 md:p-10">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-xl" onclick="closeBlueprint()"></div>
+        <div class="modal-glass w-full max-w-5xl h-full max-h-[85vh] rounded-[2.5rem] overflow-hidden flex flex-col relative z-10">
+            
+            <!-- Technical Overlay Loader -->
+            <div id="blueprint-loader" class="absolute inset-0 bg-black/60 backdrop-blur-2xl z-50 hidden flex flex-col items-center justify-center gap-6">
+                <div class="scanline"></div>
+                <div class="relative">
+                    <div class="w-16 h-16 rounded-full border-2 border-accent/20 border-t-accent animate-spin"></div>
+                    <i data-lucide="sparkles" class="absolute inset-0 m-auto w-6 h-6 text-accent animate-accent-pulse"></i>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-white font-mono text-[10px] uppercase tracking-[0.4em] mb-2">Architecting Blueprint...</h3>
+                    <p class="text-white/30 text-[9px] font-mono uppercase tracking-widest">Synthesizing node architecture & grounding reliable data</p>
+                </div>
+            </div>
+
+            <!-- Modal Header -->
+            <div class="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div class="flex flex-col">
+                    <span id="modal-branch" class="text-[9px] font-mono text-accent uppercase tracking-widest mb-1">NODE // INITIALIZING</span>
+                    <h2 id="modal-title" class="text-2xl font-display font-extrabold text-white">Project Blueprint</h2>
+                </div>
+                <button onclick="closeBlueprint()" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center hover:bg-rose-500 transition-all hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Nav -->
+            <div class="px-8 flex border-b border-white/5 bg-white/[0.01]">
+                <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40 active">Overview</button>
+                <button onclick="switchTab('schematics')" id="tab-schematics" class="tab-btn px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Schematics</button>
+                <button onclick="switchTab('implementation')" id="tab-implementation" class="tab-btn px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Implementation</button>
+                <button onclick="switchTab('media')" id="tab-media" class="tab-btn px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-white/40">Media Hub</button>
+            </div>
+
+            <!-- Modal Content Area -->
+            <div class="flex-1 overflow-y-auto p-8 scrollbar-hide" id="modal-content-area">
+                <!-- Overview Content -->
+                <div id="content-overview" class="tab-content space-y-12">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-mono text-accent uppercase tracking-widest">01 // Project Aim</h4>
+                        <p id="blueprint-aim" class="text-white/60 text-base leading-relaxed font-light"></p>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-mono text-accent uppercase tracking-widest">02 // Technical Requirements</h4>
+                        <ul id="blueprint-requirements" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-white/40 text-sm font-mono"></ul>
+                    </div>
+                </div>
+
+                <!-- Schematics Content -->
+                <div id="content-schematics" class="tab-content hidden space-y-12">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-mono text-accent uppercase tracking-widest">03 // System Architecture</h4>
+                        <div id="blueprint-schematic-desc" class="text-white/50 text-sm leading-relaxed mb-6 font-light"></div>
+                        <div class="aspect-video rounded-3xl bg-white/5 border border-white/5 flex items-center justify-center overflow-hidden relative">
+                            <i data-lucide="circuit-board" class="w-20 h-20 text-white/10"></i>
+                            <span class="absolute bottom-6 text-[10px] font-mono text-white/20 uppercase tracking-[0.3em]">H-Fidelity Schematic Rendering Engine</span>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-mono text-accent uppercase tracking-widest">04 // Node Map & Connections</h4>
+                        <div id="blueprint-connections" class="grid grid-cols-1 gap-2 text-white/50 text-xs font-mono"></div>
+                    </div>
+                </div>
+
+                <!-- Implementation Content -->
+                <div id="content-implementation" class="tab-content hidden space-y-12">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-mono text-accent uppercase tracking-widest">05 // Reference Source Code</h4>
+                        <div class="rounded-2xl bg-black border border-white/5 overflow-hidden">
+                            <div class="px-4 py-2 bg-white/5 flex justify-between items-center">
+                                <span class="text-[9px] font-mono text-white/30" id="code-filename">src/main.system</span>
+                                <button class="text-[9px] font-mono text-accent hover:text-white transition-colors" onclick="copyBlueprintCode()">COPY SOURCE</button>
+                            </div>
+                            <pre class="p-6 text-[11px] font-mono text-emerald-400 overflow-x-auto"><code id="blueprint-code"></code></pre>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-mono text-accent uppercase tracking-widest">06 // Step-by-Step Logic Deployment</h4>
+                        <div id="blueprint-tutorial" class="space-y-4 text-white/60 text-sm leading-relaxed"></div>
+                    </div>
+                </div>
+
+                <!-- Media Content -->
+                <div id="content-media" class="tab-content hidden space-y-12">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-mono text-accent uppercase tracking-widest">07 // Grounded Reference Videos</h4>
+                        <div id="blueprint-videos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Injected by AI -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Full Disciplinary Mapping
+        const projectBase = [
+            // CSE
+            { title: "Student management system", branch: "CSE", level: "Beginner" },
+            { title: "Password generator", branch: "CSE", level: "Beginner" },
+            { title: "Quiz application", branch: "CSE", level: "Beginner" },
+            { title: "Chat application", branch: "CSE", level: "Beginner" },
+            { title: "Expense tracker", branch: "CSE", level: "Beginner" },
+            { title: "Library management system", branch: "CSE", level: "Beginner" },
+            { title: "AI chatbot", branch: "CSE", level: "Beginner" },
+            { title: "Portfolio website", branch: "CSE", level: "Beginner" },
+            { title: "Face recognition attendance", branch: "CSE", level: "Beginner" },
+            { title: "To-do app", branch: "CSE", level: "Beginner" },
+            { title: "AI resume analyzer", branch: "CSE", level: "Intermediate" },
+            { title: "Online voting system", branch: "CSE", level: "Intermediate" },
+            { title: "Smart exam portal", branch: "CSE", level: "Intermediate" },
+            { title: "Fake news detector", branch: "CSE", level: "Intermediate" },
+            { title: "Sentiment analysis tool", branch: "CSE", level: "Intermediate" },
+            { title: "Cloud file sharing system", branch: "CSE", level: "Intermediate" },
+            { title: "Cybersecurity scanner", branch: "CSE", level: "Intermediate" },
+            { title: "AI image classifier", branch: "CSE", level: "Intermediate" },
+            { title: "Smart recommendation system", branch: "CSE", level: "Intermediate" },
+            { title: "Voice assistant", branch: "CSE", level: "Intermediate" },
+            { title: "AI-powered coding assistant", branch: "CSE", level: "Advanced" },
+            { title: "Autonomous AI agent", branch: "CSE", level: "Advanced" },
+            { title: "Blockchain voting system", branch: "CSE", level: "Advanced" },
+            { title: "Deepfake detection system", branch: "CSE", level: "Advanced" },
+            { title: "AI healthcare diagnosis", branch: "CSE", level: "Advanced" },
+            { title: "Smart traffic AI", branch: "CSE", level: "Advanced" },
+            { title: "AR/VR learning platform", branch: "CSE", level: "Advanced" },
+            { title: "Distributed cloud system", branch: "CSE", level: "Advanced" },
+            { title: "AI interview simulator", branch: "CSE", level: "Advanced" },
+            { title: "Real-time cyber threat detection", branch: "CSE", level: "Advanced" },
+
+            // ECE
+            { title: "Smart street light", branch: "ECE", level: "Beginner" },
+            { title: "FM transmitter", branch: "ECE", level: "Beginner" },
+            { title: "Digital thermometer", branch: "ECE", level: "Beginner" },
+            { title: "Automatic fan controller", branch: "ECE", level: "Beginner" },
+            { title: "Line follower robot", branch: "ECE", level: "Beginner" },
+            { title: "RF communication system", branch: "ECE", level: "Beginner" },
+            { title: "Home automation", branch: "ECE", level: "Beginner" },
+            { title: "Ultrasonic distance meter", branch: "ECE", level: "Beginner" },
+            { title: "Fire alarm system", branch: "ECE", level: "Beginner" },
+            { title: "RFID attendance system", branch: "ECE", level: "Beginner" },
+            { title: "IoT smart agriculture", branch: "ECE", level: "Intermediate" },
+            { title: "Smart energy meter", branch: "ECE", level: "Intermediate" },
+            { title: "Gesture controlled robot", branch: "ECE", level: "Intermediate" },
+            { title: "GPS tracking system", branch: "ECE", level: "Intermediate" },
+            { title: "ESP32 surveillance camera", branch: "ECE", level: "Intermediate" },
+            { title: "Smart parking system", branch: "ECE", level: "Intermediate" },
+            { title: "Voice controlled devices", branch: "ECE", level: "Intermediate" },
+            { title: "Smart blind stick", branch: "ECE", level: "Intermediate" },
+            { title: "Wireless notice board", branch: "ECE", level: "Intermediate" },
+            { title: "Drone communication system", branch: "ECE", level: "Intermediate" },
+            { title: "Edge AI surveillance", branch: "ECE", level: "Advanced" },
+            { title: "AI-based traffic control", branch: "ECE", level: "Advanced" },
+            { title: "Embedded healthcare monitor", branch: "ECE", level: "Advanced" },
+            { title: "Radar system prototype", branch: "ECE", level: "Advanced" },
+            { title: "Smart military rover", branch: "ECE", level: "Advanced" },
+            { title: "Satellite communication model", branch: "ECE", level: "Advanced" },
+            { title: "Autonomous drone system", branch: "ECE", level: "Advanced" },
+            { title: "Industrial IoT network", branch: "ECE", level: "Advanced" },
+            { title: "Smart city monitoring", branch: "ECE", level: "Advanced" },
+            { title: "AI-powered robotics system", branch: "ECE", level: "Advanced" },
+
+            // EEE
+            { title: "Automatic street light", branch: "EEE", level: "Beginner" },
+            { title: "Solar phone charger", branch: "EEE", level: "Beginner" },
+            { title: "Water level indicator", branch: "EEE", level: "Beginner" },
+            { title: "Energy saving system", branch: "EEE", level: "Beginner" },
+            { title: "Smart switchboard", branch: "EEE", level: "Beginner" },
+            { title: "Battery level monitor", branch: "EEE", level: "Beginner" },
+            { title: "Home electrical safety system", branch: "EEE", level: "Beginner" },
+            { title: "Mini inverter", branch: "EEE", level: "Beginner" },
+            { title: "Solar tracking system", branch: "EEE", level: "Beginner" },
+            { title: "Power factor monitor", branch: "EEE", level: "Beginner" },
+            { title: "Smart grid monitoring", branch: "EEE", level: "Intermediate" },
+            { title: "Electric vehicle charger", branch: "EEE", level: "Intermediate" },
+            { title: "Solar power optimization", branch: "EEE", level: "Intermediate" },
+            { title: "Smart transformer monitor", branch: "EEE", level: "Intermediate" },
+            { title: "IoT energy meter", branch: "EEE", level: "Intermediate" },
+            { title: "Wireless power transmission", branch: "EEE", level: "Intermediate" },
+            { title: "Automatic power saver", branch: "EEE", level: "Intermediate" },
+            { title: "Smart distribution system", branch: "EEE", level: "Intermediate" },
+            { title: "Fault detection system", branch: "EEE", level: "Intermediate" },
+            { title: "Industrial motor monitoring", branch: "EEE", level: "Intermediate" },
+            { title: "Smart EV management", branch: "EEE", level: "Advanced" },
+            { title: "AI-based power optimization", branch: "EEE", level: "Advanced" },
+            { title: "Renewable energy controller", branch: "EEE", level: "Advanced" },
+            { title: "Smart power grid", branch: "EEE", level: "Advanced" },
+            { title: "Industrial automation system", branch: "EEE", level: "Advanced" },
+            { title: "AI electricity forecasting", branch: "EEE", level: "Advanced" },
+            { title: "Intelligent load balancing", branch: "EEE", level: "Advanced" },
+            { title: "EV battery analytics", branch: "EEE", level: "Advanced" },
+            { title: "Autonomous electrical monitoring", branch: "EEE", level: "Advanced" },
+            { title: "Smart energy ecosystem", branch: "EEE", level: "Advanced" },
+
+            // MECH
+            { title: "Automatic braking system", branch: "MECH", level: "Beginner" },
+            { title: "Hydraulic lift model", branch: "MECH", level: "Beginner" },
+            { title: "Mini robotic arm", branch: "MECH", level: "Beginner" },
+            { title: "Solar-powered vehicle", branch: "MECH", level: "Beginner" },
+            { title: "Pneumatic jack", branch: "MECH", level: "Beginner" },
+            { title: "Conveyor belt system", branch: "MECH", level: "Beginner" },
+            { title: "Wind turbine model", branch: "MECH", level: "Beginner" },
+            { title: "Smart helmet", branch: "MECH", level: "Beginner" },
+            { title: "Gear mechanism demo", branch: "MECH", level: "Beginner" },
+            { title: "Water pumping system", branch: "MECH", level: "Beginner" },
+            { title: "IoT vehicle monitoring", branch: "MECH", level: "Intermediate" },
+            { title: "Smart suspension system", branch: "MECH", level: "Intermediate" },
+            { title: "Autonomous cleaning robot", branch: "MECH", level: "Intermediate" },
+            { title: "Smart wheelchair", branch: "MECH", level: "Intermediate" },
+            { title: "Industrial robotic arm", branch: "MECH", level: "Intermediate" },
+            { title: "Hybrid vehicle model", branch: "MECH", level: "Intermediate" },
+            { title: "CNC mini machine", branch: "MECH", level: "Intermediate" },
+            { title: "Smart fuel monitoring", branch: "MECH", level: "Intermediate" },
+            { title: "Automatic seed sowing machine", branch: "MECH", level: "Intermediate" },
+            { title: "Waste collection robot", branch: "MECH", level: "Intermediate" },
+            { title: "Self-balancing vehicle", branch: "MECH", level: "Advanced" },
+            { title: "Autonomous delivery robot", branch: "MECH", level: "Advanced" },
+            { title: "AI predictive maintenance", branch: "MECH", level: "Advanced" },
+            { title: "Smart manufacturing system", branch: "MECH", level: "Advanced" },
+            { title: "EV drivetrain prototype", branch: "MECH", level: "Advanced" },
+            { title: "Humanoid robotic arm", branch: "MECH", level: "Advanced" },
+            { title: "Intelligent warehouse robot", branch: "MECH", level: "Advanced" },
+            { title: "AI-powered machine diagnostics", branch: "MECH", level: "Advanced" },
+            { title: "Smart factory automation", branch: "MECH", level: "Advanced" },
+            { title: "Aerospace robotic mechanism", branch: "MECH", level: "Advanced" },
+
+            // CIVIL
+            { title: "Smart water monitoring", branch: "CIVIL", level: "Beginner" },
+            { title: "Rainwater harvesting model", branch: "CIVIL", level: "Beginner" },
+            { title: "Earthquake alarm system", branch: "CIVIL", level: "Beginner" },
+            { title: "Traffic density counter", branch: "CIVIL", level: "Beginner" },
+            { title: "Smart irrigation model", branch: "CIVIL", level: "Beginner" },
+            { title: "Water leakage detector", branch: "CIVIL", level: "Beginner" },
+            { title: "Sustainable building model", branch: "CIVIL", level: "Beginner" },
+            { title: "Automatic street drainage", branch: "CIVIL", level: "Beginner" },
+            { title: "Smart dustbin", branch: "CIVIL", level: "Beginner" },
+            { title: "Flood alert system", branch: "CIVIL", level: "Beginner" },
+            { title: "IoT bridge monitoring", branch: "CIVIL", level: "Intermediate" },
+            { title: "Smart traffic system", branch: "CIVIL", level: "Intermediate" },
+            { title: "Structural health monitoring", branch: "CIVIL", level: "Intermediate" },
+            { title: "Smart parking management", branch: "CIVIL", level: "Intermediate" },
+            { title: "AI waste management", branch: "CIVIL", level: "Intermediate" },
+            { title: "Smart construction safety", branch: "CIVIL", level: "Intermediate" },
+            { title: "Water quality monitoring", branch: "CIVIL", level: "Intermediate" },
+            { title: "Disaster alert system", branch: "CIVIL", level: "Intermediate" },
+            { title: "Smart road lighting", branch: "CIVIL", level: "Intermediate" },
+            { title: "Smart city model", branch: "CIVIL", level: "Intermediate" },
+            { title: "AI structural analysis", branch: "CIVIL", level: "Advanced" },
+            { title: "Intelligent urban planning", branch: "CIVIL", level: "Advanced" },
+            { title: "Smart earthquake-resistant structures", branch: "CIVIL", level: "Advanced" },
+            { title: "Autonomous construction robot", branch: "CIVIL", level: "Advanced" },
+            { title: "AI flood prediction system", branch: "CIVIL", level: "Advanced" },
+            { title: "Smart transportation ecosystem", branch: "CIVIL", level: "Advanced" },
+            { title: "Digital twin buildings", branch: "CIVIL", level: "Advanced" },
+            { title: "Sustainable smart city", branch: "CIVIL", level: "Advanced" },
+            { title: "AI construction management", branch: "CIVIL", level: "Advanced" },
+            { title: "Intelligent infrastructure monitoring", branch: "CIVIL", level: "Advanced" },
+
+            // IT
+            { title: "Portfolio website", branch: "IT", level: "Beginner" },
+            { title: "Online exam portal", branch: "IT", level: "Beginner" },
+            { title: "Task manager", branch: "IT", level: "Beginner" },
+            { title: "Chat application", branch: "IT", level: "Beginner" },
+            { title: "Attendance management system", branch: "IT", level: "Beginner" },
+            { title: "File encryption tool", branch: "IT", level: "Beginner" },
+            { title: "Notes application", branch: "IT", level: "Beginner" },
+            { title: "QR attendance system", branch: "IT", level: "Beginner" },
+            { title: "Blogging website", branch: "IT", level: "Beginner" },
+            { title: "Password manager", branch: "IT", level: "Beginner" },
+            { title: "AI chatbot", branch: "IT", level: "Intermediate" },
+            { title: "Cybersecurity dashboard", branch: "IT", level: "Intermediate" },
+            { title: "Smart recommendation engine", branch: "IT", level: "Intermediate" },
+            { title: "Cloud storage system", branch: "IT", level: "Intermediate" },
+            { title: "AI plagiarism checker", branch: "IT", level: "Intermediate" },
+            { title: "Facial recognition system", branch: "IT", level: "Intermediate" },
+            { title: "Smart hospital portal", branch: "IT", level: "Intermediate" },
+            { title: "Virtual classroom platform", branch: "IT", level: "Intermediate" },
+            { title: "AI content generator", branch: "IT", level: "Intermediate" },
+            { title: "Network monitoring tool", branch: "IT", level: "Intermediate" },
+            { title: "AI-powered analytics platform", branch: "IT", level: "Advanced" },
+            { title: "Blockchain data system", branch: "IT", level: "Advanced" },
+            { title: "Smart cybersecurity framework", branch: "IT", level: "Advanced" },
+            { title: "Cloud-native AI assistant", branch: "IT", level: "Advanced" },
+            { title: "AI-based fraud detection", branch: "IT", level: "Advanced" },
+            { title: "Real-time monitoring dashboard", branch: "IT", level: "Advanced" },
+            { title: "AI recruitment system", branch: "IT", level: "Advanced" },
+            { title: "Digital identity verification", branch: "IT", level: "Advanced" },
+            { title: "AI virtual teacher", branch: "IT", level: "Advanced" },
+            { title: "Enterprise automation platform", branch: "IT", level: "Advanced" },
+
+            // AEROSPACE
+            { title: "Water rocket", branch: "AEROSPACE", level: "Beginner" },
+            { title: "RC aircraft", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Mini drone", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Glider model", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Propulsion demonstration", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Wind tunnel mini model", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Aircraft wing analysis", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Flight simulator setup", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Rocket launch controller", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Drone stabilization model", branch: "AEROSPACE", level: "Beginner" },
+            { title: "Autonomous drone", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "UAV surveillance system", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "Flight data monitoring", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "Drone delivery prototype", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "Satellite communication model", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "Aircraft navigation system", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "Smart propulsion monitoring", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "AI flight stabilization", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "Rocket telemetry system", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "VTOL drone prototype", branch: "AEROSPACE", level: "Intermediate" },
+            { title: "AI-powered UAV", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Autonomous aerospace rover", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Swarm drone system", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Smart satellite network", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Hypersonic flight simulation", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Aerospace AI diagnostics", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Autonomous flight control", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Space exploration rover", branch: "AEROSPACE", level: "Advanced" },
+            { title: "AI navigation ecosystem", branch: "AEROSPACE", level: "Advanced" },
+            { title: "Advanced defense drone system", branch: "AEROSPACE", level: "Advanced" }
+        ];
+
+        let currentBranch = "All";
+        let currentLevel = "All";
+        let searchQuery = "";
+        let isForYouMode = false;
+
+        function renderProjects() {
+            const grid = document.getElementById('project-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            let filtered = projectBase.filter(p => {
+                const matchBranch = currentBranch === "All" || p.branch === currentBranch;
+                const matchLevel = currentLevel === "All" || p.level === currentLevel;
+                const matchSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchBranch && matchLevel && matchSearch;
+            });
+
+            if (isForYouMode) filtered = [...filtered].sort(() => 0.5 - Math.random()).slice(0, 9);
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+
+                filtered.forEach((p, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'glass-card p-8 rounded-[2rem] group flex flex-col justify-between reveal-text opacity-0';
+                    card.style.transitionDelay = `${idx * 0.04}s`;
+                    
+                    let levelColor = 'text-emerald-400';
+                    let levelBg = 'bg-emerald-500/10';
+                    let levelBorder = 'border-emerald-500/20';
+
+                    if (p.level === 'Intermediate') { 
+                        levelColor = 'text-amber-400'; levelBg = 'bg-amber-500/10'; levelBorder = 'border-amber-500/20';
+                    } else if (p.level === 'Advanced') { 
+                        levelColor = 'text-rose-400'; levelBg = 'bg-rose-500/10'; levelBorder = 'border-rose-500/20';
+                    }
+
+                    card.innerHTML = `
+                        <div class="spotlight"></div>
+                        <div class="relative z-10 h-full flex flex-col">
+                            <div class="flex justify-between items-start mb-10">
+                                <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-accent transition-all duration-500">
+                                    <i data-lucide="layers" class="w-5 h-5 text-accent group-hover:text-white"></i>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="px-2 py-0.5 rounded-full bg-white/5 text-[8px] font-mono font-bold text-white/40 uppercase tracking-widest border border-white/5">${p.branch}</span>
+                                    <span class="px-2.5 py-1 rounded-full ${levelBg} ${levelColor} text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5 border ${levelBorder}">
+                                        ${p.level}
+                                    </span>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-display font-bold text-white mb-3 group-hover:text-accent transition-colors">${p.title}</h3>
+                            <p class="text-white/30 text-[13px] leading-relaxed mb-8 flex-1">Complete system architecture and AI-synthesized blueprint for professional engineering deployment.</p>
+                            <button onclick="openBlueprint('${p.title}', '${p.branch}')" class="w-full py-3.5 bg-white/[0.03] border border-white/[0.08] text-white/60 group-hover:bg-accent group-hover:text-white group-hover:border-accent transition-all rounded-xl text-[9px] font-bold uppercase tracking-widest active:scale-95">
+                                Initialize Blueprint
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                    setTimeout(() => card.classList.add('active'), 10);
+
+                    card.addEventListener('mousemove', (e) => {
+                        const rect = card.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        card.querySelector('.spotlight').style.transform = `translate3d(${x - 200}px, ${y - 200}px, 0)`;
+                    });
+                });
+                lucide.createIcons();
+            }
+        }
+
+        async function openBlueprint(title, branch) {
+            const modal = document.getElementById('blueprint-modal');
+            const loader = document.getElementById('blueprint-loader');
+            
+            modal.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+            }, 10);
+
+            const systemPrompt = "Act as a world-class senior systems engineer. Generate a comprehensive technical blueprint for a project. Return the data as a clean JSON object. Ensure all technical details (aim, requirements, schematics, connections, code, tutorial) are accurate and grounded in real-world engineering standards.";
+            const userQuery = `Synthesize a high-fidelity technical blueprint for the engineering project: "${title}" within the ${branch} discipline. 
+            The blueprint must include:
+            1. aim: A precise project objective.
+            2. requirements: A list of hardware/software needs.
+            3. schematics_desc: A technical description of the system architecture.
+            4. connections: A detailed list of pin mappings or API routes.
+            5. code_snippet: A reference implementation in the appropriate language (C++, Python, etc.).
+            6. tutorial_steps: Sequential deployment logic.
+            7. reference_videos: Using Google Search, find 2 real YouTube or educational video titles and URLs that explain this concept or a related implementation.
+            
+            Format as JSON: { "aim": string, "requirements": [string], "schematics_desc": string, "connections": [string], "code_snippet": string, "tutorial_steps": [string], "reference_videos": [{ "title": string, "url": string }] }`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        tools: [{ "google_search": {} }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                const result = await response.json();
+                const blueprint = JSON.parse(result.candidates[0].content.parts[0].text);
+
+                // Populate UI
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-branch').textContent = `${branch} // ENGINEERING HUB`;
+                document.getElementById('blueprint-aim').textContent = blueprint.aim;
+                
+                const reqList = document.getElementById('blueprint-requirements');
+                reqList.innerHTML = blueprint.requirements.map(r => `<li><i class="lucide-check text-accent mr-2 inline-block w-3 h-3"></i> ${r}</li>`).join('');
+                
+                document.getElementById('blueprint-schematic-desc').textContent = blueprint.schematics_desc;
+                
+                const connList = document.getElementById('blueprint-connections');
+                connList.innerHTML = blueprint.connections.map(c => `<div class="p-2 bg-white/5 border border-white/5 rounded-lg">${c}</div>`).join('');
+                
+                document.getElementById('blueprint-code').textContent = blueprint.code_snippet;
+                
+                const tutorialList = document.getElementById('blueprint-tutorial');
+                tutorialList.innerHTML = blueprint.tutorial_steps.map((s, i) => `<p><strong>Step ${i+1}:</strong> ${s}</p>`).join('');
+
+                const videoGrid = document.getElementById('blueprint-videos');
+                videoGrid.innerHTML = blueprint.reference_videos.map(v => `
+                    <a href="${v.url}" target="_blank" class="aspect-video rounded-2xl bg-white/5 border border-white/5 relative group cursor-pointer overflow-hidden block">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-all">
+                            <i data-lucide="play-circle" class="w-12 h-12 text-white"></i>
+                        </div>
+                        <div class="absolute bottom-4 left-4 right-4">
+                            <div class="text-[10px] font-mono text-white/40 uppercase mb-1">Grounded Reference</div>
+                            <div class="text-xs font-bold text-white truncate">${v.title}</div>
+                        </div>
+                    </a>
+                `).join('');
+
+                lucide.createIcons();
+                loader.classList.add('hidden');
+                switchTab('overview');
+
+            } catch (error) {
+                console.error("Blueprint Error:", error);
+                document.getElementById('blueprint-aim').textContent = "System synthesis failed. Please retry connection.";
+                loader.classList.add('hidden');
+            }
+        }
+
+        function closeBlueprint() {
+            const modal = document.getElementById('blueprint-modal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => modal.classList.add('hidden'), 500);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+        }
+
+        function copyBlueprintCode() {
+            const code = document.getElementById('blueprint-code').textContent;
+            const el = document.createElement('textarea');
+            el.value = code;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        }
+
+
+
+        document.getElementById('btn-foryou').addEventListener('click', function() {
+            isForYouMode = !isForYouMode;
+            this.classList.toggle('bg-accent/10');
+            this.classList.toggle('text-accent');
+            document.getElementById('foryou-dot').classList.toggle('bg-accent');
+            document.getElementById('foryou-dot').classList.toggle('animate-accent-pulse');
+            renderProjects();
+        });
+
+        document.getElementById('search-input').addEventListener('input', (e) => { searchQuery = e.target.value; renderProjects(); });
+
+        document.querySelectorAll('.branch-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.branch-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-accent', 'text-white');
+                    b.classList.add('bg-white/[0.02]', 'border-white/[0.05]', 'text-[#8A8F98]');
+                });
+                btn.classList.add('active', 'bg-accent', 'text-white');
+                currentBranch = btn.getAttribute('data-branch');
+                renderProjects();
+            });
+        });
+
+        // Background WebGL Animation
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        const partGeo = new THREE.BufferGeometry();
+        const partPos = new Float32Array(1800 * 3);
+        for(let i=0; i<1800*3; i++) partPos[i] = (Math.random() - 0.5) * 130;
+        partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+        const particles = new THREE.Points(partGeo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.4 }));
+        scene.add(particles);
+        camera.position.z = 65;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.y += 0.00025;
+            renderer.render(scene, camera);
+        }
+
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        window.onload = () => {
+            lucide.createIcons();
+            renderProjects();
+            animate();
+            document.querySelectorAll('.reveal-text').forEach(el => el.classList.add('active'));
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 100) nav.classList.add('nav-shrink');
+            else nav.classList.remove('nav-shrink');
+        });
+    </script>
+</body>
+</html>
