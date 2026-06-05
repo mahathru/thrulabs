@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Career Roadmaps</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="academy_data.js"></script>
+
+    <style>
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .academy-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .academy-card:hover {
+            border-color: rgba(94, 106, 210, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .academy-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Roadmap Timeline Line Styling */
+        .timeline-line {
+            position: absolute;
+            left: 21px;
+            top: 24px;
+            bottom: 24px;
+            width: 2px;
+            background: linear-gradient(to bottom, #5E6AD2, #0A0A0C);
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Tools</a>
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 pt-36 px-4 md:px-6 pb-24 max-w-[1200px] mx-auto space-y-12">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+            <h1 class="text-xl font-display font-bold text-white tracking-widest uppercase flex items-center gap-2">
+                <span class="w-1.5 h-6 rounded bg-cyan-500"></span>
+                Career Roadmap Profile
+            </h1>
+            <a href="academy.html" class="text-[10px] font-mono text-[#BFC5D2] hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wider">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Academy
+            </a>
+        </div>
+
+        <!-- Dashboard Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left 2 Columns: Career Description and Timeline -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Overview Header Card -->
+                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-4">
+                        <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[9px] font-mono uppercase tracking-widest inline-block">Career Path</span>
+                        <h2 id="roadmap-title" class="text-2xl md:text-3xl font-display font-extrabold text-white leading-tight">--</h2>
+                        <p id="roadmap-desc" class="text-[#BFC5D2] text-sm font-light leading-relaxed">--</p>
+                    </div>
+                </div>
+
+                <!-- Required Skills Matrix -->
+                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-4">
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i> Required Core Competencies
+                        </h3>
+                        <div id="skills-container" class="flex flex-wrap gap-2.5 pt-2">
+                            <!-- Dynamic skills badges -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vertical timeline path -->
+                <div class="space-y-6">
+                    <h3 class="text-xs font-mono font-bold text-[#BFC5D2] uppercase tracking-wider">Learning Progression Tree</h3>
+                    
+                    <div class="relative pl-12 space-y-8" id="timeline-container">
+                        <!-- Vertical line element -->
+                        <div class="timeline-line"></div>
+                        
+                        <!-- Timeline nodes are dynamically loaded here -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Recommended curriculum links & Job Market -->
+            <div class="space-y-8">
+                
+                <!-- Recommended Shortcuts -->
+                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-6">
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="graduation-cap" class="w-4.5 h-4.5 text-cyan-400"></i> Recommended Courses
+                        </h3>
+                        <div id="courses-list" class="space-y-3">
+                            <!-- Dynamic courses list -->
+                        </div>
+
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2 pt-4 border-t border-white/5">
+                            <i data-lucide="award" class="w-4.5 h-4.5 text-cyan-400"></i> Target Certifications
+                        </h3>
+                        <div id="certs-list" class="space-y-3">
+                            <!-- Dynamic cert list -->
+                        </div>
+
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2 pt-4 border-t border-white/5">
+                            <i data-lucide="bot" class="w-4.5 h-4.5 text-cyan-400"></i> Recommended Projects
+                        </h3>
+                        <div id="projects-list" class="space-y-3">
+                            <!-- Dynamic projects list -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Opportunities -->
+                <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-4">
+                        <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="briefcase" class="w-4.5 h-4.5 text-cyan-400"></i> Job Opportunities & Roles
+                        </h3>
+                        <p class="text-[#BFC5D2] text-[11px] font-light leading-relaxed">
+                            Graduating from this path qualifies you for various high-growth roles in autonomous hardware, consumer electronics, and avionics:
+                        </p>
+                        <div id="opportunities-list" class="space-y-3 font-mono text-[10.5px]">
+                            <!-- Dynamic jobs -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 pt-16 pb-12 bg-surface/50 relative z-10 mt-12">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-gray-300 uppercase">Academy Ecosystem</span>
+            </div>
+            <p class="text-[8px] text-gray-300/40 font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL LEARNING AUTHORITY</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Spotlight helper function
+        function initSpotlights() {
+            document.querySelectorAll('.academy-card').forEach(card => {
+                const spotlight = card.querySelector('.spotlight');
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    if (spotlight) {
+                        spotlight.style.transform = `translate3d(${x - 225}px, ${y - 225}px, 0)`;
+                    }
+                });
+            });
+        }
+
+        // WebGL Particle Canvas System
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.BufferGeometry();
+        const ptsArr = new Float32Array(500 * 3);
+        for(let i=0; i<500*3; i++) ptsArr[i] = (Math.random() - 0.5) * 120;
+        geo.setAttribute('position', new THREE.BufferAttribute(ptsArr, 3));
+        const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.2 }));
+        scene.add(pts);
+        camera.position.z = 50;
+
+        function animateParticles() {
+            requestAnimationFrame(animateParticles);
+            pts.rotation.y += 0.0003;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Load Roadmaps
+        let activeRoadmap = null;
+
+        window.onload = () => {
+            animateParticles();
+            initSpotlights();
+            
+            const params = new URLSearchParams(window.location.search);
+            const pathId = params.get('path') || 'embedded';
+            
+            activeRoadmap = academyData.careerRoadmaps[pathId];
+            if (!activeRoadmap) {
+                activeRoadmap = academyData.careerRoadmaps['embedded'];
+            }
+            
+            renderRoadmapProfile();
+        };
+
+        function renderRoadmapProfile() {
+            if (!activeRoadmap) return;
+
+            document.getElementById('roadmap-title').innerText = activeRoadmap.title;
+            document.getElementById('roadmap-desc').innerText = activeRoadmap.desc;
+
+            // Render Core Skills Tags
+            const skillsContainer = document.getElementById('skills-container');
+            skillsContainer.innerHTML = '';
+            activeRoadmap.skills.forEach(skill => {
+                const tag = document.createElement('span');
+                tag.className = 'px-3 py-1.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-medium';
+                tag.innerText = skill;
+                skillsContainer.appendChild(tag);
+            });
+
+            // Render Timeline Checklist Nodes
+            const timelineContainer = document.getElementById('timeline-container');
+            
+            // Clean up old nodes, keeping only the vertical line element
+            const line = timelineContainer.querySelector('.timeline-line');
+            timelineContainer.innerHTML = '';
+            timelineContainer.appendChild(line);
+
+            activeRoadmap.timeline.forEach((node, idx) => {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'relative space-y-2';
+                
+                const topicsList = node.topics.map(t => 
+                    `<span class="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-[9px] text-[#BFC5D2] font-mono">${t}</span>`
+                ).join(' ');
+
+                nodeDiv.innerHTML = `
+                    <!-- Node Bullet -->
+                    <div class="absolute -left-[35px] top-1.5 w-[10px] h-[10px] rounded-full bg-cyan-500 border-2 border-base shadow-[0_0_10px_rgba(6,182,212,0.8)] z-10"></div>
+                    
+                    <span class="text-[9px] font-mono text-cyan-400 font-bold uppercase tracking-widest block">${node.stage}</span>
+                    <h4 class="text-xs font-display font-bold text-white">${node.stage.split(': ')[1] || node.stage}</h4>
+                    <p class="text-[#BFC5D2] text-[11px] font-light leading-relaxed max-w-xl">${node.desc}</p>
+                    <div class="flex flex-wrap gap-1.5 pt-1.5">
+                        ${topicsList}
+                    </div>
+                `;
+                timelineContainer.appendChild(nodeDiv);
+            });
+
+            // Render Recommended courses links
+            const coursesContainer = document.getElementById('courses-list');
+            coursesContainer.innerHTML = '';
+            activeRoadmap.courses.forEach(cId => {
+                const cObj = academyData.certifications[cId] || { title: cId.replace('-', ' ') };
+                
+                // Fetch course title by ID
+                let displayTitle = cId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                if (cId === 'ece') displayTitle = "ECE Core Path";
+                
+                const box = document.createElement('a');
+                box.href = `learn.html?course=${cId}`;
+                box.className = 'block p-4 rounded-2xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 hover-target transition-all text-xs font-display font-bold text-white flex justify-between items-center';
+                box.innerHTML = `
+                    <span>${displayTitle}</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 text-cyan-400"></i>
+                `;
+                coursesContainer.appendChild(box);
+            });
+
+            // Render Target certifications
+            const certsContainer = document.getElementById('certs-list');
+            certsContainer.innerHTML = '';
+            activeRoadmap.certifications.forEach(certKey => {
+                const certObj = academyData.certifications[certKey];
+                const displayTitle = certObj ? certObj.title : certKey + " Certification";
+                
+                const box = document.createElement('a');
+                box.href = `certification.html?cert=${certKey}`;
+                box.className = 'block p-4 rounded-2xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 hover-target transition-all text-xs font-display font-bold text-white flex justify-between items-center';
+                box.innerHTML = `
+                    <span>${displayTitle}</span>
+                    <i data-lucide="award" class="w-4 h-4 text-cyan-400"></i>
+                `;
+                certsContainer.appendChild(box);
+            });
+
+            // Render Recommended Projects
+            const projectsContainer = document.getElementById('projects-list');
+            projectsContainer.innerHTML = '';
+            activeRoadmap.projects.forEach(projKey => {
+                const projObj = academyData.projectTracks[projKey];
+                const displayTitle = projObj ? projObj.title : projKey + " Project";
+                
+                const box = document.createElement('a');
+                box.href = `project.html?track=${projKey}`;
+                box.className = 'block p-4 rounded-2xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 hover:border-white/10 hover-target transition-all text-xs font-display font-bold text-white flex justify-between items-center';
+                box.innerHTML = `
+                    <span>${displayTitle}</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 text-cyan-400"></i>
+                `;
+                projectsContainer.appendChild(box);
+            });
+
+            // Render Opportunities
+            const jobsContainer = document.getElementById('opportunities-list');
+            jobsContainer.innerHTML = '';
+            activeRoadmap.opportunities.forEach(job => {
+                const item = document.createElement('div');
+                item.className = 'p-3 bg-white/[0.01] border border-white/5 rounded-xl flex items-start gap-2.5 text-[#BFC5D2]';
+                item.innerHTML = `
+                    <i data-lucide="check" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+                    <span>${job}</span>
+                `;
+                jobsContainer.appendChild(item);
+            });
+
+            lucide.createIcons();
+            initSpotlights();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Certificate Verification</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .academy-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .academy-card:hover {
+            border-color: rgba(94, 106, 210, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .academy-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .glow-border {
+            box-shadow: 0 0 25px rgba(94, 106, 210, 0.15);
+        }
+
+        /* Certificate Printing CSS */
+        @media print {
+            body * { visibility: hidden; }
+            #printable-certificate-container, #printable-certificate-container * { visibility: visible; }
+            #printable-certificate-container {
+                position: absolute;
+                left: 0; top: 0; width: 100%;
+                background: #020203 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Tools</a>
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 pt-36 px-4 md:px-6 pb-24 max-w-[800px] mx-auto space-y-12">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+            <h1 class="text-xl font-display font-bold text-white tracking-widest uppercase flex items-center gap-2">
+                <span class="w-1.5 h-6 rounded bg-blue-500"></span>
+                Credential Verification
+            </h1>
+            <a href="academy.html" class="text-[10px] font-mono text-[#BFC5D2] hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wider">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Academy
+            </a>
+        </div>
+
+        <!-- Search Card -->
+        <div class="academy-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
+            <div class="spotlight"></div>
+            <div class="relative z-10 space-y-4">
+                <span class="text-[9.5px] font-mono text-[#BFC5D2]/50 uppercase tracking-wider block">Verify Issued Certificates</span>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="cert-verify-input" placeholder="Enter Certificate ID (e.g. TL-2026-00001 or TL-2026-ARD-12345)" class="flex-1 h-12 px-4 rounded-xl bg-white/[0.03] border border-white/10 text-white text-xs placeholder-[#BFC5D2]/45 focus:outline-none focus:border-accent">
+                    <button onclick="handleVerification()" class="px-6 h-12 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover-target">Verify Credential</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning / Not Found box -->
+        <div id="error-box" class="hidden p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-xs text-center">
+            <!-- Dynamic warning message -->
+        </div>
+
+        <!-- Verified Result: printable Certificate Frame -->
+        <div id="result-box" class="hidden space-y-6">
+            
+            <!-- Audit Metadata Sheet -->
+            <div class="academy-card p-6 rounded-[2rem] border-emerald-500/20 relative overflow-hidden group">
+                <div class="spotlight"></div>
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] font-mono uppercase tracking-widest font-bold">STATUS: VERIFIED & ACTIVE</span>
+                        </div>
+                        <h3 class="text-white font-display font-bold text-sm pt-1">Thrulabs Registry Audit Log</h3>
+                    </div>
+                    <button onclick="window.print()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all hover-target flex items-center gap-1.5">
+                        <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print Certificate
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Certificate -->
+            <div id="printable-certificate-container" class="academy-card p-10 md:p-16 rounded-[2.5rem] border-white/10 shadow-2xl relative overflow-hidden text-center bg-surface/70">
+                <div class="spotlight"></div>
+                
+                <!-- Double Frame board border design -->
+                <div class="absolute inset-5 border border-white/5 rounded-[2rem] pointer-events-none"></div>
+                <div class="absolute inset-6 border border-accent/10 rounded-[1.9rem] pointer-events-none"></div>
+
+                <div class="relative z-10 space-y-8 py-4">
+                    <div class="flex justify-center">
+                        <div class="w-16 h-16 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shadow-lg">
+                            <i data-lucide="award" class="w-8 h-8 text-accent-bright"></i>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <span class="font-display font-extrabold text-[10px] tracking-[0.4em] text-white uppercase block">THRULABS ACADEMY</span>
+                        <span class="text-[7.5px] text-[#BFC5D2]/40 font-mono tracking-widest uppercase block mt-1">GLOBAL ENGINEERING AUTHORITY</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <span class="text-[9px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">This is to certify that</span>
+                        <span class="text-2xl font-display font-extrabold text-white block select-all tracking-tight" id="cert-holder">--</span>
+                        <span class="text-[9px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">has successfully completed all requirements for the professional certification</span>
+                    </div>
+
+                    <div class="py-3 px-6 bg-white/[0.02] border border-white/5 rounded-2xl inline-block max-w-full">
+                        <span id="cert-program" class="text-sm font-mono font-bold text-accent-bright uppercase tracking-wider block">--</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-left border-t border-white/5 pt-8 text-[9px] text-[#BFC5D2] font-mono max-w-xl mx-auto">
+                        <div>
+                            <span class="text-[#BFC5D2]/40 block uppercase tracking-wider mb-0.5">Date of Issue</span>
+                            <span class="text-white font-bold text-xs" id="cert-date">--</span>
+                        </div>
+                        <div>
+                            <span class="text-[#BFC5D2]/40 block uppercase tracking-wider mb-0.5">Credential ID</span>
+                            <span class="text-white font-bold text-xs block select-all" id="cert-id-display">--</span>
+                        </div>
+                        <div class="col-span-2 md:col-span-1">
+                            <span class="text-[#BFC5D2]/40 block uppercase tracking-wider mb-0.5">Grade / Score</span>
+                            <span class="text-emerald-400 font-bold text-xs block" id="cert-grade">--</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center pt-4">
+                        <div class="flex items-center gap-2 border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 rounded-xl text-[9px] font-mono text-emerald-400 uppercase tracking-widest">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> Secure Blockchain Ledger Verified
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 pt-16 pb-12 bg-surface/50 relative z-10 mt-12">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-gray-300 uppercase">Academy Ecosystem</span>
+            </div>
+            <p class="text-[8px] text-gray-300/40 font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL LEARNING AUTHORITY</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Spotlight helper function
+        function initSpotlights() {
+            document.querySelectorAll('.academy-card').forEach(card => {
+                const spotlight = card.querySelector('.spotlight');
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    if (spotlight) {
+                        spotlight.style.transform = `translate3d(${x - 225}px, ${y - 225}px, 0)`;
+                    }
+                });
+            });
+        }
+
+        // WebGL Particle Canvas System
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.BufferGeometry();
+        const ptsArr = new Float32Array(500 * 3);
+        for(let i=0; i<500*3; i++) ptsArr[i] = (Math.random() - 0.5) * 120;
+        geo.setAttribute('position', new THREE.BufferAttribute(ptsArr, 3));
+        const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.2 }));
+        scene.add(pts);
+        camera.position.z = 50;
+
+        function animateParticles() {
+            requestAnimationFrame(animateParticles);
+            pts.rotation.y += 0.0003;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Static certificates listings
+        const staticCertificatesDb = {
+            "TL-2026-00001": {
+                name: "Alex Mercer",
+                program: "Arduino Fundamentals Certification",
+                date: "March 15, 2026",
+                status: "Verified & Active",
+                grade: "Distinction (96%)"
+            },
+            "TL-2026-00002": {
+                name: "Jane Doe",
+                program: "Embedded Systems Certification",
+                date: "April 2, 2026",
+                status: "Verified & Active",
+                grade: "First Class (88%)"
+            },
+            "TL-2026-00003": {
+                name: "Siddharth Sharma",
+                program: "IoT Development Certification",
+                date: "May 10, 2026",
+                status: "Verified & Active",
+                grade: "Distinction (94%)"
+            },
+            "TL-2026-00004": {
+                name: "Elena Rostova",
+                program: "PCB Design Certification",
+                date: "January 22, 2026",
+                status: "Verified & Active",
+                grade: "First Class (85%)"
+            },
+            "TL-2026-00005": {
+                name: "Marcus Vance",
+                program: "Drone Technology Certification",
+                date: "May 30, 2026",
+                status: "Verified & Active",
+                grade: "Distinction (98%)"
+            },
+            "TL-2026-00006": {
+                name: "Lina Chen",
+                program: "Digital Electronics Certification",
+                date: "February 18, 2026",
+                status: "Verified & Active",
+                grade: "First Class (90%)"
+            }
+        };
+
+        window.onload = () => {
+            animateParticles();
+            initSpotlights();
+            
+            // Check for id in URL search params
+            const params = new URLSearchParams(window.location.search);
+            const queryId = params.get('id');
+            
+            if (queryId) {
+                document.getElementById('cert-verify-input').value = queryId.trim();
+                verify(queryId.trim());
+            }
+        };
+
+        function handleVerification() {
+            const input = document.getElementById('cert-verify-input').value.trim();
+            verify(input);
+        }
+
+        function verify(id) {
+            const errorBox = document.getElementById('error-box');
+            const resultBox = document.getElementById('result-box');
+            
+            const searchId = id.toUpperCase();
+            if (!searchId) {
+                errorBox.innerHTML = `<div class="flex items-center justify-center gap-1.5"><i data-lucide="alert-circle" class="w-4 h-4"></i> Please enter a Certificate ID to verify.</div>`;
+                errorBox.classList.remove('hidden');
+                resultBox.classList.add('hidden');
+                lucide.createIcons();
+                return;
+            }
+            
+            // Read from both localStorage and static list
+            const dynamicDb = JSON.parse(localStorage.getItem('thrulabs_certificate_database')) || {};
+            const cert = staticCertificatesDb[searchId] || dynamicDb[searchId];
+            
+            if (cert) {
+                errorBox.classList.add('hidden');
+                
+                // Update elements in printable certificate
+                document.getElementById('cert-holder').innerText = cert.name;
+                document.getElementById('cert-program').innerText = cert.program;
+                document.getElementById('cert-date').innerText = cert.date;
+                document.getElementById('cert-id-display').innerText = searchId;
+                document.getElementById('cert-grade').innerText = cert.grade;
+
+                resultBox.classList.remove('hidden');
+            } else {
+                resultBox.classList.add('hidden');
+                errorBox.innerHTML = `
+                    <div class="flex items-center justify-center gap-1.5 mb-1 text-sm font-bold uppercase"><i data-lucide="x-circle" class="w-4.5 h-4.5"></i> Verification Failed</div>
+                    <p class="text-[#BFC5D2] text-[10.5px]">Certificate ID <strong>"${searchId}"</strong> was not found in the global registry database. Please ensure spelling is correct (e.g. TL-2026-00001).</p>
+                `;
+                errorBox.classList.remove('hidden');
+            }
+            lucide.createIcons();
+            initSpotlights();
+        }
+    </script>
+</body>
+</html>

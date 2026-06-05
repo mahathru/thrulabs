@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Academy</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="academy_data.js"></script>
+
+    <style>
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-shrink {
+            padding: 0.5rem 1.2rem !important;
+            background: rgba(10, 10, 12, 0.8);
+        }
+
+        .academy-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .academy-card:hover {
+            border-color: rgba(94, 106, 210, 0.4);
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateY(-4px);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .academy-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .reveal-text {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-text.active {
+            opacity: 1 !important;
+            transform: translateY(0);
+        }
+
+        .dropdown-panel {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .group:hover .dropdown-panel {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+        /* Badge visibility overrides */
+        .badge-free {
+            background: rgba(16, 185, 129, 0.2) !important;
+            border: 1px solid rgba(16, 185, 129, 0.5) !important;
+            color: #34D399 !important;
+            font-weight: 700 !important;
+        }
+        .badge-premium {
+            background: rgba(139, 92, 246, 0.2) !important;
+            border: 1px solid rgba(139, 92, 246, 0.5) !important;
+            color: #A78BFA !important;
+            font-weight: 700 !important;
+        }
+        .badge-certification {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border: 1px solid rgba(59, 130, 246, 0.5) !important;
+            color: #60A5FA !important;
+            font-weight: 700 !important;
+        }
+
+        /* Icon visibility - ensure all lucide icons are fully opaque */
+        .academy-card [data-lucide] {
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.1));
+        }
+
+        /* Button accessibility */
+        .academy-card button {
+            color: #FFFFFF !important;
+            font-weight: 700;
+        }
+
+        /* Search bar focus state */
+        #academy-search:focus {
+            border-color: rgba(94, 106, 210, 0.6) !important;
+            box-shadow: 0 0 0 3px rgba(94, 106, 210, 0.15);
+        }
+
+        /* Mobile readability */
+        @media (max-width: 768px) {
+            .academy-card h3 {
+                font-size: 1rem !important;
+            }
+            .academy-card p {
+                font-size: 0.75rem !important;
+            }
+            .academy-card [data-lucide] {
+                min-width: 18px;
+                min-height: 18px;
+            }
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center gap-2.5 hover-target">
+                    <div class="w-6 h-6 rounded-md bg-white flex items-center justify-center">
+                        <i data-lucide="component" class="w-3.5 h-3.5 text-black"></i>
+                    </div>
+                    <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-white uppercase text-nowrap">THRULABS</span>
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    
+                    <!-- Tools Dropdown -->
+                    <div class="relative group">
+                        <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target flex items-center gap-1.5 py-2">
+                            Tools <i data-lucide="chevron-down" class="w-3 h-3 opacity-50 group-hover:rotate-180 transition-transform"></i>
+                        </a>
+                        <div class="absolute top-full left-0 pt-4 dropdown-panel w-[22rem]">
+                            <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-2xl space-y-4">
+                                <!-- Header -->
+                                <div class="border-b border-white/5 pb-3 px-1">
+                                    <span class="text-[9px] font-display font-extrabold text-white uppercase tracking-widest block">Tools Hub</span>
+                                    <p class="text-[8px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Browse engineering tools and utilities.</p>
+                                </div>
+                                <div class="space-y-3 font-mono text-[9px]">
+                                    <a href="tools.html#calculators" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="cpu" class="w-4 h-4 text-accent mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-accent transition-colors">Engineering Calculators &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Electronics, communication systems, and circuit calculations.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#converters" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="binary" class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-emerald-400 transition-colors">Converters &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Binary, hexadecimal, and engineering conversions.</span>
+                                        </div>
+                                    </a>
+                                    <a href="tools.html#utilities" class="group/item flex items-start gap-2.5 px-2 py-1.5 rounded-xl hover:bg-white/5 transition-all hover-target">
+                                        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                                        <div class="flex flex-col">
+                                            <span class="font-bold text-white uppercase tracking-wider group-hover/item:text-purple-300 transition-colors">Student Utilities &rarr;</span>
+                                            <span class="text-[7.5px] text-white/40 font-sans mt-0.5 normal-case">Academic productivity and student tools.</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="flex items-center justify-between pt-3 border-t border-white/5 px-1 font-mono text-[8.5px]">
+                                    <a href="tools.html" class="group/all flex flex-col hover-target font-mono">
+                                        <span class="text-white/50 hover:text-white uppercase tracking-widest font-bold">All Tools &rarr;</span>
+                                        <span class="text-[7px] text-white/30 font-sans normal-case mt-0.5">View complete tool directory.</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
+                <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
+                    Get Started
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative z-10 pt-40 px-6 pb-32">
+        <!-- Hero Section -->
+        <section class="max-w-[1200px] mx-auto text-center mb-16">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-accent/15 border border-accent/40 rounded-full text-[11px] font-bold text-accent-bright uppercase tracking-widest mb-8 reveal-text">
+                <i data-lucide="graduation-cap" class="w-4 h-4 text-accent-bright"></i> LEARNING HUB
+            </div>
+            <h1 class="text-4xl md:text-7xl font-display font-extrabold tracking-tight text-white mb-6 reveal-text">ENGINEERING LEARNING CENTER</h1>
+            <p class="text-[#D1D5DB] text-sm md:text-base max-w-2xl mx-auto font-light leading-relaxed reveal-text" style="transition-delay: 0.1s;">
+                Everything engineers need: tools, courses, projects, resources, and certifications.
+            </p>
+        </section>
+
+        <!-- Search and Filters Section -->
+        <section class="max-w-[1200px] mx-auto mb-16 reveal-text" style="transition-delay: 0.2s;">
+            <div class="glass-nav p-3 rounded-[2.5rem] border border-white/5 flex flex-col gap-3 shadow-2xl">
+                <div class="flex flex-col md:flex-row items-center gap-3 w-full">
+                    <div class="relative flex-1 w-full">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70"></i>
+                        <input type="text" id="academy-search" placeholder="Search courses, certifications, projects, roadmaps..." class="w-full h-11 pl-11 pr-4 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-sm text-white placeholder-[#9CA3AF] focus:outline-none focus:border-accent/60 transition-all">
+                    </div>
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                        <button data-filter="all" class="filter-btn active h-11 px-5 rounded-2xl bg-accent text-white text-[10px] font-bold uppercase tracking-widest transition-all">All</button>
+                        <button data-filter="free" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Free</button>
+                        <button data-filter="premium" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Premium</button>
+                        <button data-filter="certifications" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Certifications</button>
+                        <button data-filter="projects" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Projects</button>
+                        <button data-filter="roadmaps" class="filter-btn h-11 px-5 rounded-2xl bg-white/[0.04] border border-white/[0.12] text-[#E5E7EB] text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/[0.08] transition-all">Roadmaps</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Empty State -->
+        <section id="empty-state" class="hidden max-w-[1200px] mx-auto py-20 text-center flex-col items-center justify-center">
+            <i data-lucide="search-code" class="w-12 h-12 text-[#9CA3AF] mb-4 animate-pulse"></i>
+            <h3 class="text-[#D1D5DB] font-medium text-sm">No courses, certifications, roadmaps, projects, or resources match your search criteria.</h3>
+        </section>
+
+        <!-- Multi-Section Layout -->
+        <section class="max-w-[1200px] mx-auto space-y-20">
+            
+
+            
+            <!-- SECTION 1: Learning Categories -->
+            <div id="section-categories" class="space-y-6 scroll-reveal">
+                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
+                    <span class="w-1.5 h-7 rounded bg-accent"></span>
+                    Learning Categories
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="grid-categories"></div>
+            </div>
+
+            <!-- SECTION 2: Featured Courses -->
+            <div id="section-courses" class="space-y-6 scroll-reveal">
+                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
+                    <span class="w-1.5 h-7 rounded bg-purple-500"></span>
+                    Featured Courses
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-courses"></div>
+            </div>
+
+            <!-- SECTION 3: Certifications -->
+            <div id="section-certifications" class="space-y-6 scroll-reveal">
+                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
+                    <span class="w-1.5 h-7 rounded bg-emerald-500"></span>
+                    Certifications
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-certifications"></div>
+            </div>
+
+            <!-- SECTION 4: Project Tracks -->
+            <div id="section-projects" class="space-y-6 scroll-reveal">
+                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
+                    <span class="w-1.5 h-7 rounded bg-amber-500"></span>
+                    Project Tracks
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="grid-projects"></div>
+            </div>
+
+            <!-- SECTION 5: Career Roadmaps -->
+            <div id="section-roadmaps" class="space-y-6 scroll-reveal">
+                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
+                    <span class="w-1.5 h-7 rounded bg-cyan-500"></span>
+                    Career Roadmaps
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="grid-roadmaps"></div>
+            </div>
+
+            <!-- SECTION 6: Resource Collections -->
+            <div id="section-resources" class="space-y-6 scroll-reveal">
+                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
+                    <span class="w-1.5 h-7 rounded bg-rose-500"></span>
+                    Resource Collections
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="grid-resources"></div>
+            </div>
+
+            <!-- SECTION 7: Certificate Verification -->
+            <div id="section-verification" class="space-y-6 scroll-reveal">
+                <h2 class="text-2xl font-display font-extrabold text-white border-b border-white/10 pb-4 flex items-center gap-3">
+                    <span class="w-1.5 h-7 rounded bg-blue-500"></span>
+                    Verify Certificates
+                </h2>
+                <div class="academy-card p-8 rounded-[2rem] max-w-xl mx-auto text-left relative overflow-hidden group">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input type="text" id="cert-id-input" placeholder="Enter Certificate ID (e.g. TL-2026-00001)" class="flex-1 h-12 px-4 rounded-xl bg-white/[0.05] border border-white/[0.15] text-white text-xs placeholder-[#9CA3AF] focus:outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition-all">
+                            <button onclick="verifyCertificate()" class="px-6 h-12 bg-accent hover:bg-accent-bright text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-accent/20">Verify</button>
+                        </div>
+                        <div id="verification-result" class="hidden p-4 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] space-y-1"></div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <footer class="border-t border-white/5 pt-24 pb-12 bg-surface/50 relative z-10">
+        <div class="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded bg-accent/20 flex items-center justify-center">
+                    <i data-lucide="component" class="w-3.5 h-3.5 text-accent"></i>
+                </div>
+                <span class="font-display font-extrabold text-[10px] tracking-[0.3em] text-[#D1D5DB] uppercase">Academy Ecosystem</span>
+            </div>
+            <div class="flex gap-8 font-mono text-[9px] text-[#D1D5DB] uppercase tracking-[0.2em]">
+                <a href="#" class="hover:text-white hover-target transition-colors">Learning LMS</a>
+                <a href="#" class="hover:text-white hover-target transition-colors">Certification Verify</a>
+                <a href="#" class="hover:text-white hover-target transition-colors">Instructor Hub</a>
+            </div>
+            <p class="text-[8px] text-[#9CA3AF] font-mono uppercase tracking-[0.4em]">© 2026 GLOBAL LEARNING AUTHORITY</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Cursor Coordinates Listener
+        let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+        window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        // color helper lookup for styling cards and glows consistently
+        const colorMap = {
+            'accent': {
+                bg: 'bg-accent/10',
+                border: 'border-accent/20',
+                text: 'text-accent-bright',
+                glow: 'rgba(94, 106, 210, 0.15)'
+            },
+            'emerald-500': {
+                bg: 'bg-emerald-500/10',
+                border: 'border-emerald-500/20',
+                text: 'text-emerald-400',
+                glow: 'rgba(16, 185, 129, 0.15)'
+            },
+            'purple-500': {
+                bg: 'bg-purple-500/10',
+                border: 'border-purple-500/20',
+                text: 'text-purple-400',
+                glow: 'rgba(139, 92, 246, 0.15)'
+            },
+            'amber-500': {
+                bg: 'bg-amber-500/10',
+                border: 'border-amber-500/20',
+                text: 'text-amber-400',
+                glow: 'rgba(245, 158, 11, 0.15)'
+            },
+            'cyan-500': {
+                bg: 'bg-cyan-500/10',
+                border: 'border-cyan-500/20',
+                text: 'text-cyan-400',
+                glow: 'rgba(6, 182, 212, 0.15)'
+            },
+            'rose-500': {
+                bg: 'bg-rose-500/10',
+                border: 'border-rose-500/20',
+                text: 'text-rose-400',
+                glow: 'rgba(244, 63, 94, 0.15)'
+            }
+        };
+
+        // Centralized data collections loaded from academyData
+        const learningCategories = [
+            {
+                title: "Embedded Systems",
+                desc: "Master microcontroller architecture, register-level configuration, hardware protocols, and bare-metal programming.",
+                icon: "cpu",
+                color: "accent"
+            },
+            {
+                title: "AIoT",
+                desc: "Bridge physical sensors with cloud systems using ESP32, MQTT telemetry, edge intelligence, and data pipeline integrations.",
+                icon: "network",
+                color: "emerald-500"
+            },
+            {
+                title: "UAV & Drone Technology",
+                desc: "Explore aerodynamics, flight stability control algorithms, PID loop configurations, and autonomous mission execution.",
+                icon: "navigation",
+                color: "amber-500"
+            },
+            {
+                title: "Electronics & Communication",
+                desc: "Analyze core logic systems, board level routing, analog-digital conversions, and modern signal transmission standards.",
+                icon: "radio",
+                color: "cyan-500"
+            }
+        ];
+
+        const featuredCourses = academyData.featuredCourses;
+        const certifications = Object.values(academyData.certifications);
+        const projectTracks = Object.values(academyData.projectTracks);
+        const careerRoadmaps = Object.values(academyData.careerRoadmaps);
+        const resourceCollections = Object.values(academyData.resourceCollections);
+
+        // Spotlight helper function
+        function addSpotlightEffect(card, glowColor = 'rgba(94, 106, 210, 0.15)') {
+            const spotlight = card.querySelector('.spotlight');
+            if (spotlight) {
+                spotlight.style.background = `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`;
+            }
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (spotlight) {
+                    spotlight.style.transform = `translate3d(${x - 200}px, ${y - 200}px, 0)`;
+                }
+            });
+        }
+
+        // Section renderers with layout spacing, contrast, and click redirects
+        function renderCategories(data) {
+            const container = document.getElementById('grid-categories');
+            container.innerHTML = '';
+            data.forEach((cat, idx) => {
+                const card = document.createElement('div');
+                card.className = 'academy-card p-8 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full';
+                card.style.transitionDelay = `${idx * 0.05}s`;
+                
+                const colors = colorMap[cat.color] || colorMap['accent'];
+
+                card.innerHTML = `
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-14 h-14 rounded-2xl ${colors.bg} border ${colors.border} flex items-center justify-center">
+                                    <i data-lucide="${cat.icon}" class="w-7 h-7 ${colors.text}"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-display font-extrabold text-white mb-2">${cat.title}</h3>
+                            <p class="text-[#D1D5DB] text-xs font-normal leading-relaxed">${cat.desc}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                setTimeout(() => card.classList.add('active'), 10);
+                addSpotlightEffect(card, colors.glow);
+            });
+        }
+
+        function renderFeaturedCourses(data) {
+            const container = document.getElementById('grid-courses');
+            container.innerHTML = '';
+            data.forEach((course, idx) => {
+                const card = document.createElement('div');
+                card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
+                card.style.transitionDelay = `${idx * 0.05}s`;
+                card.onclick = () => {
+                    window.location.href = `learn.html?course=${course.id}`;
+                };
+                
+                const colors = colorMap[course.color] || colorMap['accent'];
+
+                card.innerHTML = `
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-11 h-11 rounded-xl ${colors.bg} border ${colors.border} flex items-center justify-center">
+                                    <i data-lucide="${course.icon}" class="w-5 h-5 ${colors.text}"></i>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    ${course.price === 'FREE' 
+                                        ? `<span class="badge-free px-2.5 py-1 rounded-full text-[8px] font-mono tracking-widest">FREE</span>`
+                                        : `<span class="badge-premium px-2.5 py-1 rounded-full text-[8px] font-mono tracking-widest">PREMIUM</span>`
+                                    }
+                                    <span class="px-2.5 py-1 rounded-full ${colors.bg} text-white text-[8px] font-mono tracking-widest border ${colors.border}">
+                                        ${course.difficulty}
+                                    </span>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-display font-extrabold text-white mb-2 line-clamp-1">${course.title}</h3>
+                            <p class="text-[#D1D5DB] text-[11px] font-normal leading-relaxed mb-4 line-clamp-2">${course.desc}</p>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between text-[10px] font-mono text-[#E5E7EB] border-t border-white/8 pt-4">
+                                <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-accent-bright"></i> ${course.duration}</span>
+                                <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-accent-bright"></i> ${course.lessons} Lessons</span>
+                            </div>
+                            <button class="w-full py-3 bg-white/[0.06] border border-white/[0.12] text-white hover:bg-accent hover:border-accent hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all">
+                                Start Learning
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                setTimeout(() => card.classList.add('active'), 10);
+                addSpotlightEffect(card, colors.glow);
+            });
+        }
+
+        function renderCertifications(data) {
+            const container = document.getElementById('grid-certifications');
+            container.innerHTML = '';
+            data.forEach((cert, idx) => {
+                const card = document.createElement('div');
+                card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
+                card.style.transitionDelay = `${idx * 0.05}s`;
+                card.onclick = () => {
+                    window.location.href = `certification.html?cert=${cert.id}`;
+                };
+                
+                const colors = colorMap[cert.color] || colorMap['accent'];
+
+                card.innerHTML = `
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-11 h-11 rounded-xl ${colors.bg} border ${colors.border} flex items-center justify-center">
+                                    <i data-lucide="${cert.icon}" class="w-5 h-5 ${colors.text}"></i>
+                                </div>
+                                <span class="badge-certification px-2.5 py-1 rounded-full text-[8px] font-mono tracking-widest">
+                                    ${cert.level}
+                                </span>
+                            </div>
+                            <h3 class="text-base font-display font-extrabold text-white mb-2 line-clamp-1">${cert.title}</h3>
+                            <div class="space-y-1 mb-4">
+                                <span class="text-[#E5E7EB] uppercase tracking-widest block text-[7px] font-bold mb-0.5">Includes:</span>
+                                <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] text-[#D1D5DB]">
+                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Final Exam</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Project</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Verifiable ID</span>
+                                    <span class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Certificate</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between text-[10px] font-mono text-[#E5E7EB] border-t border-white/8 pt-4">
+                                <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-accent-bright"></i> ${cert.duration}</span>
+                                <span class="flex items-center gap-1.5"><i data-lucide="book-open" class="w-3.5 h-3.5 text-accent-bright"></i> ${cert.modules} Modules</span>
+                            </div>
+                            <button class="w-full py-3 bg-white/[0.06] border border-white/[0.12] text-white hover:bg-accent hover:border-accent hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all">
+                                Start Certification
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                setTimeout(() => card.classList.add('active'), 10);
+                addSpotlightEffect(card, colors.glow);
+            });
+        }
+
+        function renderProjectTracks(data) {
+            const container = document.getElementById('grid-projects');
+            container.innerHTML = '';
+            data.forEach((proj, idx) => {
+                const card = document.createElement('div');
+                card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
+                card.style.transitionDelay = `${idx * 0.05}s`;
+                card.onclick = () => {
+                    window.location.href = `project.html?track=${proj.id}`;
+                };
+                
+                const colors = colorMap[proj.color] || colorMap['accent'];
+
+                card.innerHTML = `
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-11 h-11 rounded-xl ${colors.bg} border ${colors.border} flex items-center justify-center">
+                                    <i data-lucide="${proj.icon}" class="w-5 h-5 ${colors.text}"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-display font-extrabold text-white mb-2 line-clamp-1">${proj.title}</h3>
+                            <p class="text-[#D1D5DB] text-[11px] font-normal leading-relaxed mb-4 line-clamp-2">${proj.desc}</p>
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between text-[10px] font-mono text-[#E5E7EB] border-t border-white/8 pt-3 mb-3">
+                                <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-accent-bright"></i> Focus Track</span>
+                                <span class="flex items-center gap-1 text-[8px] uppercase tracking-widest text-[#9CA3AF]">Hands-on Lab</span>
+                            </div>
+                            <button class="w-full py-3 bg-white/[0.06] border border-white/[0.12] text-white hover:bg-accent hover:border-accent hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all">
+                                Build Project
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                setTimeout(() => card.classList.add('active'), 10);
+                addSpotlightEffect(card, colors.glow);
+            });
+        }
+
+        function renderCareerRoadmaps(data) {
+            const container = document.getElementById('grid-roadmaps');
+            container.innerHTML = '';
+            data.forEach((roadmap, idx) => {
+                const card = document.createElement('div');
+                card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
+                card.style.transitionDelay = `${idx * 0.05}s`;
+                card.onclick = () => {
+                    window.location.href = `roadmap.html?path=&{roadmap.id}`.replace('&{', '${');
+                };
+                
+                const colors = colorMap[roadmap.color] || colorMap['accent'];
+                const skillTags = roadmap.skills.slice(0, 3).map(s => 
+                    `<span class="px-2 py-0.5 rounded bg-white/[0.06] text-[9px] text-[#D1D5DB] border border-white/[0.08]">${s}</span>`
+                ).join(' ');
+
+                card.innerHTML = `
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-11 h-11 rounded-xl ${colors.bg} border ${colors.border} flex items-center justify-center">
+                                    <i data-lucide="${roadmap.icon}" class="w-5 h-5 ${colors.text}"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-display font-extrabold text-white mb-2">${roadmap.title}</h3>
+                            <p class="text-[#D1D5DB] text-[11px] font-normal leading-relaxed mb-4">${roadmap.desc}</p>
+                            
+                            <div class="flex flex-wrap gap-1.5 mb-5">
+                                ${skillTags}
+                            </div>
+                        </div>
+                        <div>
+                            <button class="w-full py-3 bg-white/[0.06] border border-white/[0.12] text-white hover:bg-accent hover:border-accent hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all">
+                                View Roadmap
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                setTimeout(() => card.classList.add('active'), 10);
+                addSpotlightEffect(card, colors.glow);
+            });
+        }
+
+        function renderResources(data) {
+            const container = document.getElementById('grid-resources');
+            if (!container) return;
+            container.innerHTML = '';
+            data.forEach((res, idx) => {
+                const card = document.createElement('div');
+                card.className = 'academy-card p-6 rounded-[2rem] hover-target reveal-text active flex flex-col justify-between h-full cursor-pointer';
+                card.style.transitionDelay = `${idx * 0.05}s`;
+                card.onclick = () => {
+                    window.location.href = `resource.html?type=${res.id}`;
+                };
+                
+                const colors = colorMap[res.color] || colorMap['accent'];
+
+                card.innerHTML = `
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-11 h-11 rounded-xl ${colors.bg} border ${colors.border} flex items-center justify-center">
+                                    <i data-lucide="${res.icon}" class="w-5 h-5 ${colors.text}"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-display font-extrabold text-white mb-2">${res.title}</h3>
+                            <p class="text-[#D1D5DB] text-[11px] font-normal leading-relaxed mb-4">${res.desc}</p>
+                        </div>
+                        <div>
+                            <button class="w-full py-3 bg-white/[0.06] border border-white/[0.12] text-white hover:bg-accent hover:border-accent hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all">
+                                Explore Resource
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                setTimeout(() => card.classList.add('active'), 10);
+                addSpotlightEffect(card, colors.glow);
+            });
+        }
+
+        // Redirects to dedicated verification portal
+        function verifyCertificate() {
+            const input = document.getElementById('cert-id-input');
+            const id = input.value.trim().toUpperCase();
+            if (!id) {
+                alert("Please enter a Certificate ID.");
+                return;
+            }
+            window.location.href = `verify.html?id=${id}`;
+        }
+
+        // Filtering and search algorithm loading from dynamic datasets
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        function applyFiltersAndSearch() {
+            const sections = {
+                'categories': document.getElementById('section-categories'),
+                'courses': document.getElementById('section-courses'),
+                'certifications': document.getElementById('section-certifications'),
+                'projects': document.getElementById('section-projects'),
+                'roadmaps': document.getElementById('section-roadmaps'),
+                'resources': document.getElementById('section-resources'),
+                'verification': document.getElementById('section-verification')
+            };
+
+            const visibility = {
+                'categories': currentFilter === 'all',
+                'courses': currentFilter === 'all' || currentFilter === 'free' || currentFilter === 'premium',
+                'certifications': currentFilter === 'all' || currentFilter === 'certifications',
+                'projects': currentFilter === 'all' || currentFilter === 'projects',
+                'roadmaps': currentFilter === 'all' || currentFilter === 'roadmaps',
+                'resources': currentFilter === 'all',
+                'verification': currentFilter === 'all'
+            };
+
+            // Apply filter visibility
+            Object.keys(sections).forEach(key => {
+                if (sections[key]) {
+                    if (visibility[key]) {
+                        sections[key].classList.remove('hidden');
+                    } else {
+                        sections[key].classList.add('hidden');
+                    }
+                }
+            });
+
+            const q = searchQuery.toLowerCase().trim();
+
+            // Filter Categories
+            const filteredCategories = learningCategories.filter(c => 
+                c.title.toLowerCase().includes(q) || 
+                c.desc.toLowerCase().includes(q)
+            );
+            renderCategories(filteredCategories);
+
+            // Filter Courses
+            const filteredCourses = featuredCourses.filter(c => {
+                const matchesSearch = c.title.toLowerCase().includes(q) ||
+                    c.difficulty.toLowerCase().includes(q) ||
+                    c.desc.toLowerCase().includes(q);
+                
+                if (currentFilter === 'free') {
+                    return matchesSearch && c.price === 'FREE';
+                }
+                if (currentFilter === 'premium') {
+                    return matchesSearch && c.price === 'PREMIUM';
+                }
+                return matchesSearch;
+            });
+            renderFeaturedCourses(filteredCourses);
+
+            // Filter Certifications
+            const filteredCerts = certifications.filter(c => 
+                c.title.toLowerCase().includes(q) || 
+                c.level.toLowerCase().includes(q)
+            );
+            renderCertifications(filteredCerts);
+
+            // Filter Projects
+            const filteredProjects = projectTracks.filter(p => 
+                p.title.toLowerCase().includes(q) || 
+                p.difficulty.toLowerCase().includes(q) ||
+                p.desc.toLowerCase().includes(q)
+            );
+            renderProjectTracks(filteredProjects);
+
+            // Filter Roadmaps
+            const filteredRoadmaps = careerRoadmaps.filter(r => 
+                r.title.toLowerCase().includes(q) || 
+                r.skills.join(', ').toLowerCase().includes(q)
+            );
+            renderCareerRoadmaps(filteredRoadmaps);
+
+            // Filter Resources
+            const filteredResources = resourceCollections.filter(r => 
+                r.title.toLowerCase().includes(q) || 
+                r.desc.toLowerCase().includes(q)
+            );
+            renderResources(filteredResources);
+
+            // Dynamically hide section container if searching and no elements match
+            let totalVisibleItems = 0;
+
+            if (q) {
+                if (filteredCategories.length === 0 && sections['categories']) sections['categories'].classList.add('hidden');
+                else if (visibility['categories']) totalVisibleItems += filteredCategories.length;
+
+                if (filteredCourses.length === 0 && sections['courses']) sections['courses'].classList.add('hidden');
+                else if (visibility['courses']) totalVisibleItems += filteredCourses.length;
+
+                if (filteredCerts.length === 0 && sections['certifications']) sections['certifications'].classList.add('hidden');
+                else if (visibility['certifications']) totalVisibleItems += filteredCerts.length;
+
+                if (filteredProjects.length === 0 && sections['projects']) sections['projects'].classList.add('hidden');
+                else if (visibility['projects']) totalVisibleItems += filteredProjects.length;
+
+                if (filteredRoadmaps.length === 0 && sections['roadmaps']) sections['roadmaps'].classList.add('hidden');
+                else if (visibility['roadmaps']) totalVisibleItems += filteredRoadmaps.length;
+
+                if (filteredResources.length === 0 && sections['resources']) sections['resources'].classList.add('hidden');
+                else if (visibility['resources']) totalVisibleItems += filteredResources.length;
+
+                // Hide verification when filter searching
+                if (sections['verification']) sections['verification'].classList.add('hidden');
+            } else {
+                if (visibility['categories']) totalVisibleItems += learningCategories.length;
+                if (visibility['courses']) totalVisibleItems += featuredCourses.length;
+                if (visibility['certifications']) totalVisibleItems += certifications.length;
+                if (visibility['projects']) totalVisibleItems += projectTracks.length;
+                if (visibility['roadmaps']) totalVisibleItems += careerRoadmaps.length;
+                if (visibility['resources']) totalVisibleItems += resourceCollections.length;
+            }
+
+            // Toggle empty state search indicator
+            const emptyState = document.getElementById('empty-state');
+            if (totalVisibleItems === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            lucide.createIcons();
+        }
+        // WebGL Particle Canvas System
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.BufferGeometry();
+        const ptsArr = new Float32Array(1000 * 3);
+        for(let i=0; i<1000*3; i++) ptsArr[i] = (Math.random() - 0.5) * 120;
+        geo.setAttribute('position', new THREE.BufferAttribute(ptsArr, 3));
+        const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.2 }));
+        scene.add(pts);
+        camera.position.z = 50;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            pts.rotation.y += 0.0003;
+            renderer.render(scene, camera);
+        }
+
+        // Initialize lists and start events
+        window.onload = () => {
+            document.querySelectorAll('.reveal-text').forEach(el => el.classList.add('active'));
+            applyFiltersAndSearch();
+            animate();
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 100) nav.classList.add('nav-shrink');
+            else nav.classList.remove('nav-shrink');
+        });
+    </script>
+</body>
+</html>
