@@ -338,8 +338,32 @@
                         </button>
                     </form>
 
+                    <!-- Reset Password Form -->
+                    <form id="reset-password-form" class="form-container space-y-5 hidden opacity-0 translate-y-4"
+                        onsubmit="handleResetPasswordSubmit(event)">
+                        <div class="space-y-1.5 relative">
+                            <label class="font-mono text-[8px] uppercase tracking-[0.3em] text-white/20 ml-2">New Access Key</label>
+                            <div class="relative">
+                                <input type="password" id="reset-password" placeholder="Min. 8 characters"
+                                    class="w-full h-11 pl-4 pr-10 rounded-xl input-field text-white text-xs placeholder-white/10"
+                                    required>
+                                <button type="button"
+                                    class="password-toggle absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors hover-target focus:outline-none">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <p class="validation-msg text-[9px] text-rose-500/80 font-mono hidden px-2 pt-1"></p>
+                        </div>
+                        <button type="submit" id="reset-btn"
+                            class="w-full h-11 bg-white text-black font-extrabold text-[10px] uppercase tracking-[0.3em] rounded-xl hover:bg-accent hover:text-white transition-all shadow-xl hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(94,106,210,0.4)] active:scale-[0.98] hover-target mt-1 flex items-center justify-center gap-2">
+                            <span class="btn-text">Update Access Key</span>
+                            <span class="btn-spinner hidden"><i data-lucide="loader-2"
+                                    class="w-4 h-4 animate-spin text-current"></i></span>
+                        </button>
+                    </form>
+
                     <!-- Social Connect -->
-                    <div class="mt-8">
+                    <div class="mt-8" id="social-wrapper">
                         <div class="flex items-center gap-4 mb-5">
                             <div class="h-px flex-1 bg-white/[0.05]"></div>
                             <span class="text-[8px] font-mono text-white/20 uppercase tracking-[0.3em]">OR CONNECT
@@ -348,13 +372,15 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
-                            lass="flex items-center justify-center h-11 rounded-xl social-btn hover-target"
-                            onclick="triggerSocialMock('Google')">
-                            <img src="google.svg" alt="Google" class="w-[18px] h-[18px] object-contain"
-                                onerror="this.src='https://placehold.co/18x18/ffffff/000000?text=G'">
-                            </button><button c <button
+                            <button
                                 class="flex items-center justify-center h-11 rounded-xl social-btn hover-target"
-                                onclick="triggerSocialMock('GitHub')">
+                                onclick="loginWithGoogle()">
+                                <img src="google.svg" alt="Google" class="w-[18px] h-[18px] object-contain"
+                                    onerror="this.src='https://placehold.co/18x18/ffffff/000000?text=G'">
+                            </button>
+                            <button
+                                class="flex items-center justify-center h-11 rounded-xl social-btn hover-target"
+                                onclick="loginWithGithub()">
                                 <img src="github.svg" alt="GitHub" class="w-[18px] h-[18px] invert object-contain"
                                     onerror="this.src='https://placehold.co/18x18/ffffff/000000?text=Git'">
                             </button>
@@ -483,6 +509,31 @@
             }, 3500);
         }
 
+        // Toast error notifier
+        function showErrorToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification flex items-center gap-3 px-5 py-4 rounded-2xl text-white text-xs font-mono border border-rose-500/25';
+            toast.innerHTML = `
+                <div class="w-6 h-6 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 animate-pulse"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-white uppercase tracking-wider text-[9px]">SYSTEM ERROR DETECTED</div>
+                    <div class="text-white/60 text-[10px] mt-0.5">${message}</div>
+                </div>
+            `;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.add('show'), 50);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 4500);
+        }
+
         // Live validation helpers
         function validateField(input, testFn, errorMsg) {
             const container = input.closest('.relative');
@@ -525,8 +576,13 @@
         signupEmail.addEventListener('input', () => validateField(signupEmail, val => emailRegex.test(val), 'Enter a valid secure email.'));
         signupPassword.addEventListener('input', () => validateField(signupPassword, val => val.length >= 8, 'Key must be at least 8 characters.'));
 
+        const resetPassword = document.getElementById('reset-password');
+        if (resetPassword) {
+            resetPassword.addEventListener('input', () => validateField(resetPassword, val => val.length >= 8, 'Key must be at least 8 characters.'));
+        }
+
         // Handle Login Submission
-        function handleLoginSubmit(event) {
+        async function handleLoginSubmit(event) {
             event.preventDefault();
 
             const isEmailValid = validateField(loginEmail, val => emailRegex.test(val), 'Enter a valid secure node address.');
@@ -536,29 +592,28 @@
 
             const btn = document.getElementById('login-btn');
             setButtonLoading(btn, true);
+            window.isLoggingIn = true;
 
-            setTimeout(() => {
-                const userEmail = loginEmail.value.trim();
-                const userName = userEmail.split('@')[0].split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
+            try {
+                const email = loginEmail.value.trim();
+                const password = loginPassword.value;
+                await login(email, password);
 
-                const user = {
-                    name: userName || 'Senior Engineer',
-                    email: userEmail,
-                    certificateName: userName || 'Senior Engineer',
-                    photo: ''
-                };
-
-                setButtonLoading(btn, false);
-                showSuccessToast('Welcome back to THRULABS');
-
+                showSuccessToast('Login successful');
                 setTimeout(() => {
-                    auth.login(user, 'mock-jwt-token-' + Math.random().toString(36).substring(2, 15));
-                }, 1000);
-            }, 1200);
+                    redirectAfterLogin();
+                }, 1500);
+            } catch (err) {
+                window.isLoggingIn = false;
+                const isNetwork = err.message?.toLowerCase().includes('fetch') || err.message?.toLowerCase().includes('network');
+                showErrorToast(isNetwork ? 'Network error' : (err.message || 'Identity authorization failed. Check access credentials.'));
+            } finally {
+                setButtonLoading(btn, false);
+            }
         }
 
         // Handle Signup Submission
-        function handleSignupSubmit(event) {
+        async function handleSignupSubmit(event) {
             event.preventDefault();
 
             const isFirstValid = validateField(signupFirstname, val => val.trim().length >= 2, 'Min. 2 characters.');
@@ -570,39 +625,104 @@
 
             const btn = document.getElementById('signup-btn');
             setButtonLoading(btn, true);
+            window.isLoggingIn = true;
 
-            setTimeout(() => {
-                const user = {
-                    name: signupFirstname.value.trim() + ' ' + signupLastname.value.trim(),
-                    email: signupEmail.value.trim(),
-                    certificateName: signupFirstname.value.trim() + ' ' + signupLastname.value.trim(),
-                    photo: ''
+            try {
+                const email = signupEmail.value.trim();
+                const password = signupPassword.value;
+                const metadata = {
+                    first_name: signupFirstname.value.trim(),
+                    last_name: signupLastname.value.trim()
                 };
 
-                setButtonLoading(btn, false);
-                showSuccessToast('Welcome to THRULABS');
+                const data = await signup(email, password, metadata);
 
-                setTimeout(() => {
-                    auth.login(user, 'mock-jwt-token-' + Math.random().toString(36).substring(2, 15));
-                }, 1000);
-            }, 1200);
+                if (data && data.user && !data.session) {
+                    showSuccessToast('Signup successful. Confirm email verification.');
+                } else {
+                    showSuccessToast('Signup successful');
+                    setTimeout(() => {
+                        redirectAfterLogin();
+                    }, 1500);
+                }
+            } catch (err) {
+                window.isLoggingIn = false;
+                const isNetwork = err.message?.toLowerCase().includes('fetch') || err.message?.toLowerCase().includes('network');
+                showErrorToast(isNetwork ? 'Network error' : 'Account creation failed');
+            } finally {
+                setButtonLoading(btn, false);
+            }
         }
 
-        // Social login mock
-        function triggerSocialMock(provider) {
-            showSuccessToast('Connecting to ' + provider + ' identity node...');
-            setTimeout(() => {
-                const user = {
-                    name: 'Grounded Engineer',
-                    email: 'engineer@thrulabs.com',
-                    certificateName: 'Grounded Engineer',
-                    photo: ''
-                };
-                showSuccessToast('Authenticated via ' + provider);
+        // Handle Password Reset Submission
+        async function handleResetPasswordSubmit(event) {
+            event.preventDefault();
+            const resetPasswordEl = document.getElementById('reset-password');
+            const isPassValid = validateField(resetPasswordEl, val => val.length >= 8, 'Key must be at least 8 characters.');
+            if (!isPassValid) return;
+
+            const btn = document.getElementById('reset-btn');
+            setButtonLoading(btn, true);
+
+            try {
+                const { error } = await supabaseClient.auth.updateUser({
+                    password: resetPasswordEl.value
+                });
+                if (error) throw error;
+
+                showSuccessToast('Access key successfully updated.');
+                window.location.hash = '';
+
                 setTimeout(() => {
-                    auth.login(user, 'mock-social-token-' + Math.random().toString(36).substring(2, 15));
-                }, 1000);
-            }, 1000);
+                    redirectAfterLogin();
+                }, 1500);
+            } catch (err) {
+                showErrorToast(err.message || 'Failed to update access key.');
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // Recover password request
+        async function handleRecoverPassword(event) {
+            if (event) event.preventDefault();
+            const email = prompt("Enter your secure email address to receive password recovery link:");
+            if (!email) return;
+            if (!emailRegex.test(email)) {
+                showErrorToast("Invalid secure email address format.");
+                return;
+            }
+            try {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + window.location.pathname + '#type=recovery'
+                });
+                if (error) throw error;
+                showSuccessToast("Recovery link dispatched to " + email);
+            } catch (err) {
+                showErrorToast(err.message || "Failed to dispatch recovery link.");
+            }
+        }
+
+        // Check recovery mode state
+        function checkRecoveryState() {
+            const isRecovery = window.location.hash.includes('type=recovery') || window.location.hash.includes('recovery');
+            if (isRecovery) {
+                toggleContainer.className = 'flex items-center p-1 bg-white/[0.04] rounded-full border border-white/5 mb-8 relative active-login h-11 hidden';
+                document.getElementById('social-wrapper').classList.add('hidden');
+
+                loginForm.classList.add('hidden');
+                signupForm.classList.add('hidden');
+
+                const resetForm = document.getElementById('reset-password-form');
+                resetForm.classList.remove('hidden');
+                setTimeout(() => {
+                    resetForm.style.opacity = '1';
+                    resetForm.style.transform = 'translateY(0)';
+                }, 50);
+
+                authTitle.textContent = 'Reset Access Key';
+                authSubtitle.textContent = 'System Override Terminal';
+            }
         }
 
         function setButtonLoading(button, isLoading) {
@@ -660,7 +780,54 @@
             mainCard.classList.remove('opacity-0', 'translate-y-4');
             glow.classList.remove('opacity-0');
             animate();
+
+            // Check recovery state first
+            checkRecoveryState();
+
+            // Redirect if already authenticated and not in recovery mode
+            if (auth.isAuthenticated() && !window.location.hash.includes('recovery')) {
+                redirectAfterLogin();
+            }
         };
+
+        // Listen for OAuth redirects and sync session
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check for OAuth or recovery error parameters on load
+            const urlParams = new URLSearchParams(window.location.search || window.location.hash.substring(1));
+            const errorDesc = urlParams.get('error_description');
+            const errorCode = urlParams.get('error_code');
+            if (errorDesc) {
+                if (errorCode === 'otp_expired' || errorDesc.toLowerCase().includes('expired')) {
+                    showErrorToast("Session expired");
+                } else {
+                    showErrorToast("OAuth failed");
+                }
+                window.location.hash = '';
+            }
+
+            setTimeout(() => {
+                if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+                    supabaseClient.auth.onAuthStateChange((event, session) => {
+                        if (event === 'SIGNED_IN' && session) {
+                            if (window.location.hash.includes('recovery')) {
+                                return;
+                            }
+                            if (!window.isLoggingIn) {
+                                const provider = session.user.app_metadata?.provider || '';
+                                if (provider === 'github') {
+                                    showSuccessToast("Successfully authenticated with GitHub");
+                                } else {
+                                    showSuccessToast("Login successful");
+                                }
+                                setTimeout(() => {
+                                    redirectAfterLogin();
+                                }, 1500);
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        });
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
