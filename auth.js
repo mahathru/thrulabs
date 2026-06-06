@@ -1,5 +1,5 @@
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_KEY = "YOUR_PUBLISHABLE_KEY";
+const SUPABASE_URL = "https://dxbymuwmcrpxqotrbfxl.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_K3OJbPBo8yOpkjPd2dPPBQ_R6wWhX5P";
 
 const supabaseClient = supabase.createClient(
     SUPABASE_URL,
@@ -36,6 +36,39 @@ const supabaseClient = supabase.createClient(
 })();
 
 // DOM Loaded Initialization
+(async () => {
+
+    const {
+        data: { session }
+    } = await supabaseClient.auth.getSession();
+
+    if (session) {
+
+        const user = {
+            name:
+                session.user.user_metadata.full_name ||
+                session.user.user_metadata.name ||
+                "User",
+
+            email:
+                session.user.email,
+
+            avatar:
+                session.user.user_metadata.avatar_url || ""
+        };
+
+        if (!localStorage.getItem("thru_token")) {
+
+            auth.login(
+                user,
+                session.access_token
+            );
+
+            return;
+        }
+    }
+
+})();
 document.addEventListener('DOMContentLoaded', () => {
     // Render the premium dynamic navbar status
     if (typeof auth !== 'undefined' && typeof auth.renderNavbar === 'function') {
