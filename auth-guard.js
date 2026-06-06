@@ -47,7 +47,7 @@ function protectPage() {
     }
 }
 
-// Automatically execute on load
+// Automatically execute on load to prevent flash of protected content
 protectPage();
 
 // Expose functions globally

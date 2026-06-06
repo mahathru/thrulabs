@@ -280,7 +280,7 @@
 
                         <div class="space-y-1">
                             <span class="text-[7.5px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">This is to certify that</span>
-                            <span class="text-lg font-display font-bold text-white block select-all">ENGINEERING GRADUATE</span>
+                            <span id="preview-student-name" class="text-lg font-display font-bold text-white block select-all">ENGINEERING GRADUATE</span>
                             <span class="text-[7.5px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">has successfully met all academic standards for</span>
                         </div>
 
@@ -414,6 +414,13 @@
             document.getElementById('preview-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('preview-cert-id').innerText = `${activeCert.certIdPrefix}-XXXXX`;
 
+            const user = window.getCurrentUser();
+            const displayName = user ? (user.certificateName || user.name) : "ENGINEERING GRADUATE";
+            const studentNameEl = document.getElementById('preview-student-name');
+            if (studentNameEl) {
+                studentNameEl.innerText = displayName;
+            }
+
             // Render skills badges
             const skillsContainer = document.getElementById('skills-container');
             skillsContainer.innerHTML = '';
@@ -489,8 +496,9 @@
                 
                 // Save to local storage database
                 const db = JSON.parse(localStorage.getItem('thrulabs_certificate_database')) || {};
+                const user = window.getCurrentUser() || {};
                 db[issuedId] = {
-                    name: "Thrulabs Student",
+                    name: user.certificateName || user.name || "Thrulabs Student",
                     program: activeCert.title,
                     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
                     status: "Verified & Active",

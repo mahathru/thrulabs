@@ -86,10 +86,12 @@ const profileManager = {
     },
 
     _cacheProfile(data) {
+        const fallbackUsername = data.email ? data.email.split('@')[0] : 'engineer';
         const userCache = {
             name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim(),
-            first_name: data.first_name || '',
-            last_name: data.last_name || '',
+            username: data.username || fallbackUsername,
+            first_name: data.first_name || data.first_name || '',
+            last_name: data.last_name || data.last_name || '',
             email: data.email || '',
             avatar: data.avatar_url || '',
             certificateName: data.certificate_name || data.full_name || ''

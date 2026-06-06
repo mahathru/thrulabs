@@ -6,10 +6,12 @@ create table if not exists user_profiles (
  id uuid primary key references auth.users(id) on delete cascade,
  email text,
  full_name text,
+ first_name text,
+ last_name text,
  certificate_name text,
  avatar_url text,
  provider text,
- created_at timestamp default now()
+ created_at timestamp with time zone default now()
 );
 
 -- 2. Enable Row Level Security

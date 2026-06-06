@@ -330,7 +330,7 @@
                 return;
             }
 
-            document.getElementById('user-display-name').textContent = user.name || 'Grounded Engineer';
+            document.getElementById('user-display-name').textContent = user.username || user.name || 'Grounded Engineer';
             document.getElementById('user-display-email').textContent = user.email || 'engineer@thrulabs.com';
 
             document.getElementById('profile-name').value = user.name || '';
