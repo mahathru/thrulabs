@@ -50,6 +50,8 @@ function getCurrentUser() {
     }
 }
 
+let lastCheckedToken = null;
+
 async function checkAuth() {
     initializeSupabase();
     if (!supabaseClient) return;
@@ -59,6 +61,11 @@ async function checkAuth() {
         if (error) throw error;
 
         if (session) {
+            if (lastCheckedToken === session.access_token) {
+                updateNavbar();
+                return;
+            }
+            lastCheckedToken = session.access_token;
             localStorage.setItem('thru_token', session.access_token);
 
             // Fetch profile from database
@@ -182,6 +189,7 @@ async function logout() {
 function clearLocalSession() {
     localStorage.clear();
     sessionStorage.clear();
+    lastCheckedToken = null;
 }
 
 function requireAuth() {
@@ -310,6 +318,16 @@ async function updateUser(name, email, certname) {
         try {
             await supabaseClient.from('user_profiles').upsert(payload, { onConflict: 'id' });
         } catch(e){}
+        try {
+            await supabaseClient.auth.updateUser({
+                data: {
+                    full_name: name,
+                    first_name: firstName,
+                    last_name: lastName,
+                    certificate_name: certname || name
+                }
+            });
+        } catch (e) { }
         localStorage.setItem('thru_user', JSON.stringify({
             id: user.id,
             name: name,
@@ -462,6 +480,7 @@ window.showUserDropdown = showUserDropdown;
 window.hideUserDropdown = hideUserDropdown;
 window.toggleUserDropdown = toggleUserDropdown;
 window.checkAuth = checkAuth;
+window.renderNavbar = updateNavbar;
 
 // Expose legacy auth namespace for absolute compatibility
 window.auth = {
@@ -479,6 +498,7 @@ window.auth = {
     redirectAfterLogin,
     updateNavbar,
     updateNavbarUser,
+    renderNavbar: updateNavbar,
     showUserDropdown,
     hideUserDropdown,
     toggleUserDropdown,
