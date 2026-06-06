@@ -40,6 +40,7 @@
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="auth.js"></script>
     <script src="academy_data.js"></script>
 
     <style>
@@ -785,24 +786,7 @@
         let targetCourseIdForEnrollment = null;
 
         function updateProfileNav() {
-            const userName = localStorage.getItem('thrulabs_user_name');
-            const authContainer = document.getElementById('nav-auth-container');
-            if (!authContainer) return;
-            if (userName) {
-                authContainer.innerHTML = `
-                    <button onclick="openProfileModal()" class="px-5 py-2.5 bg-accent/20 border border-accent/40 text-accent-bright hover:bg-accent hover:text-white text-[9px] font-extrabold rounded-full transition-all hover-target uppercase tracking-widest flex items-center gap-1.5 shadow-xl">
-                        <i data-lucide="user" class="w-3.5 h-3.5"></i> ${userName}
-                    </button>
-                `;
-            } else {
-                authContainer.innerHTML = `
-                    <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
-                    <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
-                        Get Started
-                    </a>
-                `;
-            }
-            lucide.createIcons();
+            auth.renderNavbar();
         }
 
         // Enrollment Modal actions
@@ -840,12 +824,7 @@
                 return;
             }
             
-            localStorage.setItem('thrulabs_user_name', nameVal);
-            if (emailVal) {
-                localStorage.setItem('thrulabs_user_email', emailVal);
-            } else {
-                localStorage.removeItem('thrulabs_user_email');
-            }
+            auth.updateUser(nameVal, emailVal);
             
             closeEnrollmentModal();
             updateProfileNav();
@@ -891,12 +870,7 @@
                 return;
             }
             
-            localStorage.setItem('thrulabs_user_name', nameVal);
-            if (emailVal) {
-                localStorage.setItem('thrulabs_user_email', emailVal);
-            } else {
-                localStorage.removeItem('thrulabs_user_email');
-            }
+            auth.updateUser(nameVal, emailVal);
             
             closeProfileModal();
             updateProfileNav();

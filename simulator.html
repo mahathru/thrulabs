@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THRULABS | Interactive Engineering Simulators</title>
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        base: '#020203',
+                        surface: '#0A0A0C',
+                        accent: '#5E6AD2',
+                        'accent-bright': '#7C89FF',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="auth.js"></script>
+
+    <style>
+        :root { --accent: #5E6AD2; }
+        
+        body {
+            background-color: #020203;
+            color: #EDEDEF;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L10 18 L16 14 L22 18 Z' fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-45 16 4)'/%3E%3C/svg%3E") 16 4, auto;
+        }
+
+        a, button, [role="button"], input, select, textarea, .hover-target {
+            cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg fill='black' stroke='white' stroke-width='1.5' stroke-linejoin='round' transform='rotate(-22.5 12 12)'%3E%3Cpath d='M9 10.5V4.5a1.5 1.5 0 0 1 3 0v6M12 10.5V6.5a1.5 1.5 0 0 1 3 0v4M15 10.5V8.5a1.5 1.5 0 0 1 3 0v3a5.5 5.5 0 0 1-5.5 5.5h-1.5a5.5 5.5 0 0 1-5.5-5.5v-1a1.5 1.5 0 0 1 3 0v1.5'/%3E%3C/g%3E%3C/svg%3E") 7 4, pointer;
+        }
+
+        #webgl-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none;
+            opacity: 0.45;
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 12, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(94, 106, 210, 0.3);
+        }
+
+        .spotlight {
+            position: absolute;
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(94, 106, 210, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .glass-card:hover .spotlight { opacity: 1; }
+
+        .tab-btn.active {
+            color: #7C89FF;
+            background: rgba(94, 106, 210, 0.1);
+            border-color: rgba(94, 106, 210, 0.3);
+        }
+
+        /* Switch styling */
+        .toggle-switch-input:checked + .toggle-switch-label {
+            background-color: var(--accent);
+            box-shadow: 0 0 10px rgba(94, 106, 210, 0.5);
+        }
+        .toggle-switch-input:checked + .toggle-switch-label::before {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+<body class="selection:bg-accent/30 selection:text-white">
+
+    <canvas id="webgl-canvas"></canvas>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-8 inset-x-0 z-50 flex justify-center px-4 transition-all duration-700">
+        <div class="max-w-[1200px] w-full glass-nav px-8 py-3.5 rounded-full flex items-center justify-between shadow-2xl relative">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="flex items-center hover-target">
+                    <img src="logo.svg" alt="THRULABS Logo" class="h-5 w-auto">
+                </a>
+                
+                <div class="hidden lg:flex items-center gap-6 font-mono border-l border-white/10 pl-8">
+                    <a href="index.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Home</a>
+                    <a href="tools.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Tools</a>
+                    <a href="academy.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Academy</a>
+                    <a href="projects.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">Projects</a>
+                    <a href="about.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target">About</a>
+                    <a href="contact.html" class="text-[9px] uppercase tracking-widest text-white/40 hover:text-white transition-colors hover-target text-nowrap">Contact</a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5" id="nav-auth-container">
+                <!-- Injected dynamically by auth.js -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="relative z-10 pt-40 px-6 pb-32 max-w-[1200px] mx-auto">
+        <div class="flex flex-col gap-10">
+            <!-- Header section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 pb-8">
+                <div>
+                    <span class="text-[9px] font-mono text-accent uppercase tracking-[0.25em] mb-1.5 block">Precision Sandbox Environment</span>
+                    <h1 class="text-3xl md:text-5xl font-display font-extrabold text-white tracking-tight">Engineering Simulators</h1>
+                    <p class="text-white/40 text-xs font-mono mt-1.5">active node status: online // simulator_core: v2.4-alpha</p>
+                </div>
+                
+                <!-- Tab controller -->
+                <div class="flex flex-wrap gap-2 font-mono text-[9px] uppercase tracking-widest">
+                    <button onclick="switchSim('logic')" id="tab-logic" class="tab-btn active px-4 py-3 bg-white/5 border border-white/10 rounded-xl transition-all hover-target hover:text-white">
+                        Logic Gates
+                    </button>
+                    <button onclick="switchSim('wave')" id="tab-wave" class="tab-btn px-4 py-3 bg-white/5 border border-white/10 rounded-xl transition-all hover-target hover:text-white">
+                        Signal Oscilloscope
+                    </button>
+                    <button onclick="switchSim('pid')" id="tab-pid" class="tab-btn px-4 py-3 bg-white/5 border border-white/10 rounded-xl transition-all hover-target hover:text-white">
+                        PID Controller
+                    </button>
+                </div>
+            </div>
+
+            <!-- SIM 1: Logic Gates -->
+            <div id="sim-container-logic" class="sim-content grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Controls Card -->
+                <div class="lg:col-span-1 glass-card p-8 rounded-3xl relative h-fit">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-6">
+                        <div class="border-b border-white/5 pb-4">
+                            <h3 class="text-lg font-display font-extrabold text-white">Logic Parameters</h3>
+                            <p class="text-[9px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Toggle logic node variables</p>
+                        </div>
+                        
+                        <div class="space-y-6">
+                            <!-- Toggle inputs -->
+                            <div class="flex justify-between items-center bg-white/[0.02] border border-white/5 p-4 rounded-2xl">
+                                <span class="font-mono text-xs text-white/70">Input A (Switch)</span>
+                                <div class="relative inline-block w-12 h-6 hover-target">
+                                    <input type="checkbox" id="switch-a" onchange="runLogicSim()" class="toggle-switch-input opacity-0 w-0 h-0">
+                                    <label for="switch-a" class="toggle-switch-label absolute top-0 left-0 right-0 bottom-0 bg-white/10 rounded-full cursor-pointer transition-colors duration-300 before:content-[''] before:absolute before:w-5 before:h-5 before:bg-white before:rounded-full before:left-0.5 before:bottom-0.5 before:transition-transform before:duration-300"></label>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center bg-white/[0.02] border border-white/5 p-4 rounded-2xl">
+                                <span class="font-mono text-xs text-white/70">Input B (Switch)</span>
+                                <div class="relative inline-block w-12 h-6 hover-target">
+                                    <input type="checkbox" id="switch-b" onchange="runLogicSim()" class="toggle-switch-input opacity-0 w-0 h-0">
+                                    <label for="switch-b" class="toggle-switch-label absolute top-0 left-0 right-0 bottom-0 bg-white/10 rounded-full cursor-pointer transition-colors duration-300 before:content-[''] before:absolute before:w-5 before:h-5 before:bg-white before:rounded-full before:left-0.5 before:bottom-0.5 before:transition-transform before:duration-300"></label>
+                                </div>
+                            </div>
+
+                            <!-- Gate selectors -->
+                            <div class="space-y-2">
+                                <label class="font-mono text-[8px] uppercase tracking-wider text-white/30 ml-1">Gate Function</label>
+                                <div class="grid grid-cols-2 gap-2 font-mono text-[9px] tracking-wider uppercase">
+                                    <button onclick="setGate('AND')" id="gate-AND" class="gate-btn active py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">AND</button>
+                                    <button onclick="setGate('OR')" id="gate-OR" class="gate-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">OR</button>
+                                    <button onclick="setGate('XOR')" id="gate-XOR" class="gate-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">XOR</button>
+                                    <button onclick="setGate('NAND')" id="gate-NAND" class="gate-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">NAND</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Visual Card -->
+                <div class="lg:col-span-2 glass-card p-8 rounded-3xl relative min-h-[350px] flex flex-col justify-between">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex-1 flex flex-col justify-between">
+                        <div class="border-b border-white/5 pb-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-display font-extrabold text-white">Live Gate Schematic</h3>
+                                <p class="text-[9px] text-white/40 font-mono uppercase tracking-wider mt-0.5">grounded logic execution</p>
+                            </div>
+                            <span id="gate-logic-formula" class="font-mono text-[10px] text-accent-bright bg-accent/10 border border-accent/20 px-3 py-1 rounded-full">Y = A • B</span>
+                        </div>
+                        
+                        <!-- Drawing board / Simulation container -->
+                        <div class="flex-1 flex items-center justify-center py-10 relative">
+                            <!-- SVG wiring -->
+                            <svg class="w-full max-w-lg h-48" viewBox="0 0 500 200">
+                                <!-- Input wires -->
+                                <path id="wire-a" d="M 50 60 L 200 60" stroke="#2D3139" stroke-width="4" fill="none" class="transition-all duration-300"></path>
+                                <path id="wire-b" d="M 50 140 L 200 140" stroke="#2D3139" stroke-width="4" fill="none" class="transition-all duration-300"></path>
+                                
+                                <!-- Output wire -->
+                                <path id="wire-out" d="M 300 100 L 420 100" stroke="#2D3139" stroke-width="4" fill="none" class="transition-all duration-300"></path>
+                                
+                                <!-- Node names -->
+                                <text x="30" y="65" fill="#8A8F98" font-family="monospace" font-size="12">A</text>
+                                <text x="30" y="145" fill="#8A8F98" font-family="monospace" font-size="12">B</text>
+                                
+                                <!-- Gate representation box -->
+                                <g transform="translate(180, 50)" class="cursor-pointer">
+                                    <rect width="120" height="100" rx="15" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-width="2"></rect>
+                                    <text id="gate-name-text" x="60" y="55" dominant-baseline="middle" text-anchor="middle" fill="#FFFFFF" font-family="Plus Jakarta Sans" font-weight="800" font-size="20">AND</text>
+                                </g>
+                                
+                                <!-- Output indicator bulb -->
+                                <circle id="bulb-element" cx="430" cy="100" r="14" fill="#1f2128" stroke="rgba(255,255,255,0.1)" stroke-width="2" class="transition-all duration-500"></circle>
+                                <text x="460" y="105" fill="#8A8F98" font-family="monospace" font-size="12">OUT</text>
+                            </svg>
+                        </div>
+
+                        <!-- Results -->
+                        <div class="border-t border-white/5 pt-4 flex justify-between items-center font-mono text-[10px]">
+                            <span class="text-white/40">Status: <span id="logic-status-text" class="text-emerald-400 font-bold uppercase animate-pulse">Running</span></span>
+                            <span id="logic-truth-register" class="text-white/60">A=0 // B=0 // OUT=0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIM 2: Waveform Oscilloscope -->
+            <div id="sim-container-wave" class="sim-content hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Controls Card -->
+                <div class="lg:col-span-1 glass-card p-8 rounded-3xl relative h-fit">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-6">
+                        <div class="border-b border-white/5 pb-4">
+                            <h3 class="text-lg font-display font-extrabold text-white">Signal Generator</h3>
+                            <p class="text-[9px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Parameters Adjustment</p>
+                        </div>
+                        
+                        <div class="space-y-5">
+                            <!-- Wave selectors -->
+                            <div class="space-y-2">
+                                <label class="font-mono text-[8px] uppercase tracking-wider text-white/30 ml-1">Waveform Shape</label>
+                                <div class="grid grid-cols-3 gap-2 font-mono text-[8px] tracking-wider uppercase">
+                                    <button onclick="setWaveShape('sine')" id="wave-sine" class="wave-shape-btn active py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">Sine</button>
+                                    <button onclick="setWaveShape('square')" id="wave-square" class="wave-shape-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">Square</button>
+                                    <button onclick="setWaveShape('triangle')" id="wave-triangle" class="wave-shape-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">Triangle</button>
+                                </div>
+                            </div>
+
+                            <!-- Sliders -->
+                            <div class="space-y-3 font-mono text-[9px] uppercase tracking-wider">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-white/40">Frequency</span>
+                                        <span class="text-accent-bright" id="val-freq">5 Hz</span>
+                                    </div>
+                                    <input type="range" id="slide-freq" min="1" max="20" step="0.5" value="5" oninput="updateWaveParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-white/40">Amplitude</span>
+                                        <span class="text-accent-bright" id="val-amp">50 V</span>
+                                    </div>
+                                    <input type="range" id="slide-amp" min="10" max="80" step="1" value="50" oninput="updateWaveParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-white/40">Phase Shift</span>
+                                        <span class="text-accent-bright" id="val-phase">0°</span>
+                                    </div>
+                                    <input type="range" id="slide-phase" min="0" max="360" step="5" value="0" oninput="updateWaveParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-white/40">System Noise</span>
+                                        <span class="text-accent-bright" id="val-noise">0%</span>
+                                    </div>
+                                    <input type="range" id="slide-noise" min="0" max="50" step="1" value="0" oninput="updateWaveParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Visual Card -->
+                <div class="lg:col-span-2 glass-card p-8 rounded-3xl relative flex flex-col justify-between">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex-1 flex flex-col justify-between">
+                        <div class="border-b border-white/5 pb-4">
+                            <h3 class="text-lg font-display font-extrabold text-white">Oscilloscope Screen</h3>
+                            <p class="text-[9px] text-white/40 font-mono uppercase tracking-wider mt-0.5">frequency analyzer rendering</p>
+                        </div>
+                        
+                        <!-- Oscilloscope Canvas wrapper -->
+                        <div class="flex-1 py-8 flex items-center justify-center">
+                            <div class="w-full bg-black/60 border border-white/5 rounded-2xl p-4 overflow-hidden shadow-inner flex items-center justify-center">
+                                <canvas id="oscilloscope-canvas" class="w-full max-w-lg h-56"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Results -->
+                        <div class="border-t border-white/5 pt-4 flex justify-between items-center font-mono text-[10px]">
+                            <span class="text-white/40">System: <span class="text-emerald-400 font-bold uppercase">Sampling</span></span>
+                            <span class="text-white/60">V_pp = <span id="vpp-readout">100V</span> // Noise = <span id="noise-readout">0%</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIM 3: PID Controller -->
+            <div id="sim-container-pid" class="sim-content hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Controls Card -->
+                <div class="lg:col-span-1 glass-card p-8 rounded-3xl relative h-fit">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 space-y-6">
+                        <div class="border-b border-white/5 pb-4">
+                            <h3 class="text-lg font-display font-extrabold text-white">PID Tuning Registers</h3>
+                            <p class="text-[9px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Control System Gains</p>
+                        </div>
+                        
+                        <div class="space-y-5">
+                            <!-- Sliders -->
+                            <div class="space-y-3 font-mono text-[9px] uppercase tracking-wider">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-white/40">Proportional Gain (Kp)</span>
+                                        <span class="text-accent-bright font-bold" id="val-kp">1.5</span>
+                                    </div>
+                                    <input type="range" id="slide-kp" min="0" max="5" step="0.1" value="1.5" oninput="updatePidParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-white/40">Integral Gain (Ki)</span>
+                                        <span class="text-accent-bright font-bold" id="val-ki">0.1</span>
+                                    </div>
+                                    <input type="range" id="slide-ki" min="0" max="2" step="0.05" value="0.1" oninput="updatePidParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-white/40">Derivative Gain (Kd)</span>
+                                        <span class="text-accent-bright font-bold" id="val-kd">0.8</span>
+                                    </div>
+                                    <input type="range" id="slide-kd" min="0" max="3" step="0.1" value="0.8" oninput="updatePidParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-2 pt-2 font-mono text-[9px] uppercase tracking-widest font-bold">
+                                <button onclick="triggerPidDisturbance()" class="w-full py-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white rounded-xl transition-all hover-target text-center">
+                                    Apply Altitude Disturbance
+                                </button>
+                                <button onclick="resetPidSim()" class="w-full py-3.5 bg-white/5 border border-white/10 text-white hover:bg-white/10 rounded-xl transition-all hover-target text-center">
+                                    Reset Simulation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Visual Card -->
+                <div class="lg:col-span-2 glass-card p-8 rounded-3xl relative flex flex-col justify-between">
+                    <div class="spotlight"></div>
+                    <div class="relative z-10 flex-1 flex flex-col justify-between">
+                        <div class="border-b border-white/5 pb-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-display font-extrabold text-white">Attitude Sandbox Visualizer</h3>
+                                <p class="text-[9px] text-white/40 font-mono uppercase tracking-wider mt-0.5">Drone Altitude Stabilization Loop</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-[9px] tracking-wider font-bold">PID ENGAGED</span>
+                        </div>
+                        
+                        <!-- Physics Visualizer Canvas wrapper -->
+                        <div class="flex-1 py-8 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <!-- Left: Physical Animation Canvas -->
+                            <div class="bg-black/60 border border-white/5 rounded-2xl p-4 h-60 flex items-center justify-center relative overflow-hidden">
+                                <canvas id="pid-visual-canvas" class="w-full h-full"></canvas>
+                            </div>
+                            <!-- Right: Convergence Graph Canvas -->
+                            <div class="bg-black/60 border border-white/5 rounded-2xl p-4 h-60 flex items-center justify-center relative overflow-hidden">
+                                <canvas id="pid-graph-canvas" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Results -->
+                        <div class="border-t border-white/5 pt-4 flex justify-between items-center font-mono text-[10px]">
+                            <span class="text-white/40">Altitude: <span id="alt-readout" class="text-accent-bright font-bold">0.0m</span> (Target: 10.0m)</span>
+                            <span class="text-white/60">Overshoot = <span id="overshoot-readout">0.0%</span> // Steady State</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Init view variables
+        let activeSim = 'logic';
+        const publicPages = ['index.html', 'about.html', 'contact.html', 'auth.html'];
+        
+        function switchSim(simId) {
+            activeSim = simId;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active', 'bg-accent/10', 'border-accent/30', 'text-accent-bright'));
+            document.querySelectorAll('.sim-content').forEach(c => c.classList.add('hidden'));
+            
+            document.getElementById(`tab-${simId}`).classList.add('active', 'bg-accent/10', 'border-accent/30', 'text-accent-bright');
+            document.getElementById(`sim-container-${simId}`).classList.remove('hidden');
+            
+            if (simId === 'wave') {
+                initOscilloscope();
+            } else if (simId === 'pid') {
+                initPidSimulator();
+            }
+        }
+
+        // Logic Gate simulation engine
+        let currentGate = 'AND';
+        function setGate(gate) {
+            currentGate = gate;
+            document.querySelectorAll('.gate-btn').forEach(btn => btn.classList.remove('active', 'bg-accent', 'text-white'));
+            document.getElementById(`gate-${gate}`).classList.add('active', 'bg-accent', 'text-white');
+            
+            const formulaEl = document.getElementById('gate-logic-formula');
+            const formulaText = {
+                'AND': 'Y = A • B',
+                'OR': 'Y = A + B',
+                'XOR': 'Y = A ⊕ B',
+                'NAND': 'Y = (A • B)\''
+            };
+            formulaEl.textContent = formulaText[gate];
+            document.getElementById('gate-name-text').textContent = gate;
+            runLogicSim();
+        }
+
+        function runLogicSim() {
+            const valA = document.getElementById('switch-a').checked ? 1 : 0;
+            const valB = document.getElementById('switch-b').checked ? 1 : 0;
+            
+            let valOut = 0;
+            if (currentGate === 'AND') valOut = valA && valB;
+            else if (currentGate === 'OR') valOut = valA || valB;
+            else if (currentGate === 'XOR') valOut = valA !== valB ? 1 : 0;
+            else if (currentGate === 'NAND') valOut = !(valA && valB) ? 1 : 0;
+            
+            // Wire coloring
+            const colorActive = '#5E6AD2';
+            const colorInactive = '#2D3139';
+            
+            document.getElementById('wire-a').setAttribute('stroke', valA ? colorActive : colorInactive);
+            document.getElementById('wire-b').setAttribute('stroke', valB ? colorActive : colorInactive);
+            document.getElementById('wire-out').setAttribute('stroke', valOut ? colorActive : colorInactive);
+            
+            // Bulb lighting
+            const bulb = document.getElementById('bulb-element');
+            if (valOut) {
+                bulb.setAttribute('fill', '#E5C158');
+                bulb.setAttribute('style', 'filter: drop-shadow(0 0 12px rgba(229, 193, 88, 0.7));');
+            } else {
+                bulb.setAttribute('fill', '#1f2128');
+                bulb.setAttribute('style', '');
+            }
+            
+            document.getElementById('logic-truth-register').textContent = `A=${valA} // B=${valB} // OUT=${valOut}`;
+        }
+
+        // Oscilloscope Waveform simulator
+        let oscCanvas, oscCtx, oscAnimationId;
+        let waveShape = 'sine';
+        let waveFreq = 5;
+        let waveAmp = 50;
+        let wavePhase = 0;
+        let waveNoise = 0;
+        let oscT = 0;
+
+        function setWaveShape(shape) {
+            waveShape = shape;
+            document.querySelectorAll('.wave-shape-btn').forEach(btn => btn.classList.remove('active', 'bg-accent', 'text-white'));
+            document.getElementById(`wave-${shape}`).classList.add('active', 'bg-accent', 'text-white');
+        }
+
+        function updateWaveParam() {
+            waveFreq = parseFloat(document.getElementById('slide-freq').value);
+            waveAmp = parseFloat(document.getElementById('slide-amp').value);
+            wavePhase = parseFloat(document.getElementById('slide-phase').value);
+            waveNoise = parseFloat(document.getElementById('slide-noise').value);
+            
+            document.getElementById('val-freq').textContent = waveFreq + ' Hz';
+            document.getElementById('val-amp').textContent = waveAmp + ' V';
+            document.getElementById('val-phase').textContent = wavePhase + '°';
+            document.getElementById('val-noise').textContent = waveNoise + '%';
+            
+            document.getElementById('vpp-readout').textContent = (waveAmp * 2) + 'V';
+            document.getElementById('noise-readout').textContent = waveNoise + '%';
+        }
+
+        function initOscilloscope() {
+            oscCanvas = document.getElementById('oscilloscope-canvas');
+            oscCtx = oscCanvas.getContext('2d');
+            
+            // Set internal resolution matching CSS size
+            oscCanvas.width = oscCanvas.clientWidth;
+            oscCanvas.height = oscCanvas.clientHeight;
+            
+            if (oscAnimationId) cancelAnimationFrame(oscAnimationId);
+            drawOscilloscope();
+        }
+
+        function drawOscilloscope() {
+            oscAnimationId = requestAnimationFrame(drawOscilloscope);
+            
+            // Clean screen
+            oscCtx.fillStyle = '#060608';
+            oscCtx.fillRect(0, 0, oscCanvas.width, oscCanvas.height);
+            
+            // Draw grid lines
+            oscCtx.strokeStyle = 'rgba(255,255,255,0.03)';
+            oscCtx.lineWidth = 1;
+            const gridGap = 30;
+            for(let x=0; x<oscCanvas.width; x+=gridGap) {
+                oscCtx.beginPath(); oscCtx.moveTo(x, 0); oscCtx.lineTo(x, oscCanvas.height); oscCtx.stroke();
+            }
+            for(let y=0; y<oscCanvas.height; y+=gridGap) {
+                oscCtx.beginPath(); oscCtx.moveTo(0, y); oscCtx.lineTo(oscCanvas.width, y); oscCtx.stroke();
+            }
+            
+            // Center horizontal reference line
+            oscCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            oscCtx.lineWidth = 1.5;
+            oscCtx.beginPath();
+            oscCtx.moveTo(0, oscCanvas.height/2);
+            oscCtx.lineTo(oscCanvas.width, oscCanvas.height/2);
+            oscCtx.stroke();
+            
+            // Render Waveform
+            oscCtx.strokeStyle = '#5E6AD2';
+            oscCtx.lineWidth = 2.5;
+            oscCtx.beginPath();
+            
+            const phaseRad = (wavePhase * Math.PI) / 180;
+            oscT += 0.05;
+            
+            for(let x = 0; x < oscCanvas.width; x++) {
+                const theta = (x / oscCanvas.width) * Math.PI * 2 * waveFreq + phaseRad - oscT;
+                let y = 0;
+                
+                if (waveShape === 'sine') {
+                    y = Math.sin(theta);
+                } else if (waveShape === 'square') {
+                    y = Math.sign(Math.sin(theta));
+                } else if (waveShape === 'triangle') {
+                    y = (Math.abs((theta % (Math.PI * 2)) - Math.PI) - Math.PI/2) * (2/Math.PI);
+                }
+                
+                // Add noise
+                if (waveNoise > 0) {
+                    y += (Math.random() - 0.5) * (waveNoise / 100) * 2;
+                }
+                
+                const drawY = (oscCanvas.height / 2) - y * waveAmp;
+                if (x === 0) oscCtx.moveTo(x, drawY);
+                else oscCtx.lineTo(x, drawY);
+            }
+            
+            oscCtx.stroke();
+        }
+
+        // PID Drone Attitude simulator
+        let pidVisCanvas, pidVisCtx;
+        let pidGraphCanvas, pidGraphCtx;
+        let pidAnimationId;
+        
+        let droneY = 160; // Initial physical height in visualizer
+        let targetY = 100; // Target height in visualizer
+        let pidErrorSum = 0;
+        let pidLastError = 0;
+        let pidTime = 0;
+        
+        // Gains
+        let kp = 1.5;
+        let ki = 0.1;
+        let kd = 0.8;
+        
+        // Stats tracker
+        let droneHistory = [];
+        let timeHistory = [];
+        let maxOvershoot = 0;
+
+        function updatePidParam() {
+            kp = parseFloat(document.getElementById('slide-kp').value);
+            ki = parseFloat(document.getElementById('slide-ki').value);
+            kd = parseFloat(document.getElementById('slide-kd').value);
+            
+            document.getElementById('val-kp').textContent = kp.toFixed(1);
+            document.getElementById('val-ki').textContent = ki.toFixed(2);
+            document.getElementById('val-kd').textContent = kd.toFixed(1);
+        }
+
+        function triggerPidDisturbance() {
+            // Apply wind shear or sudden weight perturbation
+            droneY += (Math.random() > 0.5 ? 50 : -50);
+        }
+
+        function resetPidSim() {
+            droneY = 180;
+            pidErrorSum = 0;
+            pidLastError = 0;
+            droneHistory = [];
+            timeHistory = [];
+            maxOvershoot = 0;
+            document.getElementById('overshoot-readout').textContent = '0.0%';
+        }
+
+        function initPidSimulator() {
+            pidVisCanvas = document.getElementById('pid-visual-canvas');
+            pidVisCtx = pidVisCanvas.getContext('2d');
+            pidVisCanvas.width = pidVisCanvas.clientWidth;
+            pidVisCanvas.height = pidVisCanvas.clientHeight;
+            
+            pidGraphCanvas = document.getElementById('pid-graph-canvas');
+            pidGraphCtx = pidGraphCanvas.getContext('2d');
+            pidGraphCanvas.width = pidGraphCanvas.clientWidth;
+            pidGraphCanvas.height = pidGraphCanvas.clientHeight;
+            
+            if (pidAnimationId) cancelAnimationFrame(pidAnimationId);
+            runPidSimulationLoop();
+        }
+
+        function runPidSimulationLoop() {
+            pidAnimationId = requestAnimationFrame(runPidSimulationLoop);
+            
+            // Physics calculations
+            const scaleFactor = 10; // Altitude scaler (visual pixels to physics meters)
+            const error = targetY - droneY;
+            
+            // PID math
+            pidErrorSum += error * 0.01;
+            // Anti-windup
+            pidErrorSum = Math.max(-50, Math.min(50, pidErrorSum));
+            
+            const errorDeriv = (error - pidLastError) / 0.01;
+            pidLastError = error;
+            
+            const outputThrust = (kp * error) + (ki * pidErrorSum) + (kd * errorDeriv);
+            
+            // Gravity + air drag + PID thrust forces
+            const gravity = 1.2;
+            const velocity = outputThrust * 0.1 - gravity;
+            
+            // Apply movement limits
+            droneY += velocity;
+            droneY = Math.max(20, Math.min(210, droneY));
+            
+            // Track height history
+            droneHistory.push(droneY);
+            if (droneHistory.length > 150) droneHistory.shift();
+            
+            // Estimate overshoot
+            const currentOvershoot = ((targetY - droneY) / targetY) * 100;
+            if (currentOvershoot > maxOvershoot) maxOvershoot = currentOvershoot;
+            document.getElementById('overshoot-readout').textContent = Math.max(0, maxOvershoot).toFixed(1) + '%';
+            
+            // Readout height in meters (inverted since visual Y goes down)
+            const altMeters = ((220 - droneY) / 15).toFixed(1);
+            document.getElementById('alt-readout').textContent = altMeters + 'm';
+            
+            // Draw visualizer
+            drawPidVisualizer();
+            drawPidGraph();
+        }
+
+        function drawPidVisualizer() {
+            pidVisCtx.fillStyle = '#060608';
+            pidVisCtx.fillRect(0, 0, pidVisCanvas.width, pidVisCanvas.height);
+            
+            // Target dashed line
+            pidVisCtx.strokeStyle = '#5E6AD2';
+            pidVisCtx.setLineDash([5, 5]);
+            pidVisCtx.lineWidth = 1.5;
+            pidVisCtx.beginPath();
+            pidVisCtx.moveTo(0, targetY);
+            pidVisCtx.lineTo(pidVisCanvas.width, targetY);
+            pidVisCtx.stroke();
+            pidVisCtx.setLineDash([]);
+            
+            // Target label
+            pidVisCtx.fillStyle = 'rgba(94, 106, 210, 0.6)';
+            pidVisCtx.font = '8px monospace';
+            pidVisCtx.fillText('TARGET HEIGHT (10.0m)', 10, targetY - 6);
+            
+            // Draw drone
+            const dx = pidVisCanvas.width / 2;
+            const dy = droneY;
+            
+            // Drone body
+            pidVisCtx.fillStyle = '#EDEDEF';
+            pidVisCtx.fillRect(dx - 18, dy - 3, 36, 6);
+            
+            // Arms
+            pidVisCtx.strokeStyle = '#7C89FF';
+            pidVisCtx.lineWidth = 2;
+            pidVisCtx.beginPath();
+            pidVisCtx.moveTo(dx - 18, dy); pidVisCtx.lineTo(dx - 30, dy - 8);
+            pidVisCtx.moveTo(dx + 18, dy); pidVisCtx.lineTo(dx + 30, dy - 8);
+            pidVisCtx.stroke();
+            
+            // Rotors
+            pidVisCtx.strokeStyle = '#FFFFFF';
+            pidVisCtx.lineWidth = 1.5;
+            pidVisCtx.beginPath();
+            pidVisCtx.moveTo(dx - 40, dy - 8); pidVisCtx.lineTo(dx - 20, dy - 8);
+            pidVisCtx.moveTo(dx + 20, dy - 8); pidVisCtx.lineTo(dx + 40, dy - 8);
+            pidVisCtx.stroke();
+        }
+
+        function drawPidGraph() {
+            pidGraphCtx.fillStyle = '#060608';
+            pidGraphCtx.fillRect(0, 0, pidGraphCanvas.width, pidGraphCanvas.height);
+            
+            // Graph borders / axes
+            pidGraphCtx.strokeStyle = 'rgba(255,255,255,0.03)';
+            pidGraphCtx.lineWidth = 1;
+            for(let x=0; x<pidGraphCanvas.width; x+=30) {
+                pidGraphCtx.beginPath(); pidGraphCtx.moveTo(x, 0); pidGraphCtx.lineTo(x, pidGraphCanvas.height); pidGraphCtx.stroke();
+            }
+            
+            // Target Line on Graph
+            pidGraphCtx.strokeStyle = 'rgba(94, 106, 210, 0.4)';
+            pidGraphCtx.lineWidth = 1.5;
+            pidGraphCtx.beginPath();
+            pidGraphCtx.moveTo(0, targetY);
+            pidGraphCtx.lineTo(pidGraphCanvas.width, targetY);
+            pidGraphCtx.stroke();
+            
+            // Height history line
+            if (droneHistory.length < 2) return;
+            pidGraphCtx.strokeStyle = '#7C89FF';
+            pidGraphCtx.lineWidth = 2;
+            pidGraphCtx.beginPath();
+            
+            const step = pidGraphCanvas.width / 150;
+            const startX = pidGraphCanvas.width - (droneHistory.length * step);
+            
+            for(let i=0; i<droneHistory.length; i++) {
+                const x = startX + (i * step);
+                const y = droneHistory[i];
+                if (i === 0) pidGraphCtx.moveTo(x, y);
+                else pidGraphCtx.lineTo(x, y);
+            }
+            pidGraphCtx.stroke();
+        }
+
+        // Spotlight positioning
+        document.querySelectorAll('.glass-card').forEach(card => {
+            const spotlight = card.querySelector('.spotlight');
+            if (spotlight) {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    spotlight.style.transform = `translate3d(${x - 200}px, ${y - 200}px, 0)`;
+                });
+            }
+        });
+
+        // Background WebGL Animation
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const geo = new THREE.BufferGeometry();
+        const count = 1200;
+        const pos = new Float32Array(count * 3);
+        for(let i=0; i<count*3; i++) pos[i] = (Math.random() - 0.5) * 130;
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const points = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.1, color: 0x5E6AD2, transparent: true, opacity: 0.3 }));
+        scene.add(points);
+        camera.position.z = 65;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            points.rotation.y += 0.00025;
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            animate();
+            runLogicSim(); // Initialize Logic simulator states
+        };
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
