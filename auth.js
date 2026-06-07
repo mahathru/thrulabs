@@ -23,7 +23,17 @@ function initializeSupabase() {
         "sb_publishable_K3OJbPBo8yOpkjPd2dPPBQ_R6wWhX5P";
 
     if (window.supabase) {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const rememberMe = localStorage.getItem('thru_remember_me') !== 'false';
+        const storageOptions = rememberMe ? localStorage : sessionStorage;
+
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                storage: storageOptions,
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        });
         window.supabaseClient = supabaseClient;
     }
     return supabaseClient;
@@ -61,12 +71,29 @@ async function checkAuth() {
         if (error) throw error;
 
         if (session) {
+            let currentUser = session.user;
+            // Fetch fresh user metadata to bypass getSession() cache
+            try {
+                const { data: { user: freshUser }, error: userError } = await supabaseClient.auth.getUser();
+                if (!userError && freshUser) {
+                    currentUser = freshUser;
+                }
+            } catch (err) {
+                console.warn("Could not fetch fresh user metadata", err);
+            }
+
             if (lastCheckedToken === session.access_token) {
                 updateNavbar();
                 return;
             }
             lastCheckedToken = session.access_token;
-            localStorage.setItem('thru_token', session.access_token);
+            
+            const rememberMe = localStorage.getItem('thru_remember_me') !== 'false';
+            if (rememberMe) {
+                localStorage.setItem('thru_token', session.access_token);
+            } else {
+                sessionStorage.setItem('thru_token', session.access_token);
+            }
 
             // Fetch profile from database
             let profile = null;
@@ -74,10 +101,17 @@ async function checkAuth() {
                 const { data, error: profileError } = await supabaseClient
                     .from('user_profiles')
                     .select('*')
-                    .eq('id', session.user.id)
+                    .eq('id', currentUser.id)
                     .single();
                 if (!profileError && data) {
                     profile = data;
+                    // Update last_login uploader
+                    try {
+                        await supabaseClient
+                            .from('user_profiles')
+                            .update({ last_login: new Date().toISOString() })
+                            .eq('id', currentUser.id);
+                    } catch(e){}
                 }
             } catch (e) {
                 console.warn("Could not retrieve profile from database", e);
@@ -85,8 +119,8 @@ async function checkAuth() {
 
             // Create profile if not found or sync cache
             if (!profile) {
-                const provider = session.user.app_metadata?.provider || session.user.identities?.[0]?.provider || 'email';
-                await createUserProfile(session.user, provider);
+                const provider = currentUser.app_metadata?.provider || currentUser.identities?.[0]?.provider || 'email';
+                await createUserProfile(currentUser, provider);
             } else {
                 const username = profile.email ? profile.email.split('@')[0] : 'engineer';
                 const thruUser = {
@@ -94,15 +128,32 @@ async function checkAuth() {
                     name: profile.full_name,
                     username: username,
                     firstName: profile.first_name,
+                    first_name: profile.first_name,
                     lastName: profile.last_name,
+                    last_name: profile.last_name,
                     email: profile.email,
                     avatar: profile.avatar_url,
                     certificateName: profile.certificate_name,
+                    certificate_name: profile.certificate_name,
                     provider: profile.provider
                 };
                 localStorage.setItem('thru_user', JSON.stringify(thruUser));
                 localStorage.setItem('thrulabs_user_name', profile.full_name);
                 localStorage.setItem('thrulabs_user_email', profile.email);
+            }
+
+            // Fetch and sync user preferences
+            try {
+                const { data: prefData, error: prefError } = await supabaseClient
+                    .from('user_preferences')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                if (!prefError && prefData) {
+                    localStorage.setItem('thru_preferences', JSON.stringify(prefData));
+                }
+            } catch (e) {
+                console.warn("Could not retrieve preferences from database", e);
             }
         } else {
             clearLocalSession();
@@ -115,8 +166,13 @@ async function checkAuth() {
     updateNavbar();
 }
 
-async function login(email, password) {
+async function login(email, password, rememberMe = true) {
+    localStorage.setItem('thru_remember_me', rememberMe ? 'true' : 'false');
+    
+    // Force re-initialization of supabase client to apply storage change
+    supabaseClient = null;
     initializeSupabase();
+
     if (!supabaseClient) throw new Error("Supabase Client not initialized");
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -194,7 +250,9 @@ function clearLocalSession() {
 
 function requireAuth() {
     const isAuthenticated = localStorage.getItem('thru_token') !== null || 
-                            Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
+                            sessionStorage.getItem('thru_token') !== null ||
+                            Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token')) ||
+                            Object.keys(sessionStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
     if (!isAuthenticated) {
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         const fullUrl = currentPage + window.location.search;
@@ -238,7 +296,8 @@ async function createUserProfile(user, providerName = 'email') {
         certificate_name: metadata.certificate_name || fullName,
         avatar_url: metadata.avatar_url || metadata.avatar || metadata.picture || '',
         provider: providerName || 'email',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        last_login: new Date().toISOString()
     };
 
     try {
@@ -271,10 +330,13 @@ async function createUserProfile(user, providerName = 'email') {
         name: profile.full_name,
         username: username,
         firstName: profile.first_name,
+        first_name: profile.first_name,
         lastName: profile.last_name,
+        last_name: profile.last_name,
         email: profile.email,
         avatar: profile.avatar_url,
         certificateName: profile.certificate_name,
+        certificate_name: profile.certificate_name,
         provider: profile.provider
     };
 
@@ -333,10 +395,13 @@ async function updateUser(name, email, certname) {
             name: name,
             username: user.username || email.split('@')[0] || 'engineer',
             firstName: firstName,
+            first_name: firstName,
             lastName: lastName,
+            last_name: lastName,
             email: email,
             avatar: user.avatar || '',
             certificateName: certname || name,
+            certificate_name: certname || name,
             provider: user.provider || 'email'
         }));
     }
@@ -404,7 +469,7 @@ function updateNavbar() {
 
         container.innerHTML = `
             <div class="flex items-center gap-4 relative">
-                <span id="welcome-message" class="text-[9px] font-mono text-emerald-400 animate-pulse hidden mr-1">Welcome back, ${user.name}</span>
+                <span id="welcome-message" class="text-[9px] font-mono text-emerald-400 animate-pulse hidden mr-1">Welcome Back, ${user.name}</span>
                 <div class="relative font-mono z-50">
                     <button onclick="event.stopPropagation(); window.toggleUserDropdown();" class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all text-[9px] text-white hover-target select-none focus:outline-none">
                         <div class="relative w-6 h-6 rounded-full shrink-0 flex items-center justify-center">
@@ -417,13 +482,19 @@ function updateNavbar() {
                     <div id="user-dropdown-menu" class="absolute right-0 top-full pt-2 w-48 z-50 opacity-0 invisible translate-y-2 transition-all duration-300 ease-out text-[9px] uppercase tracking-wider">
                         <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-2.5 shadow-2xl space-y-1">
                             <a href="dashboard.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
-                                <i data-lucide="user" class="w-3.5 h-3.5 text-accent-bright"></i> Profile
+                                <i data-lucide="user" class="w-3.5 h-3.5 text-accent-bright"></i> Dashboard
+                            </a>
+                            <a href="dashboard.html#courses" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
+                                <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-accent-bright"></i> My Courses
                             </a>
                             <a href="dashboard.html#certificates" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
                                 <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i> My Certificates
                             </a>
+                            <a href="dashboard.html#saved-resources" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
+                                <i data-lucide="bookmark" class="w-3.5 h-3.5 text-rose-400"></i> Saved Resources
+                            </a>
                             <a href="dashboard.html#settings" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
-                                <i data-lucide="settings" class="w-3.5 h-3.5 text-emerald-400"></i> Account Settings
+                                <i data-lucide="settings" class="w-3.5 h-3.5 text-emerald-400"></i> Settings
                             </a>
                             <button onclick="window.logout();" class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all text-left uppercase hover-target">
                                 <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
@@ -463,10 +534,62 @@ function showIndexWelcome() {
     }
 }
 
+async function verifySignupOtp(email, token) {
+    initializeSupabase();
+    if (!supabaseClient) throw new Error("Supabase Client not initialized");
+    const { data, error } = await supabaseClient.auth.verifyOtp({
+        email,
+        token,
+        type: 'signup'
+    });
+    if (error) throw error;
+    if (data.user) {
+        await createUserProfile(data.user, 'email');
+    }
+    await checkAuth();
+    return data;
+}
+
+async function resendVerificationOtp(email) {
+    initializeSupabase();
+    if (!supabaseClient) throw new Error("Supabase Client not initialized");
+    const { error } = await supabaseClient.auth.resend({
+        type: 'signup',
+        email
+    });
+    if (error) throw error;
+}
+
+async function checkEmailExists(email) {
+    initializeSupabase();
+    if (!supabaseClient) return false;
+    try {
+        const { data, error } = await supabaseClient
+            .rpc('check_email_exists', { email_to_check: email });
+        if (error) throw error;
+        return !!data;
+    } catch(e) {
+        console.warn("RPC check_email_exists failed, trying select fallback", e);
+        try {
+            const { data } = await supabaseClient
+                .from('user_profiles')
+                .select('id')
+                .eq('email', email)
+                .maybeSingle();
+            return !!data;
+        } catch(err) {
+            return false;
+        }
+    }
+}
+
 // Expose functions globally
 window.initializeSupabase = initializeSupabase;
 window.login = login;
 window.signup = signup;
+window.verifySignupOtp = verifySignupOtp;
+window.resendVerificationOtp = resendVerificationOtp;
+window.checkEmailExists = checkEmailExists;
 window.logout = logout;
 window.loginWithGoogle = loginWithGoogle;
 window.loginWithGithub = loginWithGithub;
@@ -482,15 +605,25 @@ window.toggleUserDropdown = toggleUserDropdown;
 window.checkAuth = checkAuth;
 window.renderNavbar = updateNavbar;
 
+const isAuthenticated = () => {
+    return localStorage.getItem('thru_token') !== null || 
+           sessionStorage.getItem('thru_token') !== null || 
+           Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token')) ||
+           Object.keys(sessionStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
+};
+
 // Expose legacy auth namespace for absolute compatibility
 window.auth = {
-    isAuthenticated: () => localStorage.getItem('thru_token') !== null || Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token')),
+    isAuthenticated: isAuthenticated,
     getCurrentUser,
     getUser: getCurrentUser,
     updateUser,
     checkAuth,
     login,
     signup,
+    verifySignupOtp,
+    resendVerificationOtp,
+    checkEmailExists,
     loginWithGoogle,
     loginWithGithub,
     logout,
@@ -518,7 +651,12 @@ window.addEventListener('load', () => {
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if (session) {
-                    localStorage.setItem('thru_token', session.access_token);
+                    const rememberMe = localStorage.getItem('thru_remember_me') !== 'false';
+                    if (rememberMe) {
+                        localStorage.setItem('thru_token', session.access_token);
+                    } else {
+                        sessionStorage.setItem('thru_token', session.access_token);
+                    }
                     await checkAuth();
                 }
             } else if (event === 'SIGNED_OUT') {

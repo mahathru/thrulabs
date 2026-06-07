@@ -39,6 +39,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="auth-guard.js"></script>
     <script src="auth.js"></script>
+    <script src="progress.js"></script>
+    <script src="analytics.js"></script>
 
     <style>
         :root { --accent: #5E6AD2; }
@@ -201,6 +203,12 @@
                                     <button onclick="setGate('OR')" id="gate-OR" class="gate-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">OR</button>
                                     <button onclick="setGate('XOR')" id="gate-XOR" class="gate-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">XOR</button>
                                     <button onclick="setGate('NAND')" id="gate-NAND" class="gate-btn py-3 bg-white/5 border border-white/10 text-white/70 rounded-xl hover:text-white transition-all hover-target">NAND</button>
+                            </div>
+                            
+                            <div class="border-t border-white/5 pt-4 mt-6">
+                                <h4 class="text-[9px] font-mono font-bold text-white/40 uppercase tracking-widest mb-2 flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-accent-bright"></i> Previous Configurations</h4>
+                                <div id="logic-history" class="space-y-1.5 max-h-36 overflow-y-auto font-mono text-[9px] text-white/40 scrollbar-hide">
+                                    <div class="italic text-[8px] text-white/20">No previous runs logged.</div>
                                 </div>
                             </div>
                         </div>
@@ -309,6 +317,12 @@
                                         <span class="text-accent-bright" id="val-noise">0%</span>
                                     </div>
                                     <input type="range" id="slide-noise" min="0" max="50" step="1" value="0" oninput="updateWaveParam()" class="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-accent">
+                            </div>
+                            
+                            <div class="border-t border-white/5 pt-4 mt-6">
+                                <h4 class="text-[9px] font-mono font-bold text-white/40 uppercase tracking-widest mb-2 flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-accent-bright"></i> Previous Configurations</h4>
+                                <div id="wave-history" class="space-y-1.5 max-h-36 overflow-y-auto font-mono text-[9px] text-white/40 scrollbar-hide">
+                                    <div class="italic text-[8px] text-white/20">No previous runs logged.</div>
                                 </div>
                             </div>
                         </div>
@@ -387,6 +401,13 @@
                                     Reset Simulation
                                 </button>
                             </div>
+                            
+                            <div class="border-t border-white/5 pt-4 mt-6">
+                                <h4 class="text-[9px] font-mono font-bold text-white/40 uppercase tracking-widest mb-2 flex items-center gap-1.5"><i data-lucide="history" class="w-3.5 h-3.5 text-accent-bright"></i> Previous Configurations</h4>
+                                <div id="pid-history" class="space-y-1.5 max-h-36 overflow-y-auto font-mono text-[9px] text-white/40 scrollbar-hide">
+                                    <div class="italic text-[8px] text-white/20">No previous runs logged.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -463,6 +484,7 @@
             formulaEl.textContent = formulaText[gate];
             document.getElementById('gate-name-text').textContent = gate;
             runLogicSim();
+            saveLogicRun();
         }
 
         function runLogicSim() {
@@ -509,6 +531,14 @@
             waveShape = shape;
             document.querySelectorAll('.wave-shape-btn').forEach(btn => btn.classList.remove('active', 'bg-accent', 'text-white'));
             document.getElementById(`wave-${shape}`).classList.add('active', 'bg-accent', 'text-white');
+            
+            saveSimRun('wave', {
+                shape: waveShape,
+                freq: waveFreq,
+                amp: waveAmp,
+                phase: wavePhase,
+                noise: waveNoise
+            }, { peak_to_peak: waveAmp * 2, noise_pct: waveNoise });
         }
 
         function updateWaveParam() {
@@ -631,6 +661,7 @@
         function triggerPidDisturbance() {
             // Apply wind shear or sudden weight perturbation
             droneY += (Math.random() > 0.5 ? 50 : -50);
+            saveSimRun('pid', { kp, ki, kd }, { target_altitude: 10.0, disturbance_triggered: true });
         }
 
         function resetPidSim() {
@@ -817,8 +848,215 @@
             renderer.render(scene, camera);
         }
 
-        window.onload = () => {
+        async function saveSimRun(simName, settings, results) {
+            if (window.progressManager) {
+                await window.progressManager.saveSimulatorHistory(simName, settings, results);
+            } else {
+                // local fallback
+                const runs = JSON.parse(localStorage.getItem(`thrulabs_sim_history_${simName}`) || '[]');
+                runs.unshift({ settings, results, created_at: new Date().toISOString() });
+                localStorage.setItem(`thrulabs_sim_history_${simName}`, JSON.stringify(runs.slice(0, 5)));
+                localStorage.setItem(`thrulabs_sim_${simName}`, JSON.stringify(settings));
+            }
+            // reload history UI
+            await loadSimHistory(simName);
+        }
+
+        async function loadSimHistory(simName) {
+            const container = document.getElementById(`${simName}-history`);
+            if (!container) return;
+
+            let runs = [];
+            const userId = window.progressManager ? window.progressManager.getUserId() : null;
+            if (userId && window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('simulator_history')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .eq('simulator_name', simName)
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+                    if (!error && data) {
+                        runs = data;
+                    }
+                } catch(e) {
+                    console.error("Failed to load sim history", e);
+                }
+            }
+
+            if (runs.length === 0) {
+                // try local fallback
+                try {
+                    runs = JSON.parse(localStorage.getItem(`thrulabs_sim_history_${simName}`) || '[]');
+                } catch(e){}
+            }
+
+            if (runs.length === 0) {
+                container.innerHTML = `<div class="italic text-[8px] text-white/20">No previous runs logged.</div>`;
+                return;
+            }
+
+            container.innerHTML = runs.map((run, idx) => {
+                const date = new Date(run.created_at || new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                let label = '';
+                if (simName === 'logic') {
+                    label = `${run.settings.gate}: A=${run.settings.input_a}, B=${run.settings.input_b} → Y=${run.results.output}`;
+                } else if (simName === 'wave') {
+                    label = `${run.settings.shape}: ${run.settings.freq}Hz, ${run.settings.amp}V`;
+                } else if (simName === 'pid') {
+                    label = `Kp=${run.settings.kp}, Ki=${run.settings.ki}, Kd=${run.settings.kd}`;
+                }
+
+                return `
+                    <button onclick="restoreSimConfig('${simName}', ${idx}, '${encodeURIComponent(JSON.stringify(run.settings))}')" class="w-full text-left px-2 py-1 bg-white/[0.01] hover:bg-white/[0.04] border border-white/5 hover:border-white/10 rounded transition-all text-[8px] flex justify-between items-center gap-1 hover-target">
+                        <span class="truncate text-white/60">${label}</span>
+                        <span class="text-white/20 text-[7px] shrink-0">${date}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        window.restoreSimConfig = function(simName, idx, settingsJson) {
+            const settings = JSON.parse(decodeURIComponent(settingsJson));
+            if (simName === 'logic') {
+                document.getElementById('switch-a').checked = settings.input_a === 1;
+                document.getElementById('switch-b').checked = settings.input_b === 1;
+                setGate(settings.gate);
+            } else if (simName === 'wave') {
+                setWaveShape(settings.shape);
+                document.getElementById('slide-freq').value = settings.freq;
+                document.getElementById('slide-amp').value = settings.amp;
+                document.getElementById('slide-phase').value = settings.phase;
+                document.getElementById('slide-noise').value = settings.noise;
+                updateWaveParam();
+            } else if (simName === 'pid') {
+                document.getElementById('slide-kp').value = settings.kp;
+                document.getElementById('slide-ki').value = settings.ki;
+                document.getElementById('slide-kd').value = settings.kd;
+                updatePidParam();
+                resetPidSim();
+            }
+            if (window.showToast) {
+                window.showToast(`Restored previous ${simName} configuration.`, "success");
+            }
+        };
+
+        async function resumeSimulations() {
+            // Check for most recent configurations
+            const simNames = ['logic', 'wave', 'pid'];
+            for (const simName of simNames) {
+                let latestSettings = null;
+                const userId = window.progressManager ? window.progressManager.getUserId() : null;
+                if (userId && window.supabaseClient) {
+                    try {
+                        const { data } = await window.supabaseClient
+                            .from('simulator_history')
+                            .select('settings')
+                            .eq('user_id', userId)
+                            .eq('simulator_name', simName)
+                            .order('created_at', { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+                        if (data) {
+                            latestSettings = data.settings;
+                        }
+                    } catch(e){}
+                }
+                
+                if (!latestSettings) {
+                    // Try local cache
+                    try {
+                        latestSettings = JSON.parse(localStorage.getItem(`thrulabs_sim_${simName}`));
+                    } catch(e){}
+                }
+
+                if (latestSettings) {
+                    // Restore it!
+                    if (simName === 'logic') {
+                        document.getElementById('switch-a').checked = latestSettings.input_a === 1;
+                        document.getElementById('switch-b').checked = latestSettings.input_b === 1;
+                        // Avoid triggering double auto-save when restoring gate
+                        currentGate = latestSettings.gate || 'AND';
+                        document.querySelectorAll('.gate-btn').forEach(btn => btn.classList.remove('active', 'bg-accent', 'text-white'));
+                        document.getElementById(`gate-${currentGate}`).classList.add('active', 'bg-accent', 'text-white');
+                        const formulaEl = document.getElementById('gate-logic-formula');
+                        const formulaText = {
+                            'AND': 'Y = A • B',
+                            'OR': 'Y = A + B',
+                            'XOR': 'Y = A ⊕ B',
+                            'NAND': 'Y = (A • B)\''
+                        };
+                        formulaEl.textContent = formulaText[currentGate];
+                        document.getElementById('gate-name-text').textContent = currentGate;
+                    } else if (simName === 'wave') {
+                        waveShape = latestSettings.shape || 'sine';
+                        document.querySelectorAll('.wave-shape-btn').forEach(btn => btn.classList.remove('active', 'bg-accent', 'text-white'));
+                        document.getElementById(`wave-${waveShape}`).classList.add('active', 'bg-accent', 'text-white');
+                        
+                        document.getElementById('slide-freq').value = latestSettings.freq ?? 5;
+                        document.getElementById('slide-amp').value = latestSettings.amp ?? 50;
+                        document.getElementById('slide-phase').value = latestSettings.phase ?? 0;
+                        document.getElementById('slide-noise').value = latestSettings.noise ?? 0;
+                        updateWaveParam();
+                    } else if (simName === 'pid') {
+                        document.getElementById('slide-kp').value = latestSettings.kp ?? 1.5;
+                        document.getElementById('slide-ki').value = latestSettings.ki ?? 0.1;
+                        document.getElementById('slide-kd').value = latestSettings.kd ?? 0.8;
+                        updatePidParam();
+                    }
+                }
+                await loadSimHistory(simName);
+            }
+        }
+
+        function saveLogicRun() {
+            const valA = document.getElementById('switch-a').checked ? 1 : 0;
+            const valB = document.getElementById('switch-b').checked ? 1 : 0;
+            let valOut = 0;
+            if (currentGate === 'AND') valOut = valA && valB;
+            else if (currentGate === 'OR') valOut = valA || valB;
+            else if (currentGate === 'XOR') valOut = valA !== valB ? 1 : 0;
+            else if (currentGate === 'NAND') valOut = !(valA && valB) ? 1 : 0;
+
+            saveSimRun('logic', { gate: currentGate, input_a: valA, input_b: valB }, { output: valOut });
+        }
+
+        function initChangeListeners() {
+            // Logic switches
+            document.getElementById('switch-a').addEventListener('change', saveLogicRun);
+            document.getElementById('switch-b').addEventListener('change', saveLogicRun);
+
+            // Wave range sliders change event
+            document.querySelectorAll('#sim-container-wave input[type="range"]').forEach(input => {
+                input.addEventListener('change', () => {
+                    saveSimRun('wave', {
+                        shape: waveShape,
+                        freq: waveFreq,
+                        amp: waveAmp,
+                        phase: wavePhase,
+                        noise: waveNoise
+                    }, { peak_to_peak: waveAmp * 2, noise_pct: waveNoise });
+                });
+            });
+
+            // PID range sliders change event
+            document.querySelectorAll('#sim-container-pid input[type="range"]').forEach(input => {
+                input.addEventListener('change', () => {
+                    saveSimRun('pid', { kp, ki, kd }, { target_altitude: 10.0, current_altitude: parseFloat(document.getElementById('alt-readout').textContent) });
+                });
+            });
+        }
+
+        window.onload = async () => {
+            if (window.auth && typeof window.auth.checkAuth === 'function') {
+                try {
+                    await auth.checkAuth();
+                } catch(e) {}
+            }
             animate();
+            initChangeListeners();
+            await resumeSimulations();
             runLogicSim(); // Initialize Logic simulator states
         };
 

@@ -3,6 +3,8 @@
 <head>
     <script src="auth-guard.js"></script>
     <script src="auth.js"></script>
+    <script src="progress.js"></script>
+    <script src="analytics.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THRULABS | Engineering Resources</title>
@@ -172,11 +174,16 @@
                     <div class="academy-card p-8 rounded-[2rem] relative overflow-hidden group">
                         <div class="spotlight"></div>
                         <div class="relative z-10 space-y-6">
-                            <div class="space-y-3">
-                                <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-mono uppercase tracking-widest inline-block">Study Reference</span>
-                                <h2 id="resource-title" class="text-2xl md:text-3xl font-display font-extrabold text-white leading-tight">--</h2>
-                                <p id="resource-desc" class="text-[#BFC5D2] text-sm font-light leading-relaxed">--</p>
+                            <div class="flex justify-between items-start gap-4 flex-wrap">
+                                <div class="space-y-3 flex-1 min-w-0">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[9px] font-mono uppercase tracking-widest inline-block">Study Reference</span>
+                                    <h2 id="resource-title" class="text-2xl md:text-3xl font-display font-extrabold text-white leading-tight">--</h2>
+                                </div>
+                                <button id="bookmark-btn" onclick="handleBookmarkToggle()" class="px-4 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-rose-500 text-white text-[9px] font-mono font-bold uppercase tracking-wider rounded-xl transition-all hover-target flex items-center gap-1.5 whitespace-nowrap self-start">
+                                    <i data-lucide="bookmark" id="bookmark-icon" class="w-3.5 h-3.5 text-white"></i> <span id="bookmark-text">Bookmark File</span>
+                                </button>
                             </div>
+                            <p id="resource-desc" class="text-[#BFC5D2] text-sm font-light leading-relaxed">--</p>
                             
                             <!-- Dynamic HTML content container -->
                             <div id="resource-content" class="pt-6 border-t border-white/5 space-y-6">
@@ -793,7 +800,7 @@
             }
         });
 
-        function renderResource() {
+        async function renderResource() {
             if (!activeResource) return;
 
             document.getElementById('resource-title').innerText = activeResource.title;
@@ -847,8 +854,94 @@
                 projectsContainer.appendChild(box);
             });
 
+            await updateBookmarkUI();
+
             lucide.createIcons();
             initSpotlights();
+        }
+
+        async function updateBookmarkUI() {
+            const params = new URLSearchParams(window.location.search);
+            const resourceType = params.get('type') || 'formulas';
+            
+            const btn = document.getElementById('bookmark-btn');
+            if (!btn) return;
+            
+            if (window.progressManager) {
+                const bookmarked = await window.progressManager.isBookmarked(resourceType);
+                const icon = document.getElementById('bookmark-icon');
+                const text = document.getElementById('bookmark-text');
+                
+                if (bookmarked) {
+                    btn.classList.add('bg-rose-500/10', 'border-rose-500/40', 'text-rose-400');
+                    icon.classList.add('fill-rose-400', 'text-rose-400');
+                    text.innerText = 'Bookmarked';
+                } else {
+                    btn.classList.remove('bg-rose-500/10', 'border-rose-500/40', 'text-rose-400');
+                    icon.classList.remove('fill-rose-400', 'text-rose-400');
+                    text.innerText = 'Bookmark File';
+                }
+            }
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        async function handleBookmarkToggle() {
+            const params = new URLSearchParams(window.location.search);
+            const resourceType = params.get('type') || 'formulas';
+            
+            if (window.progressManager && window.progressManager.getUserId()) {
+                const isNowBookmarked = await window.progressManager.toggleBookmark(resourceType);
+                showToast(isNowBookmarked ? "Resource added to saved library bookmarks." : "Resource removed from bookmarks.", "success");
+                await updateBookmarkUI();
+            } else {
+                showToast("Please log in to bookmark resources.", "error");
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'fixed top-6 right-6 z-50 pointer-events-none flex flex-col gap-3';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            const borderColor = type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+            const iconColor = type === 'success' ? 'text-emerald-400' : 'text-rose-400';
+
+            toast.style.background = 'rgba(10, 10, 12, 0.9)';
+            toast.style.backdropFilter = 'blur(20px)';
+            toast.style.webkitBackdropFilter = 'blur(20px)';
+            toast.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+            toast.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.6)';
+            toast.style.transform = 'translateY(-30px)';
+            toast.style.opacity = '0';
+            toast.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            toast.style.pointerEvents = 'auto';
+            toast.style.borderColor = borderColor;
+            toast.className = `flex items-center gap-3 px-5 py-4 rounded-2xl text-white text-xs font-mono`;
+            
+            toast.innerHTML = `
+                <i data-lucide="${icon}" class="w-4 h-4 ${iconColor} shrink-0"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            if (window.lucide) window.lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.transform = 'translateY(0)';
+                toast.style.opacity = '1';
+            }, 50);
+
+            setTimeout(() => {
+                toast.style.transform = 'translateY(-30px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
         }
     </script>
 </body>

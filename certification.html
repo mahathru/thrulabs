@@ -415,7 +415,7 @@
             document.getElementById('preview-cert-id').innerText = `${activeCert.certIdPrefix}-XXXXX`;
 
             const user = window.getCurrentUser();
-            const displayName = user ? (user.certificateName || user.name) : "ENGINEERING GRADUATE";
+            const displayName = user ? (user.certificate_name || user.certificateName || user.name) : "ENGINEERING GRADUATE";
             const studentNameEl = document.getElementById('preview-student-name');
             if (studentNameEl) {
                 studentNameEl.innerText = displayName;
@@ -498,7 +498,7 @@
                 const db = JSON.parse(localStorage.getItem('thrulabs_certificate_database')) || {};
                 const user = window.getCurrentUser() || {};
                 db[issuedId] = {
-                    name: user.certificateName || user.name || "Thrulabs Student",
+                    name: user.certificate_name || user.certificateName || user.name || "Thrulabs Student",
                     program: activeCert.title,
                     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
                     status: "Verified & Active",

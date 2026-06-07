@@ -3,6 +3,9 @@
 <head>
     <script src="auth-guard.js"></script>
     <script src="auth.js"></script>
+    <script src="progress.js"></script>
+    <script src="certificates.js"></script>
+    <script src="analytics.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THRULABS | Learning Experience</title>
@@ -553,21 +556,49 @@
             lessons: {},
             quizzes: {},
             projects: {},
-            examPassed: false
+            examPassed: false,
+            currentModuleIndex: 0,
+            currentLessonIndex: 0,
+            currentContentType: 'lesson'
         };
 
-        function initLocalStorage() {
-            const stored = localStorage.getItem(`thrulabs_progress_${courseId}`);
-            if (stored) {
-                progressData = JSON.parse(stored);
+        async function initLocalStorage() {
+            if (window.progressManager) {
+                const synced = await window.progressManager.syncCourseProgress(courseId);
+                if (synced) {
+                    progressData = synced;
+                } else {
+                    const stored = localStorage.getItem(`thrulabs_progress_${courseId}`);
+                    if (stored) progressData = JSON.parse(stored);
+                }
             } else {
-                saveProgress();
+                const stored = localStorage.getItem(`thrulabs_progress_${courseId}`);
+                if (stored) progressData = JSON.parse(stored);
             }
+
+            if (progressData.currentModuleIndex !== undefined) {
+                currentModuleIndex = progressData.currentModuleIndex;
+            }
+            if (progressData.currentLessonIndex !== undefined) {
+                currentLessonIndex = progressData.currentLessonIndex;
+            }
+            if (progressData.currentContentType !== undefined) {
+                currentContentType = progressData.currentContentType;
+            }
+
+            updateProgressMetrics();
         }
 
         function saveProgress() {
+            progressData.currentModuleIndex = currentModuleIndex;
+            progressData.currentLessonIndex = currentLessonIndex;
+            progressData.currentContentType = currentContentType;
+
             localStorage.setItem(`thrulabs_progress_${courseId}`, JSON.stringify(progressData));
             updateProgressMetrics();
+            if (window.progressManager) {
+                window.progressManager.saveCourseProgress(courseId, progressData);
+            }
         }
 
         function getPassScore(id) {
@@ -912,6 +943,7 @@
             currentModuleIndex = mIdx;
             currentLessonIndex = lIdx;
             currentContentType = type;
+            saveProgress();
             renderClassroomSidebar();
             loadClassroomContent();
         }
@@ -1094,6 +1126,9 @@
 
             progressData.quizzes[mIdx] = score;
             saveProgress();
+            if (window.progressManager) {
+                window.progressManager.saveQuizAttempt(courseId, mIdx, score, 3, score >= 2);
+            }
             renderClassroomSidebar();
 
             if (score >= 2) {
@@ -1188,6 +1223,7 @@
                     }
                 }
             }
+            saveProgress();
             renderClassroomSidebar();
             loadClassroomContent();
         }
@@ -1252,23 +1288,36 @@
         }
 
         // Certificate generation logic
-        function generateCertificate() {
-            if (!progressData.certificateId) {
+        async function generateCertificate() {
+            const courseCode = getCourseCode(courseId);
+            const prefix = `THRU-2026-${courseCode}`;
+            
+            let certRecord = null;
+            if (window.certificatesManager) {
+                certRecord = await window.certificatesManager.unlockCertificate(courseId, course.title, prefix);
+            }
+            
+            if (certRecord) {
+                progressData.certificateId = certRecord.certificate_id;
+                saveProgress();
+            } else if (!progressData.certificateId) {
                 const randDigits = Math.floor(100000 + Math.random() * 900000);
-                const courseCode = getCourseCode(courseId);
-                progressData.certificateId = `THRU-2026-${courseCode}-${randDigits}`;
+                progressData.certificateId = `${prefix}-${randDigits}`;
                 saveProgress();
             }
+            
             const certId = progressData.certificateId;
             const metrics = calculateMetrics();
 
             // Set Printable info
             document.getElementById('cert-course-name').innerText = course.title.toUpperCase();
             document.getElementById('cert-verification-code').innerText = certId;
-            document.getElementById('cert-issue-date').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const issueDate = certRecord ? new Date(certRecord.issued_at) : new Date();
+            document.getElementById('cert-issue-date').innerText = issueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             
             // Set dynamic enrolled user name
-            const enrolledName = localStorage.getItem('thrulabs_user_name') || 'Alex Mercer';
+            const enrolledName = window.getCurrentUser()?.certificateName || window.getCurrentUser()?.name || localStorage.getItem('thrulabs_user_name') || 'Alex Mercer';
             document.getElementById('cert-student-name').innerText = enrolledName;
 
             // Set verify link href
@@ -1279,7 +1328,7 @@
             globalDb[certId] = {
                 name: enrolledName,
                 program: `${course.title} Certification`,
-                date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                date: issueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
                 status: "Verified & Active",
                 grade: `Passed with Distinction (${metrics.userScore}%)`
             };
@@ -1361,7 +1410,7 @@
             window.location.href = `resource.html?course=${courseId}`;
         }
 
-        function submitEnrollment() {
+        async function submitEnrollment() {
             const nameVal = document.getElementById('enrollment-name').value.trim();
             const emailVal = document.getElementById('enrollment-email').value.trim();
             if (!nameVal) {
@@ -1379,7 +1428,7 @@
             document.getElementById('enrollment-modal').classList.add('hidden');
             document.getElementById('course-page-wrapper').classList.remove('hidden');
             updateProfileNav();
-            initWorkspace();
+            await initWorkspace();
         }
 
         // Handle Escape key or outside clicks to close modal
@@ -1423,7 +1472,7 @@
             else nav.classList.remove('nav-shrink');
         });
 
-        function initWorkspace() {
+        async function initWorkspace() {
             // Document Title
             document.title = `THRULABS | ${course.title}`;
 
@@ -1443,7 +1492,7 @@
             document.getElementById('prerequisites-list').innerHTML = course.prerequisites.map(p => `<li>${p}</li>`).join('');
 
             // Init localStorage status & progress bars
-            initLocalStorage();
+            await initLocalStorage();
 
             // Setup tabs
             switchView('overview');
@@ -1466,7 +1515,12 @@
         }
 
         // Initialize active course load
-        window.onload = () => {
+        window.onload = async () => {
+            if (window.auth && typeof window.auth.checkAuth === 'function') {
+                try {
+                    await auth.checkAuth();
+                } catch(e) {}
+            }
             if (!course) {
                 document.getElementById('error-screen').classList.remove('hidden');
                 lucide.createIcons();
@@ -1478,7 +1532,7 @@
                     openEnrollmentModal();
                 } else {
                     document.getElementById('course-page-wrapper').classList.remove('hidden');
-                    initWorkspace();
+                    await initWorkspace();
                 }
             }
         };

@@ -2,6 +2,8 @@
 <html lang="en" class="scroll-smooth">
 <head>
     <script src="auth.js"></script>
+    <script src="progress.js"></script>
+    <script src="certificates.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THRULABS | Certificate Verification</title>
@@ -377,7 +379,7 @@
             }
         };
 
-        window.onload = () => {
+        window.onload = async () => {
             animateParticles();
             initSpotlights();
             
@@ -387,16 +389,16 @@
             
             if (queryId) {
                 document.getElementById('cert-verify-input').value = queryId.trim();
-                verify(queryId.trim());
+                await verify(queryId.trim());
             }
         };
 
-        function handleVerification() {
+        async function handleVerification() {
             const input = document.getElementById('cert-verify-input').value.trim();
-            verify(input);
+            await verify(input);
         }
 
-        function verify(id) {
+        async function verify(id) {
             const errorBox = document.getElementById('error-box');
             const resultBox = document.getElementById('result-box');
             
@@ -405,13 +407,14 @@
                 errorBox.innerHTML = `<div class="flex items-center justify-center gap-1.5"><i data-lucide="alert-circle" class="w-4 h-4"></i> Please enter a Certificate ID to verify.</div>`;
                 errorBox.classList.remove('hidden');
                 resultBox.classList.add('hidden');
-                lucide.createIcons();
+                if (window.lucide) window.lucide.createIcons();
                 return;
             }
             
-            // Read from both localStorage and static list
-            const dynamicDb = JSON.parse(localStorage.getItem('thrulabs_certificate_database')) || {};
-            const cert = staticCertificatesDb[searchId] || dynamicDb[searchId];
+            let cert = null;
+            if (window.certificatesManager) {
+                cert = await window.certificatesManager.verifyCertificate(searchId);
+            }
             
             if (cert) {
                 errorBox.classList.add('hidden');
@@ -420,8 +423,8 @@
                 document.getElementById('cert-holder').innerText = cert.name;
                 document.getElementById('cert-program').innerText = cert.program;
                 document.getElementById('cert-date').innerText = cert.date;
-                document.getElementById('cert-id-display').innerText = searchId;
-                document.getElementById('cert-grade').innerText = cert.grade;
+                document.getElementById('cert-id-display').innerText = cert.id || searchId;
+                document.getElementById('cert-grade').innerText = cert.grade || "Passed with Distinction";
 
                 resultBox.classList.remove('hidden');
             } else {
@@ -432,7 +435,7 @@
                 `;
                 errorBox.classList.remove('hidden');
             }
-            lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
             initSpotlights();
         }
     </script>

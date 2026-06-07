@@ -90,11 +90,14 @@ const profileManager = {
         const userCache = {
             name: data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim(),
             username: data.username || fallbackUsername,
-            first_name: data.first_name || data.first_name || '',
-            last_name: data.last_name || data.last_name || '',
+            firstName: data.first_name || '',
+            first_name: data.first_name || '',
+            lastName: data.last_name || '',
+            last_name: data.last_name || '',
             email: data.email || '',
             avatar: data.avatar_url || '',
-            certificateName: data.certificate_name || data.full_name || ''
+            certificateName: data.certificate_name || data.full_name || '',
+            certificate_name: data.certificate_name || data.full_name || ''
         };
         localStorage.setItem('thru_user', JSON.stringify(userCache));
         localStorage.setItem('thrulabs_user_name', userCache.name);

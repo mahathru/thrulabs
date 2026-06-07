@@ -3,6 +3,8 @@
 <head>
     <script src="auth-guard.js"></script>
     <script src="auth.js"></script>
+    <script src="progress.js"></script>
+    <script src="analytics.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THRULABS | Project Tracks</title>
@@ -374,13 +376,144 @@
 
         // Load Project Details
         let activeTrack = null;
+        let projectProgressState = {
+            current_stage: 0,
+            completed_stages: 0,
+            progress_percentage: 0
+        };
 
-        window.onload = () => {
+        async function loadProjectProgress(projectId) {
+            const userId = window.progressManager ? window.progressManager.getUserId() : null;
+            if (userId && window.supabaseClient) {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('project_progress')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .eq('project_id', projectId)
+                        .maybeSingle();
+                    if (!error && data) {
+                        projectProgressState = {
+                            current_stage: data.current_stage || 0,
+                            completed_stages: data.completed_stages || 0,
+                            progress_percentage: data.progress_percentage || 0
+                        };
+                        return;
+                    }
+                } catch(e) {
+                    console.error("Failed to load project progress from DB", e);
+                }
+            }
+            
+            // Fallback to local storage
+            try {
+                const cached = localStorage.getItem(`thrulabs_project_${projectId}`);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    projectProgressState = {
+                        current_stage: parsed.current_stage || 0,
+                        completed_stages: parsed.completed_stages || 0,
+                        progress_percentage: parsed.progress_percentage || 0
+                    };
+                    return;
+                }
+            } catch(e){}
+
+            // Default
+            projectProgressState = {
+                current_stage: 0,
+                completed_stages: 0,
+                progress_percentage: 0
+            };
+        }
+
+        async function toggleStep(idx, trackId) {
+            const project = academyData.projectTracks[trackId];
+            if (!project) return;
+
+            const checkbox = document.getElementById(`step-chk-${idx}`);
+            const isChecked = checkbox.checked;
+            
+            // Update line-through styling
+            const textSpan = checkbox.nextElementSibling;
+            if (isChecked) {
+                textSpan.classList.add('line-through', 'text-white/40');
+                projectProgressState.completed_stages |= (1 << idx);
+            } else {
+                textSpan.classList.remove('line-through', 'text-white/40');
+                projectProgressState.completed_stages &= ~(1 << idx);
+            }
+
+            // Count completed
+            let completedCount = 0;
+            project.steps.forEach((_, sIdx) => {
+                if ((projectProgressState.completed_stages & (1 << sIdx)) !== 0) {
+                    completedCount++;
+                }
+            });
+
+            // Calculate progress percentage
+            const progressPercentage = Math.round((completedCount / project.steps.length) * 100);
+            
+            // Determine current stage as the last checked stage index + 1 (or 0 if none checked)
+            let lastCheckedStage = 0;
+            project.steps.forEach((_, sIdx) => {
+                if ((projectProgressState.completed_stages & (1 << sIdx)) !== 0) {
+                    lastCheckedStage = sIdx + 1;
+                }
+            });
+            
+            projectProgressState.current_stage = lastCheckedStage;
+            projectProgressState.progress_percentage = progressPercentage;
+
+            // Save to database/local
+            if (window.progressManager) {
+                await window.progressManager.saveProjectProgress(trackId, lastCheckedStage, projectProgressState.completed_stages, progressPercentage);
+            } else {
+                const payload = {
+                    project_id: trackId,
+                    current_stage: lastCheckedStage,
+                    completed_stages: projectProgressState.completed_stages,
+                    progress_percentage: progressPercentage,
+                    last_accessed: new Date().toISOString()
+                };
+                localStorage.setItem(`thrulabs_project_${trackId}`, JSON.stringify(payload));
+            }
+        }
+
+        window.onload = async () => {
+            if (window.auth && typeof window.auth.checkAuth === 'function') {
+                try {
+                    await auth.checkAuth();
+                } catch(e) {}
+            }
             animateParticles();
             initSpotlights();
             
             const params = new URLSearchParams(window.location.search);
-            const trackId = params.get('track') || 'rover';
+            let trackId = params.get('track');
+            
+            if (!trackId && window.supabaseClient) {
+                const userId = window.progressManager ? window.progressManager.getUserId() : null;
+                if (userId) {
+                    try {
+                        const { data } = await window.supabaseClient
+                            .from('project_progress')
+                            .select('project_id')
+                            .eq('user_id', userId)
+                            .order('last_accessed', { ascending: false })
+                            .limit(1)
+                            .maybeSingle();
+                        if (data && data.project_id) {
+                            trackId = data.project_id;
+                        }
+                    } catch(e) {}
+                }
+            }
+            
+            if (!trackId) {
+                trackId = localStorage.getItem('thrulabs_last_project') || 'rover';
+            }
             
             activeTrack = academyData.projectTracks[trackId];
             if (!activeTrack) {
@@ -390,7 +523,7 @@
             document.getElementById('track-main-title').innerText = "Project Tracks";
             
             renderSidebar();
-            selectProject(activeTrack.id);
+            await selectProject(activeTrack.id);
         };
 
         function renderSidebar() {
@@ -400,9 +533,9 @@
             Object.values(academyData.projectTracks).forEach((proj) => {
                 const btn = document.createElement('button');
                 btn.id = `sidebar-btn-${proj.id}`;
-                btn.onclick = () => {
+                btn.onclick = async () => {
                     window.history.pushState({}, '', `project.html?track=${proj.id}`);
-                    selectProject(proj.id);
+                    await selectProject(proj.id);
                 };
                 btn.className = 'project-sidebar-btn w-full text-left p-4 rounded-2xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 text-[#BFC5D2] hover:text-white transition-all text-xs font-mono font-medium flex items-center justify-between hover-target';
                 
@@ -414,8 +547,10 @@
             });
             lucide.createIcons();
         }
-
-        function selectProject(trackId) {
+ 
+        async function selectProject(trackId) {
+            localStorage.setItem('thrulabs_last_project', trackId);
+            
             // Toggle active classes in sidebar
             document.querySelectorAll('.project-sidebar-btn').forEach((btn) => {
                 if (btn.id === `sidebar-btn-${trackId}`) {
@@ -427,6 +562,9 @@
 
             const project = academyData.projectTracks[trackId];
             if (!project) return;
+
+            // Load progress
+            await loadProjectProgress(trackId);
 
             document.getElementById('proj-difficulty').innerText = project.difficulty;
             document.getElementById('proj-time').innerText = project.time;
@@ -462,13 +600,19 @@
                 outcomesList.appendChild(li);
             });
 
-            // Render Steps
+            // Render Steps as checkable list
             const stepsList = document.getElementById('steps-list');
             stepsList.innerHTML = '';
-            project.steps.forEach(step => {
+            project.steps.forEach((step, idx) => {
                 const li = document.createElement('li');
-                li.className = 'leading-relaxed';
-                li.innerText = step;
+                li.className = 'flex items-center gap-3 py-1.5 border-b border-white/[0.02] last:border-0';
+                
+                const isChecked = (projectProgressState.completed_stages & (1 << idx)) !== 0;
+                
+                li.innerHTML = `
+                    <input type="checkbox" id="step-chk-${idx}" class="w-4 h-4 rounded border-white/10 bg-white/[0.03] text-amber-500 focus:ring-0 focus:ring-offset-0 cursor-pointer" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx}, '${trackId}')">
+                    <span class="text-xs text-[#BFC5D2] font-light leading-relaxed select-none ${isChecked ? 'line-through text-white/40' : ''}">${step}</span>
+                `;
                 stepsList.appendChild(li);
             });
 
