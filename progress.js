@@ -24,7 +24,7 @@ const progressManager = {
 
             if (data) {
                 // Save database copy to local storage cache
-                const localKey = `thrulabs_progress_${courseId}`;
+                const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
                 let currentLocal = {};
                 try {
                     currentLocal = JSON.parse(localStorage.getItem(localKey)) || {};
@@ -169,7 +169,8 @@ const progressManager = {
                 .upsert(payload, { onConflict: 'user_id, project_id' });
             
             // Cache local progress
-            localStorage.setItem(`thrulabs_project_${projectId}`, JSON.stringify(payload));
+            const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('project', projectId) : `thrulabs_project_${projectId}`;
+            localStorage.setItem(localKey, JSON.stringify(payload));
         } catch (e) {
             console.error("Auto-save project progress failed", e);
         }
@@ -194,7 +195,8 @@ const progressManager = {
                 .insert(payload);
 
             // Also update resume state
-            localStorage.setItem(`thrulabs_sim_${simulatorName}`, JSON.stringify(settings));
+            const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('sim', simulatorName) : `thrulabs_sim_${simulatorName}`;
+            localStorage.setItem(localKey, JSON.stringify(settings));
         } catch (e) {
             console.error("Auto-save simulator run failed", e);
         }

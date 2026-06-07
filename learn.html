@@ -568,11 +568,13 @@
                 if (synced) {
                     progressData = synced;
                 } else {
-                    const stored = localStorage.getItem(`thrulabs_progress_${courseId}`);
+                    const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
+                    const stored = localStorage.getItem(localKey);
                     if (stored) progressData = JSON.parse(stored);
                 }
             } else {
-                const stored = localStorage.getItem(`thrulabs_progress_${courseId}`);
+                const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
+                const stored = localStorage.getItem(localKey);
                 if (stored) progressData = JSON.parse(stored);
             }
 
@@ -594,7 +596,8 @@
             progressData.currentLessonIndex = currentLessonIndex;
             progressData.currentContentType = currentContentType;
 
-            localStorage.setItem(`thrulabs_progress_${courseId}`, JSON.stringify(progressData));
+            const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
+            localStorage.setItem(localKey, JSON.stringify(progressData));
             updateProgressMetrics();
             if (window.progressManager) {
                 window.progressManager.saveCourseProgress(courseId, progressData);

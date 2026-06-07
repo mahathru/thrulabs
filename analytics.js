@@ -21,8 +21,11 @@ const analyticsManager = {
 
             // Active check: within last 2 minutes
             if (Date.now() - lastActiveTime < 120000) {
-                let currentSecs = parseInt(localStorage.getItem('thrulabs_learning_seconds') || '0') + 30;
-                localStorage.setItem('thrulabs_learning_seconds', String(currentSecs));
+                const user = window.getCurrentUser();
+                const email = user ? user.email : '';
+                const key = email ? `thrulabs_learning_seconds_${email}` : 'thrulabs_learning_seconds';
+                let currentSecs = parseInt(localStorage.getItem(key) || '0') + 30;
+                localStorage.setItem(key, String(currentSecs));
 
                 // Save/Sync to user profile or user preferences table in Supabase
                 if (window.supabaseClient) {
@@ -49,7 +52,10 @@ const analyticsManager = {
 
     // Retrieve active learning hours
     getLearningHours() {
-        const seconds = parseInt(localStorage.getItem('thrulabs_learning_seconds') || '53280'); // Default fallback: 14.8 Hours
+        const user = window.getCurrentUser();
+        const email = user ? user.email : '';
+        const key = email ? `thrulabs_learning_seconds_${email}` : 'thrulabs_learning_seconds';
+        const seconds = parseInt(localStorage.getItem(key) || '0');
         return (seconds / 3600).toFixed(1);
     },
 
@@ -57,20 +63,36 @@ const analyticsManager = {
     async compileAnalytics() {
         const userId = window.progressManager ? window.progressManager.getUserId() : null;
         if (!userId || !window.supabaseClient) {
-            // Return dummy dashboard data for offline/unauthenticated views
+            // Return empty zero dashboard data for offline/unauthenticated views
             return {
-                learningHours: 14.8,
-                coursesCompleted: 1,
-                coursesStarted: 3,
-                quizAverage: 82,
-                certsEarned: 2,
-                projectsCompleted: 2,
-                progressDataPoints: [20, 45, 65, 80, 88, 92, 100],
-                quizAttemptsPoints: [60, 70, 80, 90, 100]
+                learningHours: 0,
+                coursesCompleted: 0,
+                coursesStarted: 0,
+                quizAverage: 0,
+                certsEarned: 0,
+                projectsCompleted: 0,
+                overallProgress: 0,
+                progressDataPoints: [0],
+                quizAttemptsPoints: [0]
             };
         }
 
         try {
+            // Fetch user preferences to get dynamic uptime
+            const { data: prefData } = await window.supabaseClient
+                .from('user_preferences')
+                .select('profile_visibility')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (prefData && prefData.profile_visibility) {
+                const dbHours = parseFloat(prefData.profile_visibility) || 0;
+                const user = window.getCurrentUser();
+                const email = user ? user.email : '';
+                const key = email ? `thrulabs_learning_seconds_${email}` : 'thrulabs_learning_seconds';
+                localStorage.setItem(key, String(Math.round(dbHours * 3600)));
+            }
+
             // Query progress tables
             const { data: progressList } = await window.supabaseClient
                 .from('course_progress')
@@ -96,11 +118,13 @@ const analyticsManager = {
             let coursesStarted = 0;
             let quizSum = 0;
             let quizCount = 0;
+            let totalCompletionPctSum = 0;
 
             if (progressList) {
                 coursesStarted = progressList.length;
                 progressList.forEach(p => {
                     if (p.completed || p.completion_percentage >= 100) coursesCompleted++;
+                    totalCompletionPctSum += parseFloat(p.completion_percentage || 0);
                 });
             }
 
@@ -117,6 +141,8 @@ const analyticsManager = {
             // Weekly study hours data points (mocked dynamically based on joined date)
             const progressDataPoints = progressList ? progressList.map(p => p.completion_percentage) : [0];
             const quizAttemptsPoints = quizList ? quizList.map(q => Math.round((q.score / q.total_questions) * 100)) : [0];
+            
+            const overallProgress = coursesStarted > 0 ? Math.round(totalCompletionPctSum / coursesStarted) : 0;
 
             return {
                 learningHours: parseFloat(this.getLearningHours()),
@@ -125,6 +151,7 @@ const analyticsManager = {
                 quizAverage: quizCount > 0 ? Math.round(quizSum / quizCount) : 0,
                 certsEarned,
                 projectsCompleted,
+                overallProgress,
                 progressDataPoints: progressDataPoints.length > 0 ? progressDataPoints : [0],
                 quizAttemptsPoints: quizAttemptsPoints.length > 0 ? quizAttemptsPoints : [0]
             };
@@ -132,14 +159,15 @@ const analyticsManager = {
         } catch (e) {
             console.error("Failed to compile metrics analytics", e);
             return {
-                learningHours: 14.8,
-                coursesCompleted: 1,
-                coursesStarted: 3,
-                quizAverage: 82,
-                certsEarned: 2,
-                projectsCompleted: 2,
-                progressDataPoints: [20, 45, 65, 80, 88, 92, 100],
-                quizAttemptsPoints: [60, 70, 80, 90, 100]
+                learningHours: 0,
+                coursesCompleted: 0,
+                coursesStarted: 0,
+                quizAverage: 0,
+                certsEarned: 0,
+                projectsCompleted: 0,
+                overallProgress: 0,
+                progressDataPoints: [0],
+                quizAttemptsPoints: [0]
             };
         }
     }

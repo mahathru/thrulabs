@@ -407,7 +407,8 @@
             
             // Fallback to local storage
             try {
-                const cached = localStorage.getItem(`thrulabs_project_${projectId}`);
+                const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('project', projectId) : `thrulabs_project_${projectId}`;
+                const cached = localStorage.getItem(localKey);
                 if (cached) {
                     const parsed = JSON.parse(cached);
                     projectProgressState = {
@@ -477,7 +478,8 @@
                     progress_percentage: progressPercentage,
                     last_accessed: new Date().toISOString()
                 };
-                localStorage.setItem(`thrulabs_project_${trackId}`, JSON.stringify(payload));
+                const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('project', trackId) : `thrulabs_project_${trackId}`;
+                localStorage.setItem(localKey, JSON.stringify(payload));
             }
         }
 
@@ -512,7 +514,8 @@
             }
             
             if (!trackId) {
-                trackId = localStorage.getItem('thrulabs_last_project') || 'rover';
+                const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('last_project', '') : 'thrulabs_last_project';
+                trackId = localStorage.getItem(localKey) || 'rover';
             }
             
             activeTrack = academyData.projectTracks[trackId];
@@ -549,7 +552,8 @@
         }
  
         async function selectProject(trackId) {
-            localStorage.setItem('thrulabs_last_project', trackId);
+            const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('last_project', '') : 'thrulabs_last_project';
+            localStorage.setItem(localKey, trackId);
             
             // Toggle active classes in sidebar
             document.querySelectorAll('.project-sidebar-btn').forEach((btn) => {

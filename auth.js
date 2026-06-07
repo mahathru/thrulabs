@@ -583,7 +583,16 @@ async function checkEmailExists(email) {
     }
 }
 
+// Scope storage keys per authenticated user email to isolate cache data
+window.getUserLocalStorageKey = function(baseKey, id) {
+    const user = getCurrentUser();
+    const email = user ? user.email : '';
+    const suffix = id ? `_${id}` : '';
+    return email ? `thrulabs_${baseKey}_${email}${suffix}` : `thrulabs_${baseKey}${suffix}`;
+};
+
 // Expose functions globally
+window.getUserLocalStorageKey = window.getUserLocalStorageKey;
 window.initializeSupabase = initializeSupabase;
 window.login = login;
 window.signup = signup;

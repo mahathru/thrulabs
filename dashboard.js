@@ -143,7 +143,13 @@ const dashboardController = {
         document.getElementById('stat-enrolled').textContent = analytics.coursesStarted;
         document.getElementById('stat-hours').textContent = analytics.learningHours.toFixed(1) + ' Hrs';
         document.getElementById('stat-certs').textContent = analytics.certsEarned + ' Earned';
-        document.getElementById('stat-completion-pct').textContent = analytics.coursesCompleted > 0 ? '100%' : '68%';
+        
+        const overallProgress = analytics.overallProgress || 0;
+        document.getElementById('stat-completion-pct').textContent = overallProgress + '%';
+        const pctBar = document.getElementById('stat-completion-pct-bar');
+        if (pctBar) {
+            pctBar.style.width = overallProgress + '%';
+        }
 
         // Render analytics charts
         this.renderCharts(analytics);
@@ -163,7 +169,7 @@ const dashboardController = {
                 labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7'],
                 datasets: [{
                     label: 'Completion %',
-                    data: analytics.progressDataPoints.length > 3 ? analytics.progressDataPoints : [10, 25, 45, 60, 68, 75, 80],
+                    data: (analytics.progressDataPoints.length > 0 && analytics.progressDataPoints[0] !== 0) ? analytics.progressDataPoints : [0, 0, 0, 0, 0, 0, 0],
                     borderColor: '#7C89FF',
                     backgroundColor: 'rgba(124, 137, 255, 0.1)',
                     fill: true,
@@ -189,7 +195,7 @@ const dashboardController = {
                 labels: ['Arduino', 'Embedded', 'IoT', 'PCB', 'Drone', 'Digital'],
                 datasets: [{
                     label: 'Quiz Scores (%)',
-                    data: analytics.quizAttemptsPoints.length > 3 ? analytics.quizAttemptsPoints : [80, 85, 75, 90, 88, 92],
+                    data: (analytics.quizAttemptsPoints.length > 0 && analytics.quizAttemptsPoints[0] !== 0) ? analytics.quizAttemptsPoints : [0, 0, 0, 0, 0, 0],
                     backgroundColor: 'rgba(16, 185, 129, 0.2)',
                     borderColor: '#10B981',
                     borderWidth: 1.5,
