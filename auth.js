@@ -7,6 +7,10 @@ function sanitizeSupabaseUrl(url) {
 
 let supabaseClient = null;
 
+// In-memory user cache — the ONLY source of truth for current user identity.
+// Never read or write progress-related data to localStorage.
+let _currentUser = null;
+
 function initializeSupabase() {
     if (supabaseClient) return supabaseClient;
 
@@ -41,7 +45,7 @@ function initializeSupabase() {
 
 // Auto-load dependencies synchronously if they are missing
 if (!window.supabase) {
-    document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
     window.addEventListener('DOMContentLoaded', () => {
         if (window.supabase) {
             initializeSupabase();
@@ -52,12 +56,11 @@ if (!window.supabase) {
     initializeSupabase();
 }
 
+// Returns the in-memory cached user object (synchronous).
+// This is the ONLY correct way to get the current user.
+// It will be null until checkAuth() has completed at least once.
 function getCurrentUser() {
-    try {
-        return JSON.parse(localStorage.getItem('thru_user')) || null;
-    } catch (e) {
-        return null;
-    }
+    return _currentUser;
 }
 
 let lastCheckedToken = null;
@@ -99,50 +102,41 @@ async function checkAuth() {
             let profile = null;
             try {
                 const { data, error: profileError } = await supabaseClient
-                    .from('user_profiles')
+                    .from('profiles')
                     .select('*')
                     .eq('id', currentUser.id)
                     .single();
                 if (!profileError && data) {
                     profile = data;
-                    // Update last_login uploader
-                    try {
-                        await supabaseClient
-                            .from('user_profiles')
-                            .update({ last_login: new Date().toISOString() })
-                            .eq('id', currentUser.id);
-                    } catch(e){}
                 }
             } catch (e) {
                 console.warn("Could not retrieve profile from database", e);
             }
 
-            // Create profile if not found or sync cache
+            // Create profile if not found, or populate in-memory cache
             if (!profile) {
                 const provider = currentUser.app_metadata?.provider || currentUser.identities?.[0]?.provider || 'email';
                 await createUserProfile(currentUser, provider);
             } else {
                 const username = profile.email ? profile.email.split('@')[0] : 'engineer';
-                const thruUser = {
+                // Populate the in-memory cache — NOT localStorage
+                _currentUser = {
                     id: profile.id,
                     name: profile.full_name,
                     username: username,
-                    firstName: profile.first_name,
-                    first_name: profile.first_name,
-                    lastName: profile.last_name,
-                    last_name: profile.last_name,
+                    firstName: profile.full_name ? profile.full_name.split(' ')[0] : 'User',
+                    first_name: profile.full_name ? profile.full_name.split(' ')[0] : 'User',
+                    lastName: profile.full_name ? profile.full_name.split(' ').slice(1).join(' ') : '',
+                    last_name: profile.full_name ? profile.full_name.split(' ').slice(1).join(' ') : '',
                     email: profile.email,
                     avatar: profile.avatar_url,
-                    certificateName: profile.certificate_name,
-                    certificate_name: profile.certificate_name,
-                    provider: profile.provider
+                    certificateName: profile.full_name,
+                    certificate_name: profile.full_name,
+                    provider: 'email'
                 };
-                localStorage.setItem('thru_user', JSON.stringify(thruUser));
-                localStorage.setItem('thrulabs_user_name', profile.full_name);
-                localStorage.setItem('thrulabs_user_email', profile.email);
             }
 
-            // Fetch and sync user preferences
+            // Fetch and sync user preferences (in-memory only, no localStorage write)
             try {
                 const { data: prefData, error: prefError } = await supabaseClient
                     .from('user_preferences')
@@ -150,7 +144,8 @@ async function checkAuth() {
                     .eq('user_id', currentUser.id)
                     .single();
                 if (!prefError && prefData) {
-                    localStorage.setItem('thru_preferences', JSON.stringify(prefData));
+                    // Store preferences in memory, not localStorage
+                    window._userPreferences = prefData;
                 }
             } catch (e) {
                 console.warn("Could not retrieve preferences from database", e);
@@ -243,8 +238,38 @@ async function logout() {
 }
 
 function clearLocalSession() {
-    localStorage.clear();
-    sessionStorage.clear();
+    // Surgically remove only auth-related keys — never wipe all localStorage.
+    // This preserves non-auth data like app config but correctly resets user state.
+    const authKeysToRemove = [
+        'thru_token',
+        'thru_user',
+        'thru_preferences',
+        'thru_login_welcome',
+        'redirectAfterLogin',
+        'thru_selected_course',
+        'thru_selected_project',
+        'thru_selected_simulator',
+        'thrulabs_user_name',
+        'thrulabs_user_email'
+    ];
+    authKeysToRemove.forEach(key => localStorage.removeItem(key));
+
+    // Remove Supabase session tokens
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+        }
+    });
+    Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            sessionStorage.removeItem(key);
+        }
+    });
+    sessionStorage.removeItem('thru_token');
+
+    // Clear in-memory user state
+    _currentUser = null;
+    window._userPreferences = null;
     lastCheckedToken = null;
 }
 
@@ -278,34 +303,20 @@ async function createUserProfile(user, providerName = 'email') {
     const metadata = user.user_metadata || {};
     const fullName = metadata.full_name || metadata.name || user.email?.split('@')[0] || 'THRULABS User';
 
-    let firstName = metadata.first_name || metadata.given_name || '';
-    let lastName = metadata.last_name || metadata.family_name || '';
-
-    if (!firstName) {
-        const parts = fullName.trim().split(/\s+/);
-        firstName = parts[0] || 'THRULABS';
-        lastName = parts.slice(1).join(' ') || 'User';
-    }
-
     const profile = {
         id: user.id,
         email: user.email || '',
         full_name: fullName,
-        first_name: firstName,
-        last_name: lastName,
-        certificate_name: metadata.certificate_name || fullName,
         avatar_url: metadata.avatar_url || metadata.avatar || metadata.picture || '',
-        provider: providerName || 'email',
-        created_at: new Date().toISOString(),
-        last_login: new Date().toISOString()
+        created_at: new Date().toISOString()
     };
 
     try {
         const { error } = await supabaseClient
-            .from('user_profiles')
+            .from('profiles')
             .upsert(profile, { onConflict: 'id' });
         if (error) {
-            console.warn("Supabase user_profiles table upsert failed. RLS or missing table?", error);
+            console.warn("Supabase profiles table upsert failed. RLS or missing table?", error);
         }
     } catch (e) {
         console.warn("Database upsert failed.", e);
@@ -315,9 +326,6 @@ async function createUserProfile(user, providerName = 'email') {
         await supabaseClient.auth.updateUser({
             data: {
                 full_name: fullName,
-                first_name: firstName,
-                last_name: lastName,
-                certificate_name: profile.certificate_name,
                 avatar_url: profile.avatar_url
             }
         });
@@ -325,85 +333,64 @@ async function createUserProfile(user, providerName = 'email') {
 
     const username = metadata.user_name || metadata.preferred_username || user.email?.split('@')[0] || 'engineer';
 
-    const thruUser = {
+    // Populate the in-memory cache — NOT localStorage
+    _currentUser = {
         id: profile.id,
         name: profile.full_name,
         username: username,
-        firstName: profile.first_name,
-        first_name: profile.first_name,
-        lastName: profile.last_name,
-        last_name: profile.last_name,
+        firstName: profile.full_name.split(' ')[0] || 'User',
+        first_name: profile.full_name.split(' ')[0] || 'User',
+        lastName: profile.full_name.split(' ').slice(1).join(' ') || '',
+        last_name: profile.full_name.split(' ').slice(1).join(' ') || '',
         email: profile.email,
         avatar: profile.avatar_url,
-        certificateName: profile.certificate_name,
-        certificate_name: profile.certificate_name,
-        provider: profile.provider
+        certificateName: profile.full_name,
+        certificate_name: profile.full_name,
+        provider: providerName
     };
 
-    localStorage.setItem('thru_user', JSON.stringify(thruUser));
-    localStorage.setItem('thrulabs_user_name', profile.full_name);
-    localStorage.setItem('thrulabs_user_email', profile.email);
-
-    return thruUser;
+    return _currentUser;
 }
 
 async function updateUser(name, email, certname) {
     const user = getCurrentUser();
     if (!user || !user.id) return;
 
-    const parts = name.trim().split(/\s+/);
-    const firstName = parts[0] || '';
-    const lastName = parts.slice(1).join(' ') || '';
-
-    const profileData = {
-        full_name: name,
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        certificate_name: certname || name
-    };
-
     if (window.profileManager) {
-        await window.profileManager.upsertProfile(user.id, profileData);
+        await window.profileManager.upsertProfile(user.id, { full_name: name, email: email });
     } else {
         const payload = {
             id: user.id,
             full_name: name,
-            first_name: firstName,
-            last_name: lastName,
             email: email,
-            certificate_name: certname || name,
             avatar_url: user.avatar || '',
-            provider: user.provider || 'email',
             created_at: new Date().toISOString()
         };
         try {
-            await supabaseClient.from('user_profiles').upsert(payload, { onConflict: 'id' });
+            await supabaseClient.from('profiles').upsert(payload, { onConflict: 'id' });
         } catch(e){}
         try {
             await supabaseClient.auth.updateUser({
                 data: {
-                    full_name: name,
-                    first_name: firstName,
-                    last_name: lastName,
-                    certificate_name: certname || name
+                    full_name: name
                 }
             });
         } catch (e) { }
-        localStorage.setItem('thru_user', JSON.stringify({
+
+        // Update in-memory cache only
+        _currentUser = {
+            ..._currentUser,
             id: user.id,
             name: name,
             username: user.username || email.split('@')[0] || 'engineer',
-            firstName: firstName,
-            first_name: firstName,
-            lastName: lastName,
-            last_name: lastName,
+            firstName: name.split(' ')[0] || 'User',
+            first_name: name.split(' ')[0] || 'User',
+            lastName: name.split(' ').slice(1).join(' ') || '',
+            last_name: name.split(' ').slice(1).join(' ') || '',
             email: email,
-            avatar: user.avatar || '',
             certificateName: certname || name,
-            certificate_name: certname || name,
-            provider: user.provider || 'email'
-        }));
+            certificate_name: certname || name
+        };
     }
     updateNavbar();
 }
@@ -449,11 +436,14 @@ function updateNavbar() {
     if (!container) return;
 
     const isAuthenticated = localStorage.getItem('thru_token') !== null || 
-                            Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
+                            sessionStorage.getItem('thru_token') !== null ||
+                            Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token')) ||
+                            Object.keys(sessionStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
 
     if (isAuthenticated) {
-        const user = getCurrentUser() || { name: 'User', firstName: 'User', email: '', avatar: '' };
-        const firstName = user.firstName || user.name.split(' ')[0] || 'User';
+        // Use in-memory cache; fall back to minimal placeholder while checkAuth() runs
+        const user = _currentUser || { name: 'Loading...', firstName: '', email: '', avatar: '' };
+        const firstName = user.firstName || (user.name ? user.name.split(' ')[0] : '') || 'User';
 
         let avatarHtml = '';
         if (user.avatar) {
@@ -476,25 +466,19 @@ function updateNavbar() {
                             ${avatarHtml}
                             <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-black rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)] z-10"></span>
                         </div>
-                        <span class="max-w-[80px] truncate text-white/80">${firstName}</span>
+                        <span class="max-w-[120px] truncate text-white/80">${user.name || 'User'}</span>
                         <i id="user-dropdown-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-50 transition-transform"></i>
                     </button>
                     <div id="user-dropdown-menu" class="absolute right-0 top-full pt-2 w-48 z-50 opacity-0 invisible translate-y-2 transition-all duration-300 ease-out text-[9px] uppercase tracking-wider">
                         <div class="bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-2.5 shadow-2xl space-y-1">
-                            <a href="dashboard.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
-                                <i data-lucide="user" class="w-3.5 h-3.5 text-accent-bright"></i> Dashboard
+                            <a href="dashboard.html#settings" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
+                                <i data-lucide="user" class="w-3.5 h-3.5 text-accent-bright"></i> My Profile
                             </a>
                             <a href="dashboard.html#courses" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
-                                <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-accent-bright"></i> My Courses
+                                <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-accent-bright"></i> My Progress
                             </a>
-                            <a href="dashboard.html#certificates" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
+                            <a href="certificates.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
                                 <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i> My Certificates
-                            </a>
-                            <a href="dashboard.html#saved-resources" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
-                                <i data-lucide="bookmark" class="w-3.5 h-3.5 text-rose-400"></i> Saved Resources
-                            </a>
-                            <a href="dashboard.html#settings" class="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all hover-target">
-                                <i data-lucide="settings" class="w-3.5 h-3.5 text-emerald-400"></i> Settings
                             </a>
                             <button onclick="window.logout();" class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-all text-left uppercase hover-target">
                                 <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
@@ -572,7 +556,7 @@ async function checkEmailExists(email) {
         console.warn("RPC check_email_exists failed, trying select fallback", e);
         try {
             const { data } = await supabaseClient
-                .from('user_profiles')
+                .from('profiles')
                 .select('id')
                 .eq('email', email)
                 .maybeSingle();
@@ -583,7 +567,8 @@ async function checkEmailExists(email) {
     }
 }
 
-// Scope storage keys per authenticated user email to isolate cache data
+// getUserLocalStorageKey is kept for backward compatibility with any remaining
+// non-progress localStorage keys (e.g., UI state), but must NOT be used for progress data.
 window.getUserLocalStorageKey = function(baseKey, id) {
     const user = getCurrentUser();
     const email = user ? user.email : '';
@@ -701,14 +686,16 @@ window.addEventListener('load', () => {
                 'tools.html',
                 'verify.html',
                 'certification.html',
-                'dashboard.html'
+                'dashboard.html',
+                'certificates.html'
             ];
 
             const isProtected = protectedPaths.some(p => href.includes(p));
             if (isProtected) {
-                const isAuthenticated = localStorage.getItem('thru_token') !== null || 
-                                        Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
-                if (!isAuthenticated) {
+                const authed = localStorage.getItem('thru_token') !== null || 
+                               sessionStorage.getItem('thru_token') !== null ||
+                               Object.keys(localStorage).some(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
+                if (!authed) {
                     e.preventDefault();
                     localStorage.setItem("redirectAfterLogin", href);
                     window.location.href = 'auth.html';

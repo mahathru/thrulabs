@@ -51,17 +51,18 @@ const dashboardController = {
         document.getElementById('profile-certname').value = certName;
     },
 
-    // Handle settings preferences loading
+    // Handle settings preferences loading — reads from in-memory cache set by auth.js
     loadPreferences() {
         try {
-            const storedPrefs = localStorage.getItem('thru_preferences');
+            // window._userPreferences is populated by auth.js checkAuth() from Supabase
+            const storedPrefs = window._userPreferences;
             if (storedPrefs) {
-                this.prefs = JSON.parse(storedPrefs);
+                this.prefs = storedPrefs;
             } else {
                 this.prefs = {
                     theme: 'dark',
                     notifications: true,
-                    certificate_name: this.user.name,
+                    certificate_name: this.user ? this.user.name : '',
                     profile_visibility: 'private'
                 };
             }
@@ -106,7 +107,8 @@ const dashboardController = {
 
             if (error) throw error;
 
-            localStorage.setItem('thru_preferences', JSON.stringify(updatedPrefs));
+            // Update in-memory preferences cache; no localStorage write needed
+            window._userPreferences = updatedPrefs;
             this.prefs = updatedPrefs;
             
             // Show toast success
@@ -281,26 +283,11 @@ const dashboardController = {
             } catch(e){}
         }
 
-        // Render started courses or default mock if database is empty
+        // Render started courses or default empty state if database is empty
         if (progress.length === 0) {
             container.innerHTML = `
-                <div class="p-5 bg-white/[0.01] border border-white/5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-white/[0.02] transition-colors border-l-2 border-l-accent">
-                    <div class="space-y-1.5 flex-1 w-full">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[8px] tracking-wider uppercase font-bold">Beginner</span>
-                            <span class="text-[8px] font-mono text-white/30 uppercase tracking-widest">ECE // ELEC-01</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-white">Arduino Fundamentals</h4>
-                        <div class="flex items-center gap-3 w-full max-w-md mt-2">
-                            <div class="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden">
-                                <div class="bg-accent h-full w-[0%] shadow-[0_0_8px_rgba(94,106,210,0.5)]"></div>
-                            </div>
-                            <span class="font-mono text-[10px] text-white/50">0%</span>
-                        </div>
-                    </div>
-                    <a href="learn.html?course=arduino-fundamentals" class="px-4 py-2.5 bg-white/5 border border-white/10 hover:border-accent hover:bg-accent text-white rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider transition-all hover-target whitespace-nowrap self-stretch md:self-auto text-center flex items-center justify-center gap-1.5">
-                        <i data-lucide="play" class="w-3.5 h-3.5"></i> Resume Node
-                    </a>
+                <div class="p-6 bg-white/[0.01] border border-white/5 rounded-2xl text-center text-white/40 text-xs font-mono">
+                    No active course progress found. Explore the Academy and enroll in courses to start learning!
                 </div>
             `;
         } else {
@@ -326,9 +313,9 @@ const dashboardController = {
                             <h4 class="text-sm font-bold text-white">${window.courses?.[p.course_id]?.title || p.course_id}</h4>
                             <div class="flex items-center gap-3 w-full max-w-md mt-2">
                                 <div class="flex-1 bg-white/5 h-1.5 rounded-full overflow-hidden">
-                                    <div class="bg-accent h-full shadow-[0_0_8px_rgba(94,106,210,0.5)]" style="width: ${p.completion_percentage}%;"></div>
+                                    <div class="bg-accent h-full shadow-[0_0_8px_rgba(94,106,210,0.5)]" style="width: ${p.progress_percentage}%;"></div>
                                 </div>
-                                <span class="font-mono text-[10px] text-white/50">${Math.round(p.completion_percentage)}%</span>
+                                <span class="font-mono text-[10px] text-white/50">${Math.round(p.progress_percentage)}%</span>
                             </div>
                         </div>
                         <a href="learn.html?course=${p.course_id}" class="px-4 py-2.5 bg-white/5 border border-white/10 hover:border-accent hover:bg-accent text-white rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider transition-all hover-target whitespace-nowrap self-stretch md:self-auto text-center flex items-center justify-center gap-1.5">
@@ -361,18 +348,8 @@ const dashboardController = {
 
         if (projects.length === 0) {
             container.innerHTML = `
-                <div class="p-5 bg-white/[0.01] border border-white/5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-white/[0.02] transition-colors border-l-2 border-l-amber-500">
-                    <div class="space-y-1.5 flex-1 w-full">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-[8px] tracking-wider uppercase font-bold">Advanced</span>
-                            <span class="text-[8px] font-mono text-white/30 uppercase tracking-widest">Rover System</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-white">Arduino-Based Autonomous Rover</h4>
-                        <p class="text-[10px] font-mono text-white/40">Build Stage: Assemble the chassis frame // 0%</p>
-                    </div>
-                    <a href="project.html?track=rover" class="px-4 py-2.5 bg-white/5 border border-white/10 hover:border-amber-500 hover:bg-amber-500 hover:text-white text-white rounded-lg text-[9px] font-mono font-bold uppercase tracking-wider transition-all hover-target whitespace-nowrap self-stretch md:self-auto text-center flex items-center justify-center gap-1.5">
-                        <i data-lucide="wrench" class="w-3.5 h-3.5"></i> Construct Stage
-                    </a>
+                <div class="p-6 bg-white/[0.01] border border-white/5 rounded-2xl text-center text-white/40 text-xs font-mono">
+                    No active hardware build projects in progress. Start a project track in the Academy!
                 </div>
             `;
         } else {
@@ -422,23 +399,30 @@ const dashboardController = {
                 </div>
             `;
         } else {
-            container.innerHTML = certs.map(c => `
-                <div class="p-4 bg-white/[0.01] border border-white/5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-2 border-l-amber-500 hover:bg-white/[0.02] transition-all">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
-                            <i data-lucide="award" class="w-5 h-5 text-amber-400 animate-pulse"></i>
+            container.innerHTML = certs.map(c => {
+                let courseTitle = c.course_id;
+                if (window.academyData && window.academyData.featuredCourses) {
+                    const matched = window.academyData.featuredCourses.find(course => course.id === c.course_id);
+                    if (matched) courseTitle = matched.title;
+                }
+                return `
+                    <div class="p-4 bg-white/[0.01] border border-white/5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-2 border-l-amber-500 hover:bg-white/[0.02] transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
+                                <i data-lucide="award" class="w-5 h-5 text-amber-400 animate-pulse"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-white font-mono uppercase tracking-wider">${c.certificate_id}</h4>
+                                <p class="text-[10px] text-white/50 mt-0.5">${courseTitle}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="text-xs font-bold text-white font-mono uppercase tracking-wider">${c.certificate_id}</h4>
-                            <p class="text-[10px] text-white/50 mt-0.5">${c.certificate_name}</p>
+                        <div class="flex gap-4 font-mono text-[9px] uppercase tracking-wider self-stretch sm:self-auto justify-between sm:justify-end items-center">
+                            <span class="text-white/30">Issued: ${new Date(c.issued_at).toLocaleDateString()}</span>
+                            <a href="verify.html?cert=${c.certificate_id}" class="text-accent hover:text-white transition-all hover-target flex items-center gap-1">Verify <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
                         </div>
                     </div>
-                    <div class="flex gap-4 font-mono text-[9px] uppercase tracking-wider self-stretch sm:self-auto justify-between sm:justify-end items-center">
-                        <span class="text-white/30">Issued: ${new Date(c.issued_at).toLocaleDateString()}</span>
-                        <a href="verify.html?cert=${c.certificate_id}" class="text-accent hover:text-white transition-all hover-target flex items-center gap-1">Verify <i data-lucide="arrow-right" class="w-3 h-3"></i></a>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
         if (window.lucide) window.lucide.createIcons();
     },
@@ -532,12 +516,19 @@ const dashboardController = {
                 }
 
                 if (certs) {
-                    certs.forEach(c => activity.push({
-                        time: new Date(c.issued_at),
-                        text: `Earned Certification: ${c.certificate_name} (${c.certificate_id})`,
-                        icon: 'award',
-                        color: 'text-amber-400'
-                    }));
+                    certs.forEach(c => {
+                        let courseTitle = c.course_id;
+                        if (window.academyData && window.academyData.featuredCourses) {
+                            const matched = window.academyData.featuredCourses.find(course => course.id === c.course_id);
+                            if (matched) courseTitle = matched.title;
+                        }
+                        activity.push({
+                            time: new Date(c.issued_at),
+                            text: `Earned Certification: ${courseTitle} (${c.certificate_id})`,
+                            icon: 'award',
+                            color: 'text-amber-400'
+                        });
+                    });
                 }
 
                 if (projects) {

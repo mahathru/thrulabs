@@ -873,11 +873,11 @@
             if (userId && window.supabaseClient) {
                 try {
                     const { data, error } = await window.supabaseClient
-                        .from('simulator_history')
+                        .from('simulator_progress')
                         .select('*')
                         .eq('user_id', userId)
-                        .eq('simulator_name', simName)
-                        .order('created_at', { ascending: false })
+                        .eq('simulator_id', simName)
+                        .order('completed_at', { ascending: false })
                         .limit(5);
                     if (!error && data) {
                         runs = data;
@@ -901,7 +901,7 @@
             }
 
             container.innerHTML = runs.map((run, idx) => {
-                const date = new Date(run.created_at || new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const date = new Date(run.completed_at || run.created_at || new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 let label = '';
                 if (simName === 'logic') {
                     label = `${run.settings.gate}: A=${run.settings.input_a}, B=${run.settings.input_b} → Y=${run.results.output}`;
@@ -954,11 +954,11 @@
                 if (userId && window.supabaseClient) {
                     try {
                         const { data } = await window.supabaseClient
-                            .from('simulator_history')
+                            .from('simulator_progress')
                             .select('settings')
                             .eq('user_id', userId)
-                            .eq('simulator_name', simName)
-                            .order('created_at', { ascending: false })
+                            .eq('simulator_id', simName)
+                            .order('completed_at', { ascending: false })
                             .limit(1)
                             .maybeSingle();
                         if (data) {

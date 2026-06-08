@@ -799,8 +799,10 @@
             const nameInput = document.getElementById('enrollment-name');
             const emailInput = document.getElementById('enrollment-email');
             
-            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
-            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            // Pre-fill from in-memory session cache, not localStorage
+            const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+            nameInput.value = currentUser?.name || '';
+            emailInput.value = currentUser?.email || '';
             
             modal.classList.remove('hidden');
             nameInput.focus();
@@ -837,14 +839,10 @@
             }
         }
 
+        // User is always authenticated (page is guarded), navigate directly
         function onStartCourseClick(event, courseId) {
             event.stopPropagation();
-            const enrolledName = localStorage.getItem('thrulabs_user_name');
-            if (!enrolledName) {
-                openEnrollmentModal(courseId);
-            } else {
-                window.location.href = `resource.html?course=${courseId}`;
-            }
+            window.location.href = `resource.html?course=${courseId}`;
         }
 
         // Profile Settings Modal actions
@@ -853,8 +851,10 @@
             const nameInput = document.getElementById('profile-name');
             const emailInput = document.getElementById('profile-email');
             
-            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
-            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            // Pre-fill from in-memory session cache, not localStorage
+            const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+            nameInput.value = currentUser?.name || '';
+            emailInput.value = currentUser?.email || '';
             
             modal.classList.remove('hidden');
             nameInput.focus();

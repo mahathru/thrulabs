@@ -430,8 +430,7 @@
             } else {
                 resultBox.classList.add('hidden');
                 errorBox.innerHTML = `
-                    <div class="flex items-center justify-center gap-1.5 mb-1 text-sm font-bold uppercase"><i data-lucide="x-circle" class="w-4.5 h-4.5"></i> Verification Failed</div>
-                    <p class="text-[#BFC5D2] text-[10.5px]">Certificate ID <strong>"${searchId}"</strong> was not found in the global registry database. Please ensure spelling is correct (e.g. TL-2026-00001).</p>
+                    <div class="flex items-center justify-center gap-1.5 text-sm font-bold uppercase"><i data-lucide="x-circle" class="w-4.5 h-4.5"></i> Certificate not found</div>
                 `;
                 errorBox.classList.remove('hidden');
             }

@@ -410,10 +410,13 @@
                     </div>
                 </div>
                 
-                <button onclick="window.print()" class="no-print mt-6 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2">
+                <button onclick="window.print()" class="no-print mt-6 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
                     <i data-lucide="printer" class="w-4 h-4"></i> Print Certificate
                 </button>
-                <a id="cert-verify-link" href="#" class="no-print mt-6 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2">
+                <button onclick="downloadCertificatePDF()" class="no-print mt-6 px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
+                    <i data-lucide="download" class="w-4 h-4"></i> Download Certificate
+                </button>
+                <a id="cert-verify-link" href="#" class="no-print mt-6 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
                     <i data-lucide="shield-check" class="w-4 h-4"></i> View Verification Page
                 </a>
             </div>
@@ -562,20 +565,15 @@
             currentContentType: 'lesson'
         };
 
+        // Load progress exclusively from Supabase. No localStorage fallback.
         async function initLocalStorage() {
             if (window.progressManager) {
                 const synced = await window.progressManager.syncCourseProgress(courseId);
                 if (synced) {
                     progressData = synced;
-                } else {
-                    const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
-                    const stored = localStorage.getItem(localKey);
-                    if (stored) progressData = JSON.parse(stored);
                 }
-            } else {
-                const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
-                const stored = localStorage.getItem(localKey);
-                if (stored) progressData = JSON.parse(stored);
+                // If synced is null, this is a new user with no prior progress.
+                // Start fresh with the default empty progressData.
             }
 
             if (progressData.currentModuleIndex !== undefined) {
@@ -591,13 +589,12 @@
             updateProgressMetrics();
         }
 
+        // Save progress to Supabase only. No localStorage writes.
         function saveProgress() {
             progressData.currentModuleIndex = currentModuleIndex;
             progressData.currentLessonIndex = currentLessonIndex;
             progressData.currentContentType = currentContentType;
 
-            const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
-            localStorage.setItem(localKey, JSON.stringify(progressData));
             updateProgressMetrics();
             if (window.progressManager) {
                 window.progressManager.saveCourseProgress(courseId, progressData);
@@ -1319,27 +1316,31 @@
             const issueDate = certRecord ? new Date(certRecord.issued_at) : new Date();
             document.getElementById('cert-issue-date').innerText = issueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             
-            // Set dynamic enrolled user name
-            const enrolledName = window.getCurrentUser()?.certificateName || window.getCurrentUser()?.name || localStorage.getItem('thrulabs_user_name') || 'Alex Mercer';
+            // Set dynamic enrolled user name from in-memory session cache only
+            const enrolledName = window.getCurrentUser()?.certificateName || window.getCurrentUser()?.name || 'THRULABS Graduate';
             document.getElementById('cert-student-name').innerText = enrolledName;
 
             // Set verify link href
             document.getElementById('cert-verify-link').href = `verify.html?cert=${certId}`;
-            
-            // Append certificate to global database in localStorage so it registers in academy.html certificate verification box!
-            const globalDb = JSON.parse(localStorage.getItem('thrulabs_certificate_database')) || {};
-            globalDb[certId] = {
-                name: enrolledName,
-                program: `${course.title} Certification`,
-                date: issueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                status: "Verified & Active",
-                grade: `Passed with Distinction (${metrics.userScore}%)`
-            };
-            localStorage.setItem('thrulabs_certificate_database', JSON.stringify(globalDb));
 
             // Show Certificate UI
             document.getElementById('printable-certificate').classList.remove('hidden');
             document.getElementById('printable-certificate').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function downloadCertificatePDF() {
+            if (!progressData.certificateId) return;
+            const certId = progressData.certificateId;
+            // Read enrolled name from in-memory session cache only
+            const enrolledName = window.getCurrentUser()?.certificateName || window.getCurrentUser()?.name || 'THRULABS Graduate';
+            const issueDate = document.getElementById('cert-issue-date').innerText;
+            try {
+                if (window.showToast) window.showToast("Compiling high-resolution PDF certificate...", "success");
+                await window.certificatesManager.downloadCertificatePDF(certId, enrolledName, course.title, issueDate);
+            } catch(e) {
+                console.error("PDF download failed", e);
+                if (window.showToast) window.showToast("Failed to compile certificate PDF.", "error");
+            }
         }
 
         // Profile settings modal actions
@@ -1354,8 +1355,10 @@
             const nameInput = document.getElementById('profile-name');
             const emailInput = document.getElementById('profile-email');
             
-            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
-            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            // Read from in-memory session cache, not localStorage
+            const currentUser = window.getCurrentUser();
+            nameInput.value = currentUser?.name || '';
+            emailInput.value = currentUser?.email || '';
             
             modal.classList.remove('hidden');
             nameInput.focus();
@@ -1374,15 +1377,9 @@
                 return;
             }
             
+            // Update via auth.js which syncs to Supabase and updates in-memory cache
             if (typeof auth !== 'undefined' && typeof auth.updateUser === 'function') {
                 auth.updateUser(nameVal, emailVal);
-            } else {
-                localStorage.setItem('thrulabs_user_name', nameVal);
-                if (emailVal) {
-                    localStorage.setItem('thrulabs_user_email', emailVal);
-                } else {
-                    localStorage.removeItem('thrulabs_user_email');
-                }
             }
             
             // If printable certificate is already rendered/active, update name immediately
@@ -1395,14 +1392,18 @@
             updateProfileNav();
             alert("Profile settings updated successfully.");
         }
-        // Enrollment Modal actions
+        // Enrollment modal: user is already authenticated (page is guarded), so
+        // this modal should simply be bypassed. However, we keep it for UX flow
+        // but source values from the authenticated user's profile.
         function openEnrollmentModal() {
             const modal = document.getElementById('enrollment-modal');
             const nameInput = document.getElementById('enrollment-name');
             const emailInput = document.getElementById('enrollment-email');
             
-            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
-            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            // Pre-fill from in-memory session cache, not localStorage
+            const currentUser = window.getCurrentUser();
+            nameInput.value = currentUser?.name || '';
+            emailInput.value = currentUser?.email || '';
             
             modal.classList.remove('hidden');
             nameInput.focus();
@@ -1414,20 +1415,7 @@
         }
 
         async function submitEnrollment() {
-            const nameVal = document.getElementById('enrollment-name').value.trim();
-            const emailVal = document.getElementById('enrollment-email').value.trim();
-            if (!nameVal) {
-                alert("Full name is required to start the course.");
-                return;
-            }
-            
-            localStorage.setItem('thrulabs_user_name', nameVal);
-            if (emailVal) {
-                localStorage.setItem('thrulabs_user_email', emailVal);
-            } else {
-                localStorage.removeItem('thrulabs_user_email');
-            }
-            
+            // User is already authenticated. Just close modal and start workspace.
             document.getElementById('enrollment-modal').classList.add('hidden');
             document.getElementById('course-page-wrapper').classList.remove('hidden');
             updateProfileNav();
@@ -1529,14 +1517,8 @@
                 lucide.createIcons();
             } else {
                 updateProfileNav();
-
-                const enrolledName = localStorage.getItem('thrulabs_user_name');
-                if (!enrolledName) {
-                    openEnrollmentModal();
-                } else {
-                    document.getElementById('course-page-wrapper').classList.remove('hidden');
-                    await initWorkspace();
-                }
+                document.getElementById('course-page-wrapper').classList.remove('hidden');
+                await initWorkspace();
             }
         };
     </script>

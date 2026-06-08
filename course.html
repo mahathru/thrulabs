@@ -1124,35 +1124,15 @@
         // Enrollment and Profile Settings State
         let targetCourseIdForEnrollment = null;
 
+        // updateProfileNav delegates to auth.js in-memory cache
         function updateProfileNav() {
-            const userName = localStorage.getItem('thrulabs_user_name');
-            const authContainer = document.getElementById('nav-auth-container');
-            if (!authContainer) return;
-            if (userName) {
-                authContainer.innerHTML = `
-                    <button onclick="openProfileModal()" class="px-5 py-2.5 bg-accent/20 border border-accent/40 text-accent-bright hover:bg-accent hover:text-white text-[9px] font-extrabold rounded-full transition-all hover-target uppercase tracking-widest flex items-center gap-1.5 shadow-xl">
-                        <i data-lucide="user" class="w-3.5 h-3.5"></i> ${userName}
-                    </button>
-                `;
-            } else {
-                authContainer.innerHTML = `
-                    <a href="auth.html" class="text-[9px] font-bold text-white/60 hover:text-white transition-all hover-target uppercase tracking-widest">Login</a>
-                    <a href="auth.html" class="px-5 py-2.5 bg-white text-black text-[9px] font-extrabold rounded-full hover:bg-accent hover:text-white transition-all hover-target uppercase tracking-widest shadow-xl">
-                        Get Started
-                    </a>
-                `;
-            }
-            lucide.createIcons();
+            if (window.updateNavbar) window.updateNavbar();
+            if (window.lucide) window.lucide.createIcons();
         }
 
-        // Actions
+        // Actions — user is always authenticated (page is guarded)
         function startCourseAction() {
-            const enrolledName = localStorage.getItem('thrulabs_user_name');
-            if (!enrolledName) {
-                openEnrollmentModal(courseId);
-            } else {
-                window.location.href = `learn.html?course=${courseId}`;
-            }
+            window.location.href = `learn.html?course=${courseId}`;
         }
 
         function viewCertRequirements() {
@@ -1166,8 +1146,10 @@
             const nameInput = document.getElementById('enrollment-name');
             const emailInput = document.getElementById('enrollment-email');
             
-            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
-            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            // Pre-fill from in-memory session cache, not localStorage
+            const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+            nameInput.value = currentUser?.name || '';
+            emailInput.value = currentUser?.email || '';
             
             modal.classList.remove('hidden');
             nameInput.focus();
@@ -1180,35 +1162,27 @@
 
         function submitEnrollment() {
             const nameVal = document.getElementById('enrollment-name').value.trim();
-            const emailVal = document.getElementById('enrollment-email').value.trim();
             if (!nameVal) {
                 alert("Please enter your full name.");
                 return;
             }
-            
-            localStorage.setItem('thrulabs_user_name', nameVal);
-            if (emailVal) {
-                localStorage.setItem('thrulabs_user_email', emailVal);
-            } else {
-                localStorage.removeItem('thrulabs_user_email');
-            }
-            
+            // Do not write to localStorage; user is authenticated
             closeEnrollmentModal();
             updateProfileNav();
-            
             if (targetCourseIdForEnrollment) {
                 window.location.href = `learn.html?course=${targetCourseIdForEnrollment}`;
             }
         }
 
-        // Profile Settings Modal actions
         function openProfileModal() {
             const modal = document.getElementById('profile-modal');
             const nameInput = document.getElementById('profile-name');
             const emailInput = document.getElementById('profile-email');
             
-            nameInput.value = localStorage.getItem('thrulabs_user_name') || '';
-            emailInput.value = localStorage.getItem('thrulabs_user_email') || '';
+            // Read from in-memory session cache, not localStorage
+            const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+            nameInput.value = currentUser?.name || '';
+            emailInput.value = currentUser?.email || '';
             
             modal.classList.remove('hidden');
             nameInput.focus();
@@ -1222,19 +1196,14 @@
         // Submit profile changes and refresh dynamic views
         function submitProfileUpdate() {
             const nameVal = document.getElementById('profile-name').value.trim();
-            const emailVal = document.getElementById('profile-email').value.trim();
             if (!nameVal) {
                 alert("Full name cannot be empty.");
                 return;
             }
-            
-            localStorage.setItem('thrulabs_user_name', nameVal);
-            if (emailVal) {
-                localStorage.setItem('thrulabs_user_email', emailVal);
-            } else {
-                localStorage.removeItem('thrulabs_user_email');
+            // Update via auth.js which syncs to Supabase and in-memory cache
+            if (window.auth && typeof window.auth.updateUser === 'function') {
+                window.auth.updateUser(nameVal, document.getElementById('profile-email').value.trim());
             }
-            
             closeProfileModal();
             updateProfileNav();
             alert("Profile settings updated successfully.");

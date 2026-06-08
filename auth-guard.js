@@ -39,7 +39,9 @@ function protectPage() {
         'project.html',
         'resource.html',
         'simulator.html',
-        'certification.html'
+        'certification.html',
+        'dashboard.html',
+        'certificates.html'
     ];
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     if (protectedPages.includes(currentPage)) {

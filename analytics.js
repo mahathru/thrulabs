@@ -1,6 +1,11 @@
 // THRULABS Learning Analytics Engine
+// Learning hours are tracked in-memory and synced to Supabase user_preferences.
+// localStorage is NOT used for analytics data.
 
 const analyticsManager = {
+    // Module-level session timer (in seconds). Not persisted to localStorage.
+    _sessionSeconds: 0,
+
     // Start active tracking session
     initSessionTracker() {
         if (this._sessionInterval) clearInterval(this._sessionInterval);
@@ -14,27 +19,21 @@ const analyticsManager = {
         window.addEventListener('click', resetActivity);
         window.addEventListener('scroll', resetActivity);
 
-        // Every 30 seconds, if user was active recently, increment tracking logs
+        // Every 30 seconds, if user was active recently, increment in-memory counter
         this._sessionInterval = setInterval(async () => {
-            const userId = window.progressManager ? window.progressManager.getUserId() : null;
+            const userId = window.progressManager ? await window.progressManager._resolveUserId() : null;
             if (!userId) return;
 
             // Active check: within last 2 minutes
             if (Date.now() - lastActiveTime < 120000) {
-                const user = window.getCurrentUser();
-                const email = user ? user.email : '';
-                const key = email ? `thrulabs_learning_seconds_${email}` : 'thrulabs_learning_seconds';
-                let currentSecs = parseInt(localStorage.getItem(key) || '0') + 30;
-                localStorage.setItem(key, String(currentSecs));
+                this._sessionSeconds += 30;
 
-                // Save/Sync to user profile or user preferences table in Supabase
+                // Sync total hours to Supabase user_preferences.learning_hours
                 if (window.supabaseClient) {
                     try {
-                        const totalHours = (currentSecs / 3600).toFixed(2);
-                        // Store total hours or uptime in user_preferences theme metadata or custom parameter
-                        const userPref = JSON.parse(localStorage.getItem('thru_preferences') || '{}');
-                        
-                        // We can save to user preferences or profile metadata
+                        const totalHours = parseFloat((this._sessionSeconds / 3600).toFixed(4));
+                        const userPref = window._userPreferences || {};
+
                         await window.supabaseClient
                             .from('user_preferences')
                             .upsert({
@@ -42,28 +41,26 @@ const analyticsManager = {
                                 certificate_name: userPref.certificate_name || window.getCurrentUser()?.name,
                                 theme: userPref.theme || 'dark',
                                 notifications: userPref.notifications !== false,
-                                profile_visibility: totalHours // Hack: use profile_visibility or a JSON payload if we want to store uptime
+                                profile_visibility: userPref.profile_visibility || 'private',
+                                learning_hours: totalHours
                             }, { onConflict: 'user_id' });
-                    } catch(e){}
+                    } catch(e) {
+                        // Silently ignore — session data will sync on next interval
+                    }
                 }
             }
         }, 30000);
     },
 
-    // Retrieve active learning hours
+    // Retrieve active learning hours from the in-memory session counter.
     getLearningHours() {
-        const user = window.getCurrentUser();
-        const email = user ? user.email : '';
-        const key = email ? `thrulabs_learning_seconds_${email}` : 'thrulabs_learning_seconds';
-        const seconds = parseInt(localStorage.getItem(key) || '0');
-        return (seconds / 3600).toFixed(1);
+        return (this._sessionSeconds / 3600).toFixed(1);
     },
 
-    // Compile analytics datasets from database tables
+    // Compile analytics datasets from Supabase tables.
     async compileAnalytics() {
-        const userId = window.progressManager ? window.progressManager.getUserId() : null;
+        const userId = window.progressManager ? await window.progressManager._resolveUserId() : null;
         if (!userId || !window.supabaseClient) {
-            // Return empty zero dashboard data for offline/unauthenticated views
             return {
                 learningHours: 0,
                 coursesCompleted: 0,
@@ -78,19 +75,20 @@ const analyticsManager = {
         }
 
         try {
-            // Fetch user preferences to get dynamic uptime
+            // Fetch stored learning hours from user_preferences
             const { data: prefData } = await window.supabaseClient
                 .from('user_preferences')
-                .select('profile_visibility')
+                .select('learning_hours')
                 .eq('user_id', userId)
                 .maybeSingle();
 
-            if (prefData && prefData.profile_visibility) {
-                const dbHours = parseFloat(prefData.profile_visibility) || 0;
-                const user = window.getCurrentUser();
-                const email = user ? user.email : '';
-                const key = email ? `thrulabs_learning_seconds_${email}` : 'thrulabs_learning_seconds';
-                localStorage.setItem(key, String(Math.round(dbHours * 3600)));
+            if (prefData && prefData.learning_hours) {
+                // Seed in-memory counter from database value (accumulated from past sessions)
+                const dbSeconds = Math.round(parseFloat(prefData.learning_hours) * 3600);
+                // Only update if DB has more hours than current session (user returning from previous session)
+                if (dbSeconds > this._sessionSeconds) {
+                    this._sessionSeconds = dbSeconds;
+                }
             }
 
             // Query progress tables
@@ -123,8 +121,8 @@ const analyticsManager = {
             if (progressList) {
                 coursesStarted = progressList.length;
                 progressList.forEach(p => {
-                    if (p.completed || p.completion_percentage >= 100) coursesCompleted++;
-                    totalCompletionPctSum += parseFloat(p.completion_percentage || 0);
+                    if (p.completed || p.progress_percentage >= 100) coursesCompleted++;
+                    totalCompletionPctSum += parseFloat(p.progress_percentage || 0);
                 });
             }
 
@@ -138,8 +136,7 @@ const analyticsManager = {
             const certsEarned = certList ? certList.length : 0;
             const projectsCompleted = projectList ? projectList.filter(pr => pr.progress_percentage >= 100).length : 0;
 
-            // Weekly study hours data points (mocked dynamically based on joined date)
-            const progressDataPoints = progressList ? progressList.map(p => p.completion_percentage) : [0];
+            const progressDataPoints = progressList ? progressList.map(p => Math.round(parseFloat(p.progress_percentage || 0))) : [0];
             const quizAttemptsPoints = quizList ? quizList.map(q => Math.round((q.score / q.total_questions) * 100)) : [0];
             
             const overallProgress = coursesStarted > 0 ? Math.round(totalCompletionPctSum / coursesStarted) : 0;

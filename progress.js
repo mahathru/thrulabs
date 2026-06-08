@@ -1,15 +1,29 @@
 // THRULABS LMS Progress Sync & Auto-Save Systems
+// All progress data is stored exclusively in Supabase.
+// localStorage is NEVER used for progress persistence.
 
 const progressManager = {
-    // Helper to get active authenticated user ID
+    // Helper to get active authenticated user ID from the live Supabase session.
+    async _resolveUserId() {
+        if (!window.supabaseClient) return null;
+        try {
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            return user ? user.id : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    // Synchronous accessor for in-memory cached user (used in non-async contexts).
     getUserId() {
-        const user = window.getCurrentUser();
+        const user = window.getCurrentUser ? window.getCurrentUser() : null;
         return user ? user.id : null;
     },
 
-    // Sync progress data from database for a specific course
+    // Sync progress data from database for a specific course.
+    // Returns a progress object or null if no prior progress exists.
     async syncCourseProgress(courseId) {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return null;
 
         try {
@@ -23,38 +37,30 @@ const progressManager = {
             if (error) throw error;
 
             if (data) {
-                // Save database copy to local storage cache
-                const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('progress', courseId) : `thrulabs_progress_${courseId}`;
-                let currentLocal = {};
-                try {
-                    currentLocal = JSON.parse(localStorage.getItem(localKey)) || {};
-                } catch(e) {}
-
                 let parsedModule = {};
                 try {
                     parsedModule = data.current_module ? JSON.parse(data.current_module) : {};
                 } catch(e) {}
 
-                // Support both flat object (lessons only) and structured object (with resume indices)
-                const lessons = parsedModule.lessons || (Object.keys(parsedModule).every(k => k.includes('-')) ? parsedModule : {});
-                const currentModuleIndex = parsedModule.currentModuleIndex !== undefined ? parsedModule.currentModuleIndex : (currentLocal.currentModuleIndex || 0);
-                const currentLessonIndex = parsedModule.currentLessonIndex !== undefined ? parsedModule.currentLessonIndex : (currentLocal.currentLessonIndex || 0);
-                const currentContentType = parsedModule.currentContentType || currentLocal.currentContentType || 'lesson';
+                const lessons = parsedModule.lessons || {};
+                const currentModuleIndex = parsedModule.currentModuleIndex !== undefined ? parsedModule.currentModuleIndex : 0;
+                const currentLessonIndex = parsedModule.currentLessonIndex !== undefined ? parsedModule.currentLessonIndex : 0;
+                const currentContentType = parsedModule.currentContentType || 'lesson';
 
-                // Deep merge or restore variables
+                // Build the in-memory progress object from Supabase data only
                 const synced = {
                     lessons: lessons,
                     currentModuleIndex: currentModuleIndex,
                     currentLessonIndex: currentLessonIndex,
                     currentContentType: currentContentType,
-                    quizzes: currentLocal.quizzes || {},
-                    projects: currentLocal.projects || {},
-                    certificateId: currentLocal.certificateId || null,
+                    quizzes: {},
+                    projects: {},
+                    certificateId: null,
                     examPassed: data.completed || false,
                     last_accessed: data.last_accessed
                 };
 
-                // Sync quizzes and projects details from other tables to rebuild complete object
+                // Populate quiz scores from quiz_attempts table
                 const { data: quizData } = await window.supabaseClient
                     .from('quiz_attempts')
                     .select('module_id, score')
@@ -63,71 +69,138 @@ const progressManager = {
 
                 if (quizData) {
                     quizData.forEach(q => {
-                        synced.quizzes[q.module_id] = q.score;
+                        // module_id is stored as string, convert to numeric key for progressData.quizzes
+                        const key = parseInt(q.module_id, 10);
+                        if (!isNaN(key)) {
+                            synced.quizzes[key] = q.score;
+                        } else {
+                            synced.quizzes[q.module_id] = q.score;
+                        }
                     });
                 }
 
-                localStorage.setItem(localKey, JSON.stringify(synced));
                 return synced;
             }
         } catch (e) {
-            console.warn("Could not sync course progress from Supabase, using local cache", e);
+            console.warn("Could not sync course progress from Supabase", e);
         }
         return null;
     },
 
-    // Automatically save course progress parameters
+    // Save course progress to Supabase only. No localStorage writes.
     async saveCourseProgress(courseId, localProgress) {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return;
 
-        // Calculate modules, lessons, and completion percentage
-        let lessonsCount = Object.keys(localProgress.lessons || {}).length;
-        let modulesCount = Object.keys(localProgress.projects || {}).length;
-        
-        let quizSum = 0;
-        let quizCount = Object.keys(localProgress.quizzes || {}).length;
-        Object.values(localProgress.quizzes || {}).forEach(score => { quizSum += score; });
-        let quizAvg = quizCount > 0 ? (quizSum / quizCount) : 0;
+        // Retrieve existing database record to merge details
+        let existing = null;
+        try {
+            const { data } = await window.supabaseClient
+                .from('course_progress')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('course_id', courseId)
+                .maybeSingle();
+            if (data) existing = data;
+        } catch(e) {}
+
+        let existingModule = {};
+        if (existing && existing.current_module) {
+            try {
+                existingModule = JSON.parse(existing.current_module) || {};
+            } catch(e) {}
+        }
+
+        // Merge incoming progress with the existing database state
+        const lessons = localProgress.lessons || existingModule.lessons || {};
+        const currentModuleIndex = localProgress.currentModuleIndex !== undefined ? localProgress.currentModuleIndex : (existingModule.currentModuleIndex || 0);
+        const currentLessonIndex = localProgress.currentLessonIndex !== undefined ? localProgress.currentLessonIndex : (existingModule.currentLessonIndex || 0);
+        const currentContentType = localProgress.currentContentType || existingModule.currentContentType || 'lesson';
+
+        let lessonsCount = Object.keys(lessons).length;
+        let modulesCount = localProgress.projects ? Object.keys(localProgress.projects).length : (existing ? existing.modules_completed : 0);
+
+        let quizCount = localProgress.quizzes ? Object.keys(localProgress.quizzes).length : 0;
+        let quizAvg = existing ? parseFloat(existing.quiz_score || 0) : 0;
+        if (quizCount > 0) {
+            let quizSum = 0;
+            Object.values(localProgress.quizzes).forEach(score => { quizSum += score; });
+            quizAvg = quizSum / quizCount;
+        }
 
         // Estimate completion percentage
-        let completionPct = 0;
+        let completionPct = localProgress.pct || localProgress.progress_percentage || localProgress.progressPercentage || 0;
+        let courseTitle = courseId;
         if (window.courses && window.courses[courseId]) {
             const courseObj = window.courses[courseId];
-            let totalLessons = 0;
-            courseObj.modules.forEach(m => totalLessons += m.lessons.length);
-            completionPct = totalLessons > 0 ? Math.round((lessonsCount / totalLessons) * 100) : 0;
+            courseTitle = courseObj.title;
+            if (completionPct === 0) {
+                let totalLessons = 0;
+                courseObj.modules.forEach(m => totalLessons += m.lessons.length);
+                completionPct = totalLessons > 0 ? Math.round((lessonsCount / totalLessons) * 100) : 0;
+            }
+        } else if (existing) {
+            completionPct = Math.max(completionPct, parseFloat(existing.progress_percentage || 0));
+        }
+
+        const isCompleted = localProgress.examPassed || localProgress.completed || (completionPct >= 100) || (existing && existing.completed);
+        if (isCompleted) {
+            completionPct = 100;
         }
 
         const payload = {
             user_id: userId,
             course_id: courseId,
             current_module: JSON.stringify({
-                lessons: localProgress.lessons || {},
-                currentModuleIndex: localProgress.currentModuleIndex || 0,
-                currentLessonIndex: localProgress.currentLessonIndex || 0,
-                currentContentType: localProgress.currentContentType || 'lesson'
+                lessons: lessons,
+                currentModuleIndex: currentModuleIndex,
+                currentLessonIndex: currentLessonIndex,
+                currentContentType: currentContentType
             }),
             modules_completed: modulesCount,
             lessons_completed: lessonsCount,
             quiz_score: quizAvg,
-            completion_percentage: completionPct,
+            progress_percentage: completionPct,
             last_accessed: new Date().toISOString(),
-            completed: localProgress.examPassed || (completionPct >= 100)
+            completed: isCompleted,
+            completed_at: isCompleted ? (existing?.completed_at || new Date().toISOString()) : null
         };
 
         try {
             await window.supabaseClient
                 .from('course_progress')
                 .upsert(payload, { onConflict: 'user_id, course_id' });
+
+            // Automatically generate certificate record if 100% completed
+            if (isCompleted && window.certificatesManager) {
+                const mapping = {
+                    "arduino-fundamentals": "ARD",
+                    "embedded-systems": "EMB",
+                    "esp32-iot": "IOT",
+                    "digital-electronics": "DIG",
+                    "pcb-design": "PCB",
+                    "uav-drone": "UAV",
+                    "communication-systems-basics": "COM",
+                    "introduction-to-embedded": "INT",
+                    "basic-electronics": "ELC",
+                    "rtos": "RTOS",
+                    "aiot": "AIOT",
+                    "advanced-embedded": "ADV",
+                    "industry-projects": "IND"
+                };
+                const courseCode = mapping[courseId] || "GEN";
+                const prefix = `TL-${courseCode}-${new Date().getFullYear()}`;
+                
+                await window.certificatesManager.unlockCertificate(courseId, courseTitle, prefix);
+            }
         } catch (e) {
             console.error("Auto-save course progress failed", e);
         }
     },
 
-    // Save quiz attempt
+    // Save quiz attempt to Supabase
     async saveQuizAttempt(courseId, moduleId, score, totalQuestions, passed) {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return;
 
         const payload = {
@@ -149,17 +222,20 @@ const progressManager = {
         }
     },
 
-    // Save project stage progress
+    // Save project stage progress to Supabase only. No localStorage writes.
     async saveProjectProgress(projectId, currentStage, completedStages, progressPercentage) {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return;
 
+        const isCompleted = progressPercentage >= 100;
         const payload = {
             user_id: userId,
             project_id: projectId,
             current_stage: currentStage,
             completed_stages: completedStages,
             progress_percentage: progressPercentage,
+            completed: isCompleted,
+            completed_at: isCompleted ? new Date().toISOString() : null,
             last_accessed: new Date().toISOString()
         };
 
@@ -167,44 +243,38 @@ const progressManager = {
             await window.supabaseClient
                 .from('project_progress')
                 .upsert(payload, { onConflict: 'user_id, project_id' });
-            
-            // Cache local progress
-            const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('project', projectId) : `thrulabs_project_${projectId}`;
-            localStorage.setItem(localKey, JSON.stringify(payload));
         } catch (e) {
             console.error("Auto-save project progress failed", e);
         }
     },
 
-    // Save simulator run history configuration
+    // Save simulator run history to Supabase only. No localStorage writes.
     async saveSimulatorHistory(simulatorName, settings, results) {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return;
 
         const payload = {
             user_id: userId,
-            simulator_name: simulatorName,
+            simulator_id: simulatorName,
+            progress_percentage: 100.0,
+            completed: true,
+            completed_at: new Date().toISOString(),
             settings: settings,
-            results: results,
-            created_at: new Date().toISOString()
+            results: results
         };
 
         try {
             await window.supabaseClient
-                .from('simulator_history')
-                .insert(payload);
-
-            // Also update resume state
-            const localKey = window.getUserLocalStorageKey ? window.getUserLocalStorageKey('sim', simulatorName) : `thrulabs_sim_${simulatorName}`;
-            localStorage.setItem(localKey, JSON.stringify(settings));
+                .from('simulator_progress')
+                .upsert(payload, { onConflict: 'user_id, simulator_id' });
         } catch (e) {
             console.error("Auto-save simulator run failed", e);
         }
     },
 
-    // Save/Bookmark Resource
+    // Toggle bookmark for a resource — Supabase only
     async toggleBookmark(resourceId) {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return false;
 
         try {
@@ -241,9 +311,9 @@ const progressManager = {
         }
     },
 
-    // Get bookmark status
+    // Get bookmark status for a resource
     async isBookmarked(resourceId) {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return false;
 
         try {
@@ -259,9 +329,9 @@ const progressManager = {
         }
     },
 
-    // Get all bookmarked resources
+    // Get all bookmarked resources for the current user
     async getSavedResources() {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return [];
 
         try {
@@ -278,17 +348,17 @@ const progressManager = {
         }
     },
 
-    // Get resume tracking metrics
+    // Get the most recently accessed course for "resume learning" banner
     async getResumeState() {
-        const userId = this.getUserId();
+        const userId = await this._resolveUserId();
         if (!userId || !window.supabaseClient) return null;
 
         try {
-            // Find most recently accessed course progress
             const { data: courseData } = await window.supabaseClient
                 .from('course_progress')
                 .select('*')
                 .eq('user_id', userId)
+                .eq('completed', false)
                 .order('last_accessed', { ascending: false })
                 .limit(1);
 
@@ -296,7 +366,7 @@ const progressManager = {
                 return {
                     type: 'course',
                     id: courseData[0].course_id,
-                    percentage: courseData[0].completion_percentage,
+                    percentage: Math.round(parseFloat(courseData[0].progress_percentage || 0)),
                     last_accessed: courseData[0].last_accessed
                 };
             }
