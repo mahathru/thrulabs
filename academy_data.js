@@ -12,7 +12,7 @@ const academyData = {
             icon: "cpu",
             color: "purple-500",
             price: "FREE",
-            hasCertificate: false
+            hasCertificate: true
         },
         {
             id: "embedded-systems",
@@ -48,7 +48,7 @@ const academyData = {
             icon: "binary",
             color: "cyan-500",
             price: "FREE",
-            hasCertificate: false
+            hasCertificate: true
         },
         {
             id: "pcb-design",
@@ -84,7 +84,7 @@ const academyData = {
             icon: "radio",
             color: "cyan-500",
             price: "FREE",
-            hasCertificate: false
+            hasCertificate: true
         },
         {
             id: "introduction-to-embedded",
@@ -96,7 +96,7 @@ const academyData = {
             icon: "cpu",
             color: "purple-500",
             price: "FREE",
-            hasCertificate: false
+            hasCertificate: true
         },
         {
             id: "basic-electronics",
@@ -108,7 +108,7 @@ const academyData = {
             icon: "activity",
             color: "emerald-500",
             price: "FREE",
-            hasCertificate: false
+            hasCertificate: true
         },
         {
             id: "rtos",
