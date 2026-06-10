@@ -142,11 +142,28 @@
             border-bottom: 2px solid #5E6AD2;
             color: #FFFFFF;
         }
+
+        /* Responsive Certificate CSS */
+        .container-type-inline {
+            container-type: inline-size;
+        }
         
         @media print {
             body * { visibility: hidden; }
             #printable-certificate, #printable-certificate * { visibility: visible; }
-            #printable-certificate { position: absolute; left: 0; top: 0; width: 100%; }
+            #printable-certificate {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                height: 100% !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background-color: #020203 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
     </style>
 </head>
@@ -375,48 +392,41 @@
             </div>
             
             <!-- Printable Certificate Box (Hidden by default, shown when printing or unlocked) -->
-            <div id="printable-certificate" class="hidden mt-12 academy-card p-12 md:p-16 rounded-[2.5rem] border border-accent/20 bg-[#0B0C10] max-w-4xl mx-auto shadow-2xl relative text-center space-y-8 font-sans overflow-hidden">
-                <div class="absolute inset-0 bg-radial-gradient(circle at center, rgba(94,106,210,0.06) 0%, transparent 80%) pointer-events-none"></div>
-                <div class="flex justify-between items-center border-b border-white/10 pb-6">
-                    <img src="logo.svg" alt="THRULABS Logo" class="h-5 w-auto">
-                    <span class="text-[9px] font-mono text-zinc-500 tracking-wider">ACADEMIC ECOSYSTEM</span>
+            <div id="printable-certificate" class="hidden mt-12 mx-auto max-w-[800px] w-full aspect-[800/568] relative bg-[#020203] rounded-[1.5rem] border border-white/10 overflow-hidden shadow-2xl font-sans text-white container-type-inline">
+                <!-- Background Image -->
+                <div class="absolute inset-0 bg-[url('certificate.png')] bg-cover bg-center pointer-events-none"></div>
+                
+                <!-- Dynamic Content (with percentage positioning so it scales nicely!) -->
+                <div id="cert-student-name" class="absolute top-[33.1%] left-[10%] right-[10%] text-center text-[3.5cqw] font-extrabold font-display tracking-wide text-white">
+                    Alex Mercer
                 </div>
                 
-                <div class="space-y-6 py-6">
-                    <span class="text-xs font-mono text-accent-bright tracking-[0.25em] uppercase font-bold">Certificate of Completion</span>
-                    <h1 id="cert-student-name" class="text-3xl md:text-5xl font-display font-extrabold text-white leading-tight">Alex Mercer</h1>
-                    <p class="text-[#BFC5D2] text-sm font-light leading-relaxed max-w-xl mx-auto">
-                        has successfully completed all laboratory exercises, hardware assessments, and final examinations required to demonstrate technical proficiency in
-                    </p>
-                    <h2 id="cert-course-name" class="text-xl md:text-2xl font-mono font-bold text-white tracking-wide">ARDUINO FUNDAMENTALS</h2>
+                <div id="cert-course-name" class="absolute top-[50.7%] left-[10%] right-[10%] text-center text-[2.3cqw] font-bold font-mono tracking-wider text-[#7C89FF] uppercase">
+                    ARDUINO FUNDAMENTALS
                 </div>
+                
+                <div class="absolute bottom-[14.3%] left-0 right-0 font-mono text-[1.3cqw] font-bold">
+                    <div id="cert-issue-date" class="absolute left-[21.06%] -translate-x-1/2 text-center text-white w-[25%]">
+                        June 4, 2026
+                    </div>
+                    <div id="cert-verification-code" class="absolute left-[50%] -translate-x-1/2 text-center text-white w-[30%]">
+                        THRU-2026-EMB-XXXXXX
+                    </div>
+                    <div id="cert-status" class="absolute left-[78.75%] -translate-x-1/2 text-center text-[#10B981] w-[25%]">
+                        VERIFIED
+                    </div>
+                </div>
+            </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8 border-t border-white/10 font-mono text-[10px] text-left text-zinc-400">
-                    <div>
-                        <span class="text-[8px] uppercase tracking-wider block text-white/40 mb-1">Issue Date</span>
-                        <span id="cert-issue-date" class="text-white font-bold">June 4, 2026</span>
-                    </div>
-                    <div>
-                        <span class="text-[8px] uppercase tracking-wider block text-white/40 mb-1">Certificate ID</span>
-                        <span id="cert-verification-code" class="text-white font-bold">THRU-2026-EMB-XXXXXX</span>
-                    </div>
-                    <div>
-                        <span class="text-[8px] uppercase tracking-wider block text-white/40 mb-1">Verification Status</span>
-                        <span id="cert-status" class="text-emerald-400 font-bold">Verified & Active</span>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-[8px] uppercase tracking-wider block text-white/40 mb-1">Grading Rank</span>
-                        <span class="text-white font-bold uppercase">Passed with Distinction</span>
-                    </div>
-                </div>
-                
-                <button onclick="window.print()" class="no-print mt-6 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
+            <!-- Control Actions for Certificate (No-print, placed right below the template) -->
+            <div id="certificate-actions" class="hidden mt-6 flex flex-wrap justify-center gap-4 no-print">
+                <button onclick="window.print()" class="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
                     <i data-lucide="printer" class="w-4 h-4"></i> Print Certificate
                 </button>
-                <button onclick="downloadCertificatePDF()" class="no-print mt-6 px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
+                <button onclick="downloadCertificatePDF()" class="px-6 py-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
                     <i data-lucide="download" class="w-4 h-4"></i> Download Certificate
                 </button>
-                <a id="cert-verify-link" href="#" class="no-print mt-6 px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
+                <a id="cert-verify-link" href="#" class="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all inline-flex items-center gap-2 hover-target font-mono">
                     <i data-lucide="shield-check" class="w-4 h-4"></i> View Verification Page
                 </a>
             </div>
@@ -1325,6 +1335,7 @@
 
             // Show Certificate UI
             document.getElementById('printable-certificate').classList.remove('hidden');
+            document.getElementById('certificate-actions').classList.remove('hidden');
             document.getElementById('printable-certificate').scrollIntoView({ behavior: 'smooth' });
         }
 

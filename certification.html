@@ -121,6 +121,10 @@
         .glow-border {
             box-shadow: 0 0 25px rgba(94, 106, 210, 0.15);
         }
+
+        .container-type-inline {
+            container-type: inline-size;
+        }
     </style>
 </head>
 <body class="selection:bg-accent/30 selection:text-white overflow-x-hidden">
@@ -261,50 +265,28 @@
                 </h3>
                 
                 <!-- Printable/Preview Frame -->
-                <div id="certificate-preview" class="academy-card p-6 md:p-8 rounded-[2rem] text-center border-emerald-500/20 shadow-2xl relative overflow-hidden group">
-                    <div class="spotlight"></div>
+                <div id="certificate-preview" class="w-full aspect-[800/568] relative bg-[#020203] rounded-[1.5rem] border border-white/10 overflow-hidden shadow-2xl font-sans text-white container-type-inline">
+                    <!-- Background Image -->
+                    <div class="absolute inset-0 bg-[url('certificate.png')] bg-cover bg-center pointer-events-none"></div>
                     
-                    <!-- Decorative border design -->
-                    <div class="absolute inset-4 border border-white/5 rounded-[1.5rem] pointer-events-none"></div>
-                    <div class="absolute inset-5 border border-emerald-500/10 rounded-[1.4rem] pointer-events-none"></div>
+                    <!-- Dynamic Content -->
+                    <div id="preview-student-name" class="absolute top-[33.1%] left-[10%] right-[10%] text-center text-[3.5cqw] font-extrabold font-display tracking-wide text-white">
+                        ENGINEERING GRADUATE
+                    </div>
                     
-                    <div class="relative z-10 space-y-6 py-6">
-                        <div class="flex justify-center mb-1">
-                            <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                                <i data-lucide="award" class="w-6 h-6 text-emerald-400"></i>
-                            </div>
+                    <div id="preview-cert-title" class="absolute top-[50.7%] left-[10%] right-[10%] text-center text-[2.3cqw] font-bold font-mono tracking-wider text-[#7C89FF] uppercase text-nowrap truncate">
+                        Arduino Fundamentals
+                    </div>
+                    
+                    <div class="absolute bottom-[14.3%] left-0 right-0 font-mono text-[1.3cqw] font-bold">
+                        <div id="preview-date" class="absolute left-[21.06%] -translate-x-1/2 text-center text-white w-[25%]">
+                            June 4, 2026
                         </div>
-
-                        <div>
-                            <span class="font-display font-extrabold text-[8px] tracking-[0.4em] text-white uppercase block">THRULABS ACADEMY</span>
-                            <span class="text-[7px] text-[#BFC5D2]/40 font-mono tracking-widest uppercase block mt-1">GLOBAL ENGINEERING AUTHORITY</span>
+                        <div id="preview-cert-id" class="absolute left-[50%] -translate-x-1/2 text-center text-white w-[30%]">
+                            TL-2026-ARD-XXXXX
                         </div>
-
-                        <div class="space-y-1">
-                            <span class="text-[7.5px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">This is to certify that</span>
-                            <span id="preview-student-name" class="text-lg font-display font-bold text-white block select-all">ENGINEERING GRADUATE</span>
-                            <span class="text-[7.5px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">has successfully met all academic standards for</span>
-                        </div>
-
-                        <div class="py-2.5 px-4 bg-white/[0.02] border border-white/5 rounded-xl inline-block max-w-full">
-                            <span id="preview-cert-title" class="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider block">Arduino Fundamentals</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4 text-left border-t border-white/5 pt-4 text-[8px] text-[#BFC5D2] font-mono">
-                            <div>
-                                <span class="text-[#BFC5D2]/40 block uppercase tracking-wider">Date of Issue</span>
-                                <span class="text-white font-bold" id="preview-date">June 4, 2026</span>
-                            </div>
-                            <div>
-                                <span class="text-[#BFC5D2]/40 block uppercase tracking-wider">Credential ID</span>
-                                <span class="text-white font-bold block" id="preview-cert-id">TL-2026-ARD-XXXXX</span>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-center pt-2">
-                            <div class="text-[7px] text-[#BFC5D2]/30 font-mono uppercase tracking-widest border border-white/5 px-3 py-1 rounded">
-                                STATUS: PREVIEW ONLY
-                            </div>
+                        <div id="preview-status" class="absolute left-[78.75%] -translate-x-1/2 text-center text-[#10B981] w-[25%]">
+                            VERIFIED
                         </div>
                     </div>
                 </div>

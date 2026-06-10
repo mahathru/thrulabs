@@ -120,16 +120,26 @@
             box-shadow: 0 0 25px rgba(94, 106, 210, 0.15);
         }
 
+        .container-type-inline {
+            container-type: inline-size;
+        }
+
         /* Certificate Printing CSS */
         @media print {
             body * { visibility: hidden; }
             #printable-certificate-container, #printable-certificate-container * { visibility: visible; }
             #printable-certificate-container {
                 position: absolute;
-                left: 0; top: 0; width: 100%;
-                background: #020203 !important;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                height: 100% !important;
                 border: none !important;
+                border-radius: 0 !important;
                 box-shadow: none !important;
+                background-color: #020203 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
         }
     </style>
@@ -217,56 +227,33 @@
             </div>
 
             <!-- Main Certificate -->
-            <div id="printable-certificate-container" class="academy-card p-10 md:p-16 rounded-[2.5rem] border-white/10 shadow-2xl relative overflow-hidden text-center bg-surface/70">
-                <div class="spotlight"></div>
+            <div id="printable-certificate-container" class="w-full aspect-[800/568] relative bg-[#020203] rounded-[1.5rem] border border-white/10 overflow-hidden shadow-2xl font-sans text-white container-type-inline">
+                <!-- Background Image -->
+                <div class="absolute inset-0 bg-[url('certificate.png')] bg-cover bg-center pointer-events-none"></div>
                 
-                <!-- Double Frame board border design -->
-                <div class="absolute inset-5 border border-white/5 rounded-[2rem] pointer-events-none"></div>
-                <div class="absolute inset-6 border border-accent/10 rounded-[1.9rem] pointer-events-none"></div>
-
-                <div class="relative z-10 space-y-8 py-4">
-                    <div class="flex justify-center">
-                        <div class="w-16 h-16 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shadow-lg">
-                            <i data-lucide="award" class="w-8 h-8 text-accent-bright"></i>
-                        </div>
+                <!-- Dynamic Content -->
+                <div id="cert-holder" class="absolute top-[33.1%] left-[10%] right-[10%] text-center text-[3.5cqw] font-extrabold font-display tracking-wide text-white">
+                    --
+                </div>
+                
+                <div id="cert-program" class="absolute top-[50.7%] left-[10%] right-[10%] text-center text-[2.3cqw] font-bold font-mono tracking-wider text-[#7C89FF] uppercase text-nowrap truncate">
+                    --
+                </div>
+                
+                <div class="absolute bottom-[14.3%] left-0 right-0 font-mono text-[1.3cqw] font-bold">
+                    <div id="cert-date" class="absolute left-[21.06%] -translate-x-1/2 text-center text-white w-[25%]">
+                        --
                     </div>
-
-                    <div class="space-y-1.5">
-                        <span class="font-display font-extrabold text-[10px] tracking-[0.4em] text-white uppercase block">THRULABS ACADEMY</span>
-                        <span class="text-[7.5px] text-[#BFC5D2]/40 font-mono tracking-widest uppercase block mt-1">GLOBAL ENGINEERING AUTHORITY</span>
+                    <div id="cert-id-display" class="absolute left-[50%] -translate-x-1/2 text-center text-white w-[30%] select-all">
+                        --
                     </div>
-
-                    <div class="space-y-2">
-                        <span class="text-[9px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">This is to certify that</span>
-                        <span class="text-2xl font-display font-extrabold text-white block select-all tracking-tight" id="cert-holder">--</span>
-                        <span class="text-[9px] text-[#BFC5D2]/60 font-mono tracking-widest uppercase block">has successfully completed all requirements for the professional certification</span>
-                    </div>
-
-                    <div class="py-3 px-6 bg-white/[0.02] border border-white/5 rounded-2xl inline-block max-w-full">
-                        <span id="cert-program" class="text-sm font-mono font-bold text-accent-bright uppercase tracking-wider block">--</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-left border-t border-white/5 pt-8 text-[9px] text-[#BFC5D2] font-mono max-w-xl mx-auto">
-                        <div>
-                            <span class="text-[#BFC5D2]/40 block uppercase tracking-wider mb-0.5">Date of Issue</span>
-                            <span class="text-white font-bold text-xs" id="cert-date">--</span>
-                        </div>
-                        <div>
-                            <span class="text-[#BFC5D2]/40 block uppercase tracking-wider mb-0.5">Credential ID</span>
-                            <span class="text-white font-bold text-xs block select-all" id="cert-id-display">--</span>
-                        </div>
-                        <div class="col-span-2 md:col-span-1">
-                            <span class="text-[#BFC5D2]/40 block uppercase tracking-wider mb-0.5">Grade / Score</span>
-                            <span class="text-emerald-400 font-bold text-xs block" id="cert-grade">--</span>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-center pt-4">
-                        <div class="flex items-center gap-2 border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 rounded-xl text-[9px] font-mono text-emerald-400 uppercase tracking-widest">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i> Secure Blockchain Ledger Verified
-                        </div>
+                    <div id="cert-status" class="absolute left-[78.75%] -translate-x-1/2 text-center text-[#10B981] w-[25%]">
+                        VERIFIED
                     </div>
                 </div>
+
+                <!-- Hidden elements to satisfy JavaScript updating code -->
+                <span id="cert-grade" class="hidden"></span>
             </div>
 
         </div>

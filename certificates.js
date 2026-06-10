@@ -146,50 +146,24 @@ const certificatesManager = {
         
         element.innerHTML = `
             <div style="position: absolute; inset: 0; background-image: url('certificate.png'); background-size: cover; background-position: center; pointer-events: none;"></div>
-            <div style="position: absolute; inset: 20px; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; pointer-events: none;"></div>
-            <div style="position: absolute; inset: 24px; border: 1px solid rgba(94, 106, 210, 0.1); border-radius: 12px; pointer-events: none;"></div>
             
-            <div style="position: absolute; top: 12%; left: 0; right: 0; text-align: center;">
-                <div style="font-size: 14px; font-weight: 800; letter-spacing: 0.35em; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif;">THRULABS</div>
-                <div style="font-size: 18px; font-weight: 800; letter-spacing: 0.2em; color: #7C89FF; margin-top: 15px; font-family: 'Plus Jakarta Sans', sans-serif;">CERTIFICATE OF COMPLETION</div>
-                <div style="font-size: 8px; font-weight: 500; letter-spacing: 0.15em; color: #BFC5D2; opacity: 0.5; margin-top: 8px; text-transform: uppercase;">This certifies that</div>
+            <div style="position: absolute; top: 33.1%; left: 10%; right: 10%; text-align: center; font-size: 24px; font-weight: 800; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0.05em;">
+                ${studentName}
             </div>
 
-            <div style="position: absolute; top: 40%; left: 10%; right: 10%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-                <span style="font-size: 20px; font-weight: 800; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif;">${studentName}</span>
+            <div style="position: absolute; top: 50.7%; left: 10%; right: 10%; text-align: center; font-size: 16px; font-weight: 700; color: #7C89FF; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em;">
+                ${courseTitle}
             </div>
 
-            <div style="position: absolute; top: 50%; left: 0; right: 0; text-align: center;">
-                <div style="font-size: 8px; font-weight: 500; letter-spacing: 0.15em; color: #BFC5D2; opacity: 0.5; text-transform: uppercase;">has successfully completed</div>
-            </div>
-
-            <div style="position: absolute; top: 58%; left: 10%; right: 10%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-                <span style="font-size: 15px; font-weight: 700; color: #7C89FF; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">${courseTitle}</span>
-            </div>
-
-            <div style="position: absolute; bottom: 18%; left: 10%; right: 10%; display: flex; justify-content: space-between; text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #BFC5D2;">
-                <div style="width: 30%;">
-                    <div style="color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 4px;">Date of Completion</div>
-                    <div style="font-weight: bold; color: #FFFFFF;">${issueDate}</div>
+            <div style="position: absolute; bottom: 14.3%; left: 0; right: 0; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;">
+                <div style="position: absolute; left: 21.06%; transform: translateX(-50%); text-align: center; color: #FFFFFF; width: 150px;">
+                    ${issueDate}
                 </div>
-                <div style="width: 40%; text-align: center;">
-                    <div style="color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 4px;">Certificate ID</div>
-                    <div style="font-weight: bold; color: #FFFFFF;">${certId}</div>
+                <div style="position: absolute; left: 50.00%; transform: translateX(-50%); text-align: center; color: #FFFFFF; width: 200px;">
+                    ${certId}
                 </div>
-                <div style="width: 30%; text-align: right;">
-                    <div style="color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 4px;">Verification Status</div>
-                    <div style="font-weight: bold; color: #10B981;">THRULABS VERIFIED</div>
-                </div>
-            </div>
-
-            <div style="position: absolute; bottom: 8%; left: 10%; right: 10%; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #BFC5D2;">
-                <div style="width: 30%; text-align: left; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
-                    <div style="font-style: italic; color: #FFFFFF; font-size: 9px; margin-bottom: 2px;">THRULABS</div>
-                    <div style="color: rgba(255,255,255,0.4);">ISSUED BY THRULABS</div>
-                </div>
-                <div style="width: 30%; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
-                    <div style="font-family: 'Georgia', serif; font-style: italic; color: #7C89FF; font-size: 10px; margin-bottom: 2px;">Authorized Representative</div>
-                    <div style="color: rgba(255,255,255,0.4);">AUTHORIZED SIGNATURE</div>
+                <div style="position: absolute; left: 78.75%; transform: translateX(-50%); text-align: center; color: #10B981; width: 150px;">
+                    VERIFIED
                 </div>
             </div>
         `;
@@ -255,50 +229,24 @@ const certificatesManager = {
         
         element.innerHTML = `
             <div style="position: absolute; inset: 0; background-image: url('certificate.png'); background-size: cover; background-position: center; pointer-events: none;"></div>
-            <div style="position: absolute; inset: 20px; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; pointer-events: none;"></div>
-            <div style="position: absolute; inset: 24px; border: 1px solid rgba(94, 106, 210, 0.1); border-radius: 12px; pointer-events: none;"></div>
             
-            <div style="position: absolute; top: 12%; left: 0; right: 0; text-align: center;">
-                <div style="font-size: 14px; font-weight: 800; letter-spacing: 0.35em; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif;">THRULABS</div>
-                <div style="font-size: 18px; font-weight: 800; letter-spacing: 0.2em; color: #7C89FF; margin-top: 15px; font-family: 'Plus Jakarta Sans', sans-serif;">CERTIFICATE OF COMPLETION</div>
-                <div style="font-size: 8px; font-weight: 500; letter-spacing: 0.15em; color: #BFC5D2; opacity: 0.5; margin-top: 8px; text-transform: uppercase;">This certifies that</div>
+            <div style="position: absolute; top: 33.1%; left: 10%; right: 10%; text-align: center; font-size: 24px; font-weight: 800; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0.05em;">
+                ${studentName}
             </div>
 
-            <div style="position: absolute; top: 40%; left: 10%; right: 10%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-                <span style="font-size: 20px; font-weight: 800; color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif;">${studentName}</span>
+            <div style="position: absolute; top: 50.7%; left: 10%; right: 10%; text-align: center; font-size: 16px; font-weight: 700; color: #7C89FF; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em;">
+                ${courseTitle}
             </div>
 
-            <div style="position: absolute; top: 50%; left: 0; right: 0; text-align: center;">
-                <div style="font-size: 8px; font-weight: 500; letter-spacing: 0.15em; color: #BFC5D2; opacity: 0.5; text-transform: uppercase;">has successfully completed</div>
-            </div>
-
-            <div style="position: absolute; top: 58%; left: 10%; right: 10%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-                <span style="font-size: 15px; font-weight: 700; color: #7C89FF; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">${courseTitle}</span>
-            </div>
-
-            <div style="position: absolute; bottom: 18%; left: 10%; right: 10%; display: flex; justify-content: space-between; text-align: left; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #BFC5D2;">
-                <div style="width: 30%;">
-                    <div style="color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 4px;">Date of Completion</div>
-                    <div style="font-weight: bold; color: #FFFFFF;">${issueDate}</div>
+            <div style="position: absolute; bottom: 14.3%; left: 0; right: 0; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;">
+                <div style="position: absolute; left: 21.06%; transform: translateX(-50%); text-align: center; color: #FFFFFF; width: 150px;">
+                    ${issueDate}
                 </div>
-                <div style="width: 40%; text-align: center;">
-                    <div style="color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 4px;">Certificate ID</div>
-                    <div style="font-weight: bold; color: #FFFFFF;">${certId}</div>
+                <div style="position: absolute; left: 50.00%; transform: translateX(-50%); text-align: center; color: #FFFFFF; width: 200px;">
+                    ${certId}
                 </div>
-                <div style="width: 30%; text-align: right;">
-                    <div style="color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 4px;">Verification Status</div>
-                    <div style="font-weight: bold; color: #10B981;">THRULABS VERIFIED</div>
-                </div>
-            </div>
-
-            <div style="position: absolute; bottom: 8%; left: 10%; right: 10%; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 7px; color: #BFC5D2;">
-                <div style="width: 30%; text-align: left; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
-                    <div style="font-style: italic; color: #FFFFFF; font-size: 9px; margin-bottom: 2px;">THRULABS</div>
-                    <div style="color: rgba(255,255,255,0.4);">ISSUED BY THRULABS</div>
-                </div>
-                <div style="width: 30%; text-align: right; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
-                    <div style="font-family: 'Georgia', serif; font-style: italic; color: #7C89FF; font-size: 10px; margin-bottom: 2px;">Authorized Representative</div>
-                    <div style="color: rgba(255,255,255,0.4);">AUTHORIZED SIGNATURE</div>
+                <div style="position: absolute; left: 78.75%; transform: translateX(-50%); text-align: center; color: #10B981; width: 150px;">
+                    VERIFIED
                 </div>
             </div>
         `;
