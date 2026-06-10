@@ -28,12 +28,12 @@ const courses = {
             "Basic Computer Knowledge",
             "No Prior Arduino Experience Required"
         ],
-        hasCertificate: false,
+        hasCertificate: true,
         certDetail: {
-            available: "No",
+            available: "Yes",
             assessment: "Practical Assessment Required",
-            verification: "Not Supported",
-            idPrefix: "TL-2026-NOCERT"
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-ARD"
         },
         modules: [
             {
@@ -511,11 +511,12 @@ void loop() {
             "Understanding of basic digital logic states",
             "Basic computer interface navigation skills"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "Practical Assessment Required",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00002"
+            idPrefix: "TL-2026-EMB"
         },
         modules: [
             {
@@ -954,11 +955,12 @@ int main(void) {
             "Basic microcontroller programming skills",
             "Basic knowledge of internet protocols"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "Practical Assessment Required",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00003"
+            idPrefix: "TL-2026-IOT"
         },
         modules: [
             {
@@ -1314,12 +1316,12 @@ void setup() {
             "Basic Computer Knowledge",
             "No Prior Arduino Experience Required"
         ],
-        hasCertificate: false,
+        hasCertificate: true,
         certDetail: {
-            available: "No",
+            available: "Yes",
             assessment: "Practical Assessment Required",
-            verification: "Not Supported",
-            idPrefix: "TL-2026-NOCERT"
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-DIG"
         },
         modules: [
             {
@@ -1672,11 +1674,12 @@ Carry = A · B (AND)</pre>
             "Basic understanding of electronic components (resistors, ICs)",
             "Familiarity with standard schematic diagrams"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "Practical Assessment Required",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00004"
+            idPrefix: "TL-2026-PCB"
         },
         modules: [
             {
@@ -1981,11 +1984,12 @@ Carry = A · B (AND)</pre>
             "High school physics and algebra",
             "Basic knowledge of C/C++ or programming structures"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "Practical Assessment Required",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00005"
+            idPrefix: "TL-2026-UAV"
         },
         modules: [
             {
@@ -2376,11 +2380,12 @@ Carry = A · B (AND)</pre>
             "Basic algebra",
             "High school physics foundations"
         ],
+        hasCertificate: true,
         certDetail: {
-            available: "No",
+            available: "Yes",
             assessment: "Practical Exercises",
-            verification: "Not Available",
-            idPrefix: "TL-2026-NOCERT"
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-COM"
         },
         modules: [
             {
@@ -2548,11 +2553,12 @@ Carry = A · B (AND)</pre>
         prerequisites: [
             "None"
         ],
+        hasCertificate: true,
         certDetail: {
-            available: "No",
+            available: "Yes",
             assessment: "Lab Exercises",
-            verification: "Not Available",
-            idPrefix: "TL-2026-NOCERT"
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-INT"
         },
         modules: [
             {
@@ -2716,11 +2722,12 @@ Carry = A · B (AND)</pre>
         prerequisites: [
             "None"
         ],
+        hasCertificate: true,
         certDetail: {
-            available: "No",
+            available: "Yes",
             assessment: "Practical Lab Tests",
-            verification: "Not Available",
-            idPrefix: "TL-2026-NOCERT"
+            verification: "Supported (Database verification)",
+            idPrefix: "TL-2026-ELC"
         },
         modules: [
             {
@@ -2888,11 +2895,12 @@ Carry = A · B (AND)</pre>
             "Pointers in C programming",
             "Microcontroller bare-metal basics"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "RTOS Task Synchronization quiz (100% correct required)",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00007"
+            idPrefix: "TL-2026-RTOS"
         },
         modules: [
             {
@@ -3048,11 +3056,12 @@ Carry = A · B (AND)</pre>
             "Python basics for ML modeling",
             "ESP32 Wi-Fi configuration basics"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "Edge AI telemetry deployment exam (100% correct required)",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00008"
+            idPrefix: "TL-2026-AIOT"
         },
         modules: [
             {
@@ -3205,11 +3214,12 @@ Carry = A · B (AND)</pre>
             "Completed Embedded Systems Essentials course",
             "Strong C programming and hardware registry knowledge"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "DMA and Driver registration exam (100% correct required)",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00009"
+            idPrefix: "TL-2026-ADV"
         },
         modules: [
             {
@@ -3359,11 +3369,12 @@ Carry = A · B (AND)</pre>
         prerequisites: [
             "Completed PCB design and Embedded firmware courses"
         ],
+        hasCertificate: true,
         certDetail: {
             available: "Yes",
             assessment: "Product design review and checklist clearance",
             verification: "Supported (Database verification)",
-            idPrefix: "TL-2026-00010"
+            idPrefix: "TL-2026-IND"
         },
         modules: [
             {
